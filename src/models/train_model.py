@@ -171,9 +171,9 @@ def main():
     plt.xlabel("Epoch #")
     plt.ylabel("Loss/Accuracy")
     plt.legend(loc="lower left")
-    plt.savefig(r"/Users/hermannordaunet/Documents/UiO/Master/Master-Codebase/reports/figures/plot.png")
+    plt.savefig(r"../../reports/figures/plot.png")
     # serialize the model to disk
-    torch.save(model, r"/Users/hermannordaunet/Documents/UiO/Master/Master-Codebase/models/model.pt")
+    torch.save(model, r"../../models/model.pt")
 
 
 if __name__ == "__main__":
