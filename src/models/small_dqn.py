@@ -5,7 +5,7 @@ import torch.nn.functional as F
 
 class small_DQN(nn.Module):
     def __init__(
-        self, in_channels, img_height, img_width, num_classes, memory, dropout_prob=0.5
+        self, in_channels=3, img_height=280, img_width=280, num_classes=10, dropout_prob=0.5
     ):
         super(small_DQN, self).__init__()
         # ---- CONVOLUTIONAL NEURAL NETWORK ----
@@ -19,11 +19,13 @@ class small_DQN(nn.Module):
         self._img_height = img_height
         self._img_width = img_width
         self._num_classes = num_classes
-        self.memory = memory
+
+        # TODO: Add this back
+        # self.memory = memory
 
         # Layer 1 with batch norm
         self.conv1 = nn.Conv2d(
-            self._num_classes,
+            self._in_channels,
             HIDDEN_LAYER_1_OUT,
             kernel_size=KERNEL_SIZE,
             stride=STRIDE,
@@ -67,22 +69,26 @@ class small_DQN(nn.Module):
         linear_input_size = convw * convh * HIDDEN_LAYER_3_OUT
 
         # bottleneck Linear layer
-        self.fc1 = nn.Linear(linear_input_size, 128)
+        self.fc1 = nn.Linear(linear_input_size, 500)
 
         # Last linear for class probability distribution
-        self.fc2 = nn.Linear(128, self._num_classes)
+        self.fc2 = nn.Linear(500, self._num_classes)
+
+        self.logSoftmax = nn.LogSoftmax(dim=1)
 
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        x = F.relu(self.bn1(self.conv1(x)))
-        x = F.relu(self.bn2(self.conv2(x)))
-        x = F.relu(self.bn3(self.conv3(x)))
+        x = F.leaky_relu(self.bn1(self.conv1(x)))
+        x = F.leaky_relu(self.bn2(self.conv2(x)))
+        x = F.leaky_relu(self.bn3(self.conv3(x)))
         x = x.view(x.size(0), -1)
-        x = F.relu(self.fc1(x))
+        x = F.leaky_relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
+
+        x = self.logSoftmax(x)
 
         # DELETE: Remove the conf
         # conf = torch.max(self.softmax(x)).item()
