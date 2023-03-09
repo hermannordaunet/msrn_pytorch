@@ -7,7 +7,11 @@ from torchvision.datasets import KMNIST
 from torch.optim import Adam
 from torch import nn
 
+# Local import 
 from small_dqn import small_DQN
+from small_dqn_ee import small_DQN_EE
+
+from utils.loss_functions import loss_v2
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -171,9 +175,9 @@ def main():
     plt.xlabel("Epoch #")
     plt.ylabel("Loss/Accuracy")
     plt.legend(loc="lower left")
-    plt.savefig(r"../../reports/figures/plot.png")
+    plt.savefig(r"./reports/figures/plot.png")
     # serialize the model to disk
-    torch.save(model, r"../../models/model.pt")
+    torch.save(model, r"./models/model.pt")
 
 
 if __name__ == "__main__":
