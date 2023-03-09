@@ -78,6 +78,10 @@ def main():
 
     for e in range(0, EPOCHS):
         # set the model in training mode
+
+        losses = []
+        pred_losses = []
+        cost_losses = []
         model.train()
         # initialize the total training and validation loss
         totalTrainLoss = 0
