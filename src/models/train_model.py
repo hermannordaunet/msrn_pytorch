@@ -91,9 +91,9 @@ def main():
         trainCorrect = 0
         valCorrect = 0
         # loop over the training set
-        for x, y in trainDataLoader:
+        for data, target in trainDataLoader:
             # send the input to the device
-            (x, y) = (x.to(device), y.to(device))
+            data, target = data.to(device), target.to(device, dtype=torch.int64)
             # perform a forward pass and calculate the training loss
             pred = model(x)
             loss = lossFn(pred, y)
