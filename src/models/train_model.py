@@ -7,7 +7,7 @@ from torchvision.datasets import KMNIST
 from torch.optim import Adam
 from torch import nn
 
-# Local import 
+# Local import
 from small_dqn import small_DQN
 from small_dqn_ee import small_DQN_EE
 
@@ -28,6 +28,7 @@ def main():
     # define the train and val splits
     TRAIN_SPLIT = 0.75
     VAL_SPLIT = 1 - TRAIN_SPLIT
+
     # set the device we will be using to train the model
     # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
     device = "cpu"
@@ -68,7 +69,6 @@ def main():
 
     # TODO: Implement loss function
     # lossFn = nn.NLLLoss()
-    
 
     # initialize a dictionary to store training history
     H = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
@@ -99,10 +99,7 @@ def main():
             if isinstance(model, small_DQN_EE):
                 pred, conf, cost = model(data)
                 cost.append(torch.tensor(1.0).to(device))
-                cum_loss, pred_loss, cost_loss = loss_v2(
-                    2, pred, target, conf, cost
-                )
-
+                cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
 
             # zero out the gradients, perform the backpropagation step,
             # and update the weights
@@ -113,7 +110,7 @@ def main():
             optimizer.step()
             # add the loss to the total training loss so far and
             # calculate the number of correct predictions
-            
+
             # TODO: Check if we need this
             # totalTrainLoss += loss
 
@@ -126,7 +123,7 @@ def main():
             # loop over the validation set
             for data, target in trainDataLoader:
                 # send the input to the device
-                data, target = data.to(device), target.to(device, dtype=torch.int32)
+                data, target = data.to(device), target.to(device, dtype=torch.int64)
                 # make the predictions and calculate the validation loss
                 pred, _, _ = model(data)
                 loss = torch.nn.functional.nll_loss(pred.log(), target) + 1.0 * cost
