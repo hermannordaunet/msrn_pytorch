@@ -24,12 +24,13 @@ def main():
     # define training hyperparameters
     INIT_LR = 1e-3
     BATCH_SIZE = 64
-    EPOCHS = 10
+    EPOCHS = 20
     # define the train and val splits
     TRAIN_SPLIT = 0.75
     VAL_SPLIT = 1 - TRAIN_SPLIT
     # set the device we will be using to train the model
-    device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
+    device = "cpu"
     print(f"Device is: {device}")
 
     # load the KMNIST dataset
