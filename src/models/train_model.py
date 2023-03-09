@@ -95,29 +95,41 @@ def main():
             # send the input to the device
             data, target = data.to(device), target.to(device, dtype=torch.int64)
             # perform a forward pass and calculate the training loss
-            pred = model(x)
-            loss = lossFn(pred, y)
+            if isinstance(model, small_DQN_EE):
+                pred, conf, cost = model(data)
+                cost.append(torch.tensor(1.0).to(device))
+                cum_loss, pred_loss, cost_loss = loss_v2(
+                    2, pred, target, conf, cost
+                )
+
+
             # zero out the gradients, perform the backpropagation step,
             # and update the weights
-            opt.zero_grad()
-            loss.backward()
-            opt.step()
+            losses.append(float(cum_loss))
+            pred_losses.append(float(pred_loss))
+            cost_losses.append(float(cost_loss))
+            cum_loss.backward()
+            optimizer.step()
             # add the loss to the total training loss so far and
             # calculate the number of correct predictions
-            totalTrainLoss += loss
-            trainCorrect += (pred.argmax(1) == y).type(torch.float).sum().item()
+            
+            # TODO: Check if we need this
+            # totalTrainLoss += loss
+
+            # trainCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
 
         # switch off autograd for evaluation
         with torch.no_grad():
             # set the model in evaluation mode
             model.eval()
             # loop over the validation set
-            for x, y in valDataLoader:
+            for data, target in trainDataLoader:
                 # send the input to the device
-                (x, y) = (x.to(device), y.to(device))
+                data, target = data.to(device), target.to(device, dtype=torch.int32)
                 # make the predictions and calculate the validation loss
-                pred = model(x)
-                totalValLoss += lossFn(pred, y)
+                pred, _, _ = model(data)
+                loss = torch.nn.functional.nll_loss(pred.log(), target) + 1.0 * cost
+                totalValLoss += loss
                 # calculate the number of correct predictions
                 valCorrect += (pred.argmax(1) == y).type(torch.float).sum().item()
 
