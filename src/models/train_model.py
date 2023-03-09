@@ -75,6 +75,7 @@ def main():
     # measure how long training is going to take
     print("[INFO] training the network...")
     startTime = time.time()
+    print(f"[INFO] started training {startTime}")
 
     for e in range(0, EPOCHS):
         # set the model in training mode
