@@ -1,5 +1,6 @@
-# Found in the EEnets pytorch implementation. 
+# Found in the EEnets pytorch implementation.
 import torch.nn.functional as F
+
 
 def loss_v2(num_ee, pred, target, conf, cost, lambda_coef=1.0):
     """loss version 2
