@@ -57,7 +57,7 @@ def main():
 
     # initialize the LeNet model
     print("[INFO] initializing the small_DQN model...")
-    model = small_DQN(
+    model = small_DQN_EE(
         in_channels=1,
         img_height=28,
         img_width=28,
