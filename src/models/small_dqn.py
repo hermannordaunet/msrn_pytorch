@@ -16,7 +16,7 @@ class small_DQN(nn.Module):
         # ---- CONVOLUTIONAL NEURAL NETWORK ----
         HIDDEN_LAYER_1_OUT = 16
         HIDDEN_LAYER_2_OUT = 32
-        HIDDEN_LAYER_3_OUT = 64
+        HIDDEN_LAYER_3_OUT = 32
         KERNEL_SIZE = 3  # original = 5
         STRIDE = 1  # original = 2
 
