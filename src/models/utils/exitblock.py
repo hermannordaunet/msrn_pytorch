@@ -1,5 +1,6 @@
 import torch.nn as nn
 
+
 class ExitBlock(nn.Module):
     """Exit Block defition.
 
