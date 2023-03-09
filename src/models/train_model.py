@@ -64,8 +64,12 @@ def main():
         num_classes=len(trainData.dataset.classes),
     ).to(device)
     # initialize our optimizer and loss function
-    opt = Adam(model.parameters(), lr=INIT_LR)
-    lossFn = nn.NLLLoss()
+    optimizer = Adam(model.parameters(), lr=INIT_LR)
+
+    # TODO: Implement loss function
+    # lossFn = nn.NLLLoss()
+    
+
     # initialize a dictionary to store training history
     H = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
     # measure how long training is going to take
