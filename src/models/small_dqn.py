@@ -5,7 +5,12 @@ import torch.nn.functional as F
 
 class small_DQN(nn.Module):
     def __init__(
-        self, in_channels=3, img_height=280, img_width=280, num_classes=10, dropout_prob=0.5
+        self,
+        in_channels=3,
+        img_height=280,
+        img_width=280,
+        num_classes=10,
+        dropout_prob=0.5,
     ):
         super(small_DQN, self).__init__()
         # ---- CONVOLUTIONAL NEURAL NETWORK ----
