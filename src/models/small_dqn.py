@@ -68,7 +68,7 @@ class small_DQN(nn.Module):
         def conv2d_size_out(size, kernel_size=KERNEL_SIZE, stride=STRIDE):
             return (size - (kernel_size - 1) - 1) // stride + 1
 
-        # Calculate the number of in features for the bootleneck linear layer (fc1). 
+        # Calculate the number of in features for the bootleneck linear layer (fc1).
         convw = conv2d_size_out(conv2d_size_out(conv2d_size_out(self._img_width)))
         convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(self._img_height)))
         linear_input_size = convw * convh * HIDDEN_LAYER_3_OUT
@@ -80,7 +80,6 @@ class small_DQN(nn.Module):
         self.fc2 = nn.Linear(500, self._num_classes)
 
         self.logSoftmax = nn.LogSoftmax(dim=1)
-
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
@@ -97,4 +96,4 @@ class small_DQN(nn.Module):
 
         # DELETE: Remove the conf
         # conf = torch.max(self.softmax(x)).item()
-        return x #, conf
+        return x  # , conf
