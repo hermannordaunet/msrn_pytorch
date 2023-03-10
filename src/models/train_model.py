@@ -63,13 +63,13 @@ def main():
     trainSteps = len(trainDataLoader.dataset) // BATCH_SIZE
     valSteps = len(valDataLoader.dataset) // BATCH_SIZE
 
-    # initialize the LeNet model
+    # initialize the small DQN EE model
     print("[INFO] initializing the small_DQN model...")
     model = small_DQN_EE(
         in_channels=1,
-        img_height=28,
-        img_width=28,
-        num_classes=len(trainData.dataset.classes),
+        img_height=IMG_HEIGHT,
+        img_width=IMG_WIDTH,
+        num_classes=NUM_CLASSES,
     ).to(device)
     # initialize our optimizer and loss function
     optimizer = Adam(model.parameters(), lr=INIT_LR)
