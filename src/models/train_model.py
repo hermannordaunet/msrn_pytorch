@@ -1,11 +1,20 @@
-# import the necessary packages
-from sklearn.metrics import classification_report
-from torch.utils.data import random_split
-from torch.utils.data import DataLoader
-from torchvision.transforms import ToTensor
-from torchvision.datasets import KMNIST
-from torch.optim import Adam
+import time
+import torch
+import numpy as np
+import matplotlib.pyplot as plt
+
+# import the necessary torch packages
 from torch import nn
+from torch.optim import Adam
+from torch.utils.data import DataLoader
+from torch.utils.data import random_split
+
+# import the necessary torchvision packages
+from torchvision.datasets import KMNIST
+from torchvision.transforms import ToTensor
+
+# import the necessary sklearn packages
+from sklearn.metrics import classification_report
 
 # Local import
 from small_dqn import small_DQN
