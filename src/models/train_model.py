@@ -40,6 +40,11 @@ def main():
     print("[INFO] loading the KMNIST dataset...")
     trainData = KMNIST(root="data", train=True, download=True, transform=ToTensor())
     testData = KMNIST(root="data", train=False, download=True, transform=ToTensor())
+
+    # Load the sizes of dataset
+    NUM_CLASSES = len(trainData.classes)
+    _, IMG_WIDTH, IMG_HEIGHT = trainData.train_data.shape
+
     # calculate the train/validation split
     print("[INFO] generating the train/validation split...")
     numTrainSamples = int(len(trainData) * TRAIN_SPLIT)
