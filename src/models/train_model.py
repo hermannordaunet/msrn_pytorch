@@ -19,14 +19,7 @@ from sklearn.metrics import classification_report
 # Local import
 from small_dqn import small_DQN
 from small_dqn_ee import small_DQN_EE
-
 from utils.loss_functions import loss_v2
-
-import matplotlib.pyplot as plt
-import numpy as np
-import argparse
-import torch
-import time
 
 
 def main():
