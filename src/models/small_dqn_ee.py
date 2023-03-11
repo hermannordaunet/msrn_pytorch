@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 
 # Local import
-from utils.exitblock import ExitBlock
+from src.models.utils.exitblock import ExitBlock
 
 
 class small_DQN_EE(nn.Module):
