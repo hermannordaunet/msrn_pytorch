@@ -12,7 +12,7 @@ class ExitBlock(nn.Module):
         _, width, height = input_shape
         self.expansion = width * height if exit_type == "plain" else 1
 
-        self.layers = []
+        self.layers = nn.ModuleList()
         if exit_type == "bnpool":
             self.layers.append(nn.BatchNorm2d(inplanes))
         if exit_type != "plain":
@@ -29,7 +29,7 @@ class ExitBlock(nn.Module):
 
     def forward(self, x):
         for layer in self.layers:
-            x = layer(x).to(x.device)
+            x = layer(x)
         x = x.view(x.size(0), -1)
         conf = self.confidence(x)
         pred = self.classifier(x)
