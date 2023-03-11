@@ -37,7 +37,13 @@ def main():
 
     # set the device we will be using to train the model
     # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
-    device = "cpu"
+    if torch.cuda.is_available():
+        device = "cuda"
+    elif torch.backends.mps.is_available():
+        device = "mps"
+    else:
+        device = "cpu"
+
     print(f"Device is: {device}")
 
     # load the KMNIST dataset
