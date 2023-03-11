@@ -96,14 +96,12 @@ def main():
         losses = []
         pred_losses = []
         cost_losses = []
-        model.train()
-        # initialize the total training and validation loss
-        totalTrainLoss = 0
-        totalValLoss = 0
-        # initialize the number of correct predictions in the training
-        # and validation step
-        trainCorrect = 0
+
         valCorrect = 0
+        totalValLoss = 0
+
+        model.train()
+
         # loop over the training set
         for data, target in trainDataLoader:
             # send the input to the device
