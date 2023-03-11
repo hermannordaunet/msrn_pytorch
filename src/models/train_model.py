@@ -166,8 +166,8 @@ def main():
         # print the model training and validation information
         print("[INFO] EPOCH: {}/{}".format(e + 1, EPOCHS))
         print(
-            "Train loss: {:.6f}, Train accuracy: {:.4f}".format(
-                avgTrainLoss, trainCorrect
+            "Train loss: {:.6f}, Prediction loss: {:.4f}, Cost Loss: {:.4f}".format(
+                result["train_loss"], result["pred_loss"], result["cost_loss"]
             )
         )
         print("Val loss: {:.6f}, Val accuracy: {:.4f}\n".format(avgValLoss, valCorrect))
