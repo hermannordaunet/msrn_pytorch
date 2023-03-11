@@ -61,11 +61,11 @@ def main():
 
     # initialize the train, validation, and test data loaders
     trainDataLoader = DataLoader(trainData, shuffle=True, batch_size=BATCH_SIZE)
-    valDataLoader = DataLoader(valData, batch_size=BATCH_SIZE)
-    testDataLoader = DataLoader(testData, batch_size=BATCH_SIZE)
+    valDataLoader = DataLoader(valData, batch_size=TEST_BATCH_SIZE)
+    testDataLoader = DataLoader(testData, batch_size=TEST_BATCH_SIZE)
     # calculate steps per epoch for training and validation set
-    trainSteps = len(trainDataLoader.dataset) // BATCH_SIZE
-    valSteps = len(valDataLoader.dataset) // BATCH_SIZE
+    # trainSteps = len(trainDataLoader.dataset) // BATCH_SIZE
+    valSteps = len(valDataLoader.dataset) // TEST_BATCH_SIZE
 
     # initialize the small DQN EE model
     print("[INFO] initializing the small_DQN model...")
