@@ -106,10 +106,10 @@ def main():
         valCorrect = 0
         totalValLoss = 0
 
-        model.train()
 
         # loop over the training set
         for data, target in trainDataLoader:
+            model.train()
             # send the input to the device
             data, target = data.to(device), target.to(device, dtype=torch.int64)
 
@@ -138,10 +138,10 @@ def main():
             # trainCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
 
         # switch off autograd for evaluation
-        model.eval()
         exit_points = [0] * (len(model.exits) + 1)
         with torch.no_grad():
             # set the model in evaluation mode
+            model.eval()
             # loop over the validation set
             for data, target in valDataLoader:
                 # send the input to the device
