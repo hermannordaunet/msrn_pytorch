@@ -114,7 +114,7 @@ class small_DQN_EE(nn.Module):
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
-        preds, confs = [], []
+        preds, confs = list(), list()
 
         # First layer
         x = F.leaky_relu(self.bn1(self.conv1(x)))
