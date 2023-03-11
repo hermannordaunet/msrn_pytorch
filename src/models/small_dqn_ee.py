@@ -86,7 +86,7 @@ class small_DQN_EE(nn.Module):
 
         # TODO: Clean up all these
         self.input_shape = (self._in_channels, self._img_width, self._img_height)
-        self.exit_threshold = 0.5
+        self.exit_threshold = 0.3
         self.exit_type = "bnpool"
 
         # TODO: Make this dynamic in terms of how far into the network the exit is
