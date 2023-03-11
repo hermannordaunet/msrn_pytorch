@@ -85,8 +85,10 @@ def main():
     H = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
     # measure how long training is going to take
     print("[INFO] training the network...")
+
+    # Timing
     startTime = time.time()
-    print(f"[INFO] started training {startTime}")
+    print(f"[INFO] started training {time.ctime(startTime)}")
 
     for e in range(0, EPOCHS):
         # set the model in training mode
