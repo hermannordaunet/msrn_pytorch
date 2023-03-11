@@ -47,7 +47,7 @@ def main():
 
     # Load the sizes of dataset
     NUM_CLASSES = len(trainData.classes)
-    _, IMG_WIDTH, IMG_HEIGHT = trainData.train_data.shape
+    _, IMG_WIDTH, IMG_HEIGHT = trainData.data.shape
 
     # calculate the train/validation split
     print("[INFO] generating the train/validation split...")
