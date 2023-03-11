@@ -132,31 +132,37 @@ def main():
             # trainCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
 
         # switch off autograd for evaluation
+        model.eval()
+        exit_points = [0] * (len(model.exits) + 1)
         with torch.no_grad():
             # set the model in evaluation mode
-            model.eval()
             # loop over the validation set
-            for data, target in trainDataLoader:
+            for data, target in valDataLoader:
                 # send the input to the device
                 data, target = data.to(device), target.to(device, dtype=torch.int64)
                 # make the predictions and calculate the validation loss
-                pred, _, _ = model(data)
-                loss = torch.nn.functional.nll_loss(pred.log(), target) + 1.0 * cost
+                pred, idx, cost = model(data)
+                loss = torch.nn.functional.nll_loss(pred, target) + 1.0 * cost
+                exit_points[idx] += 1
+
                 totalValLoss += loss
                 # calculate the number of correct predictions
-                valCorrect += (pred.argmax(1) == y).type(torch.float).sum().item()
+                valCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
 
-        # calculate the average training and validation loss
-        avgTrainLoss = totalTrainLoss / trainSteps
+        # trainCorrect = trainCorrect / len(trainDataLoader.dataset)
+
         avgValLoss = totalValLoss / valSteps
-        # calculate the training and validation accuracy
-        trainCorrect = trainCorrect / len(trainDataLoader.dataset)
         valCorrect = valCorrect / len(valDataLoader.dataset)
-        # update our training history
-        H["train_loss"].append(avgTrainLoss.cpu().detach().numpy())
-        H["train_acc"].append(trainCorrect)
-        H["val_loss"].append(avgValLoss.cpu().detach().numpy())
-        H["val_acc"].append(valCorrect)
+
+        result = {
+            "train_loss": round(np.mean(losses), 4),
+            "train_loss_sem": round(stats.sem(losses), 2),
+            "pred_loss": round(np.mean(pred_losses), 4),
+            "pred_loss_sem": round(stats.sem(pred_losses), 2),
+            "cost_loss": round(np.mean(cost_losses), 4),
+            "cost_loss_sem": round(stats.sem(cost_losses), 2),
+        }
+
         # print the model training and validation information
         print("[INFO] EPOCH: {}/{}".format(e + 1, EPOCHS))
         print(
