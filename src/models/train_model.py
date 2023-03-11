@@ -176,7 +176,7 @@ def main():
                 result["train_loss"], result["pred_loss"], result["cost_loss"]
             )
         )
-        print("Val loss: {:.6f}, Val accuracy: {:.4f}\n".format(avgValLoss, valCorrect))
+        print("Val loss: {:.6f}, Val accuracy: {:.4f}\n, Exit points: {}".format(avgValLoss, valCorrect, exit_points))
 
     # finish measuring how long training took
     endTime = time.time()
