@@ -10,11 +10,14 @@ from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 
 # import the necessary torchvision packages
-from torchvision.datasets import KMNIST
+from torchvision.datasets import KMNIST, CIFAR10, ImageNet
 from torchvision.transforms import ToTensor
 
 # import the necessary sklearn packages
 from sklearn.metrics import classification_report
+
+# import the necassary scipy packages
+from scipy import stats
 
 # Local import
 from small_dqn import small_DQN
