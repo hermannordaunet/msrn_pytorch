@@ -195,11 +195,11 @@ def main():
         # initialize a list to store our predictions
         preds = []
         # loop over the test set
-        for x, y in testDataLoader:
+        for data, _ in testDataLoader:
             # send the input to the device
-            x = x.to(device)
+            data = data.to(device)
             # make the predictions and add them to the list
-            pred = model(x)
+            pred, idx, cost = model(data)
             preds.extend(pred.argmax(axis=1).cpu().numpy())
     # generate a classification report
     print(
