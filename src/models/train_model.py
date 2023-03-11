@@ -29,7 +29,7 @@ def main():
     # define training hyperparameters
     INIT_LR = 1e-3
     BATCH_SIZE = 64
-    TEST_BATCH_SIZE = 1 # exit block cant handle batch size > 1 in eval mode
+    TEST_BATCH_SIZE = 1  # exit block cant handle batch size > 1 in eval mode
     EPOCHS = 20
     # define the train and val splits
     TRAIN_SPLIT = 0.75
