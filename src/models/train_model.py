@@ -106,7 +106,11 @@ def main():
         for data, target in trainDataLoader:
             # send the input to the device
             data, target = data.to(device), target.to(device, dtype=torch.int64)
-            # perform a forward pass and calculate the training loss
+
+            # TODO: Find out when to use this
+            optimizer.zero_grad()
+
+            # perform a forward pass and calculate the losses
             if isinstance(model, small_DQN_EE):
                 pred, conf, cost = model(data)
                 cost.append(torch.tensor(1.0).to(device))
