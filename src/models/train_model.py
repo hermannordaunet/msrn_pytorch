@@ -232,7 +232,7 @@ def main():
     # plt.legend(loc="lower left")
     # plt.savefig(r"./reports/figures/plot.png")
     # # serialize the model to disk
-    # torch.save(model, r"./models/model.pt")
+    torch.save(model, r"./models/loss_v1_KMNIST_model.pt")
 
 
 if __name__ == "__main__":
