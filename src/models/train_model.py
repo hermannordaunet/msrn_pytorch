@@ -81,6 +81,7 @@ def main():
         img_width=IMG_WIDTH,
         num_classes=NUM_CLASSES,
     ).to(device)
+    num_ee = len(model.exits)
     # initialize our optimizer and loss function
     optimizer = Adam(model.parameters(), lr=INIT_LR)
 
