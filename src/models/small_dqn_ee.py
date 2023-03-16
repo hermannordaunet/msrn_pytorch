@@ -122,7 +122,7 @@ class small_DQN_EE(nn.Module):
         # First EE block
         pred, conf = self.exits[0](x)
         if not self.training and conf.item() > self.exit_threshold:
-            return pred, 0, self.cost[0]
+            return pred, 0, self.cost[0], conf.item()
 
         preds.append(pred)
         confs.append(conf)
@@ -133,7 +133,7 @@ class small_DQN_EE(nn.Module):
         # Second EE block
         pred, conf = self.exits[1](x)
         if not self.training and conf.item() > self.exit_threshold:
-            return pred, 1, self.cost[1]
+            return pred, 1, self.cost[1], conf.item()
 
         preds.append(pred)
         confs.append(conf)
@@ -151,7 +151,7 @@ class small_DQN_EE(nn.Module):
         pred = self.classifier(x)
 
         if not self.training:
-            return pred, len(self.exits), 1.0
+            return pred, len(self.exits), 1.0, conf.item()
 
         preds.append(pred)
         confs.append(conf)
