@@ -26,7 +26,8 @@ def main():
     print("[INFO] loading the KMNIST test dataset...")
     testData = KMNIST(root=data_path, train=False, download=True,
         transform=ToTensor())
-    idxs = np.random.choice(range(0, len(testData)), size=(10,))
+    num_classes = len(testData.classes)
+    idxs = np.random.choice(range(0, num_classes), size=(num_classes,))
     testData = Subset(testData, idxs)
     # initialize the test data loader
     testDataLoader = DataLoader(testData, batch_size=1)
