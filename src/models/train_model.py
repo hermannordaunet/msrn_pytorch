@@ -22,7 +22,7 @@ from scipy import stats
 # Local import
 from small_dqn import small_DQN
 from small_dqn_ee import small_DQN_EE
-from utils.loss_functions import loss_v2
+from utils.loss_functions import loss_v1, loss_v2
 
 
 def main():
@@ -104,6 +104,7 @@ def main():
             list(),
             list(),
         )
+        conf_min_max = list()
 
 
         valCorrect = 0
@@ -123,7 +124,10 @@ def main():
             if isinstance(model, small_DQN_EE):
                 pred, conf, cost = model(data)
                 cost.append(torch.tensor(1.0).to(device))
-                cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
+                conf_min_max.append(conf)
+                # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
+                cum_loss, pred_loss, cost_loss = loss_v1(2, pred, target, conf, cost)
+
 
             # zero out the gradients, perform the backpropagation step,
             # and update the weights
@@ -171,6 +175,8 @@ def main():
             "cost_loss": round(np.mean(cost_losses), 4),
             "cost_loss_sem": round(stats.sem(cost_losses), 2),
         }
+
+        print(f"\n\nResults:\n{result}\n\n")
 
         # print the model training and validation information
         print("[INFO] EPOCH: {}/{}".format(e + 1, EPOCHS))
