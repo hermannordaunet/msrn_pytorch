@@ -21,8 +21,11 @@ def loss_v1(num_ee, pred, target, conf, cost, lambda_coef=1.0):
     for i in range(num_ee - 1, -1, -1):
         cum_pred = conf[i] * pred[i] + (1 - conf[i]) * cum_pred
         cum_cost = conf[i] * cost[i] + (1 - conf[i]) * cum_cost
-        
-    pred_loss = F.nll_loss(cum_pred.log(), target)
+
+    # TODO: Find out why they do .log here:
+    # ASK: ^
+    # pred_loss = F.nll_loss(cum_pred.log(), target)
+    pred_loss = F.nll_loss(cum_pred, target)
     cost_loss = cum_cost.mean()
     cum_loss = pred_loss + lambda_coef * cost_loss
 
