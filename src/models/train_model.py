@@ -99,9 +99,12 @@ def main():
     for e in range(0, EPOCHS):
         # set the model in training mode
 
-        losses = []
-        pred_losses = []
-        cost_losses = []
+        losses, pred_losses, cost_losses = (
+            list(),
+            list(),
+            list(),
+        )
+
 
         valCorrect = 0
         totalValLoss = 0
@@ -193,7 +196,7 @@ def main():
         model.eval()
 
         # initialize a list to store our predictions
-        preds = []
+        preds = list()
         # loop over the test set
         for data, _ in testDataLoader:
             # send the input to the device
