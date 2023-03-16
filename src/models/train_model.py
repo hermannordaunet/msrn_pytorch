@@ -81,6 +81,7 @@ def main():
         img_width=IMG_WIDTH,
         num_classes=NUM_CLASSES,
     ).to(device)
+
     num_ee = len(model.exits)
     # initialize our optimizer and loss function
     optimizer = Adam(model.parameters(), lr=INIT_LR)
@@ -127,7 +128,7 @@ def main():
                 cost.append(torch.tensor(1.0).to(device))
                 conf_min_max.append(conf)
                 # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
-                cum_loss, pred_loss, cost_loss = loss_v1(2, pred, target, conf, cost)
+                cum_loss, pred_loss, cost_loss = loss_v1(num_ee, pred, target, conf, cost)
 
 
             # zero out the gradients, perform the backpropagation step,
