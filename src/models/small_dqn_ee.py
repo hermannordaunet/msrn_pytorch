@@ -102,13 +102,13 @@ class small_DQN_EE(nn.Module):
                 HIDDEN_LAYER_2_OUT, self._num_classes, self.input_shape, self.exit_type
             )
         )
-        self.classifier = nn.Sequential(
-            nn.Linear(500, num_classes),
-            nn.LogSoftmax(dim=1),
-        )
         self.confidence = nn.Sequential(
             nn.Linear(500, 1),
             nn.Sigmoid(),
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(500, num_classes),
+            nn.LogSoftmax(dim=1),
         )
 
     # Called with either one element to determine next action, or a batch
