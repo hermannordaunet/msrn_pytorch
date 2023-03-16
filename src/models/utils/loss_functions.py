@@ -1,6 +1,7 @@
 # Found in the EEnets pytorch implementation.
 import torch.nn.functional as F
 
+    for i in range(num_ee - 1, -1, -1):
 
 def loss_v2(num_ee, pred, target, conf, cost, lambda_coef=1.0):
     """loss version 2
