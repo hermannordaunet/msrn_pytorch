@@ -108,10 +108,8 @@ def main():
         )
         conf_min_max = list()
 
-
         valCorrect = 0
         totalValLoss = 0
-
 
         # loop over the training set
         for data, target in trainDataLoader:
@@ -128,8 +126,9 @@ def main():
                 cost.append(torch.tensor(1.0).to(device))
                 conf_min_max.append(conf)
                 # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
-                cum_loss, pred_loss, cost_loss = loss_v1(num_ee, pred, target, conf, cost)
-
+                cum_loss, pred_loss, cost_loss = loss_v1(
+                    num_ee, pred, target, conf, cost
+                )
 
             # zero out the gradients, perform the backpropagation step,
             # and update the weights
@@ -187,15 +186,19 @@ def main():
                 result["train_loss"], result["pred_loss"], result["cost_loss"]
             )
         )
-        print("Val loss: {:.6f}, Val accuracy: {:.4f}\n, Exit points: {}".format(avgValLoss, valCorrect, exit_points))
+        print(
+            "Val loss: {:.6f}, Val accuracy: {:.4f}\n, Exit points: {}".format(
+                avgValLoss, valCorrect, exit_points
+            )
+        )
 
         # Calculate max and min conf of each exit suring training
         # get the number of columns
         num_cols = len(conf_min_max[0])
 
         # initialize lists to store the min and max values for each column
-        min_vals = [float('inf')] * num_cols
-        max_vals = [float('-inf')] * num_cols
+        min_vals = [float("inf")] * num_cols
+        max_vals = [float("-inf")] * num_cols
 
         # iterate over the rows and columns and update the min and max values
         for row in conf_min_max:
@@ -208,7 +211,6 @@ def main():
                 if col_max > max_vals[col_idx]:
                     max_vals[col_idx] = col_max
 
-        
         print(f"Min values at each exit: {min_vals}")
         print(f"Max values at each exit: {max_vals}")
 
