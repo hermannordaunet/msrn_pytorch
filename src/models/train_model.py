@@ -28,9 +28,9 @@ from utils.loss_functions import loss_v2
 def main():
     # define training hyperparameters
     INIT_LR = 1e-3
-    BATCH_SIZE = 64
+    BATCH_SIZE = 32
     TEST_BATCH_SIZE = 1  # exit block cant handle batch size > 1 in eval mode
-    EPOCHS = 20
+    EPOCHS = 150
     # define the train and val splits
     TRAIN_SPLIT = 0.75
     VAL_SPLIT = 1 - TRAIN_SPLIT
