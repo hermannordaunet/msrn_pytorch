@@ -154,7 +154,7 @@ def main():
                 # send the input to the device
                 data, target = data.to(device), target.to(device, dtype=torch.int64)
                 # make the predictions and calculate the validation loss
-                pred, idx, cost = model(data)
+                pred, idx, cost, conf = model(data)
                 loss = torch.nn.functional.nll_loss(pred, target) + 1.0 * cost
                 exit_points[idx] += 1
 
