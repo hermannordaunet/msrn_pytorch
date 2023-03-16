@@ -233,7 +233,7 @@ def main():
             # send the input to the device
             data = data.to(device)
             # make the predictions and add them to the list
-            pred, idx, cost = model(data)
+            pred, idx, cost, conf = model(data)
             preds.extend(pred.argmax(axis=1).cpu().numpy())
     # generate a classification report
     print(
