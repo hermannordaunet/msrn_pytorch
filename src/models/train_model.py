@@ -25,6 +25,34 @@ from small_dqn_ee import small_DQN_EE
 from utils.loss_functions import loss_v1, loss_v2
 
 
+
+def get_max_min_conf(conf_list: list()) -> tuple():
+    # Calculate max and min conf of each exit suring training
+    # get the number of columns
+
+    if isinstance(conf_list[0], list()):
+        num_cols = len(conf_list[0])
+    else:
+        num_cols=1
+
+    # initialize lists to store the min and max values for each column
+    min_vals = [float("inf")] * num_cols
+    max_vals = [float("-inf")] * num_cols
+
+    # iterate over the rows and columns and update the min and max values
+    for row in conf_list:
+        for col_idx in range(num_cols):
+            col_vals = row[col_idx]
+            col_min = col_vals.min().item()
+            col_max = col_vals.max().item()
+            if col_min < min_vals[col_idx]:
+                min_vals[col_idx] = col_min
+            if col_max > max_vals[col_idx]:
+                max_vals[col_idx] = col_max
+
+    return (min_vals, max_vals)
+
+
 def main():
     # define training hyperparameters
     INIT_LR = 1e-3
@@ -145,8 +173,15 @@ def main():
 
             # trainCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
 
-        # switch off autograd for evaluation
+        min_vals, max_vals = get_max_min_conf(conf_min_max)
+
+        print(f"\n[TRAIN]: Min values at each exit: {min_vals}")
+        print(f"[TRAIN]: Max values at each exit: {max_vals}\n")
+
         exit_points = [0] * (len(model.exits) + 1)
+        conf_min_max = list()
+
+        # switch off autograd for evaluation
         with torch.no_grad():
             # set the model in evaluation mode
             model.eval()
@@ -156,6 +191,7 @@ def main():
                 data, target = data.to(device), target.to(device, dtype=torch.int64)
                 # make the predictions and calculate the validation loss
                 pred, idx, cost, conf = model(data)
+                conf_min_max.append(conf)
                 loss = torch.nn.functional.nll_loss(pred, target) + 1.0 * cost
                 exit_points[idx] += 1
 
@@ -192,27 +228,10 @@ def main():
             )
         )
 
-        # Calculate max and min conf of each exit suring training
-        # get the number of columns
-        num_cols = len(conf_min_max[0])
+        min_vals, max_vals = get_max_min_conf(conf_min_max)
 
-        # initialize lists to store the min and max values for each column
-        min_vals = [float("inf")] * num_cols
-        max_vals = [float("-inf")] * num_cols
-
-        # iterate over the rows and columns and update the min and max values
-        for row in conf_min_max:
-            for col_idx in range(num_cols):
-                col_vals = row[col_idx]
-                col_min = col_vals.min().item()
-                col_max = col_vals.max().item()
-                if col_min < min_vals[col_idx]:
-                    min_vals[col_idx] = col_min
-                if col_max > max_vals[col_idx]:
-                    max_vals[col_idx] = col_max
-
-        print(f"Min values at each exit: {min_vals}")
-        print(f"Max values at each exit: {max_vals}")
+        print(f"\n[EVAL]: Min values at each exit: {min_vals}")
+        print(f"[EVAL]: Max values at each exit: {max_vals}\n")
 
     # finish measuring how long training took
     endTime = time.time()
