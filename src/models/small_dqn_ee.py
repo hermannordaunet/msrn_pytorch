@@ -81,8 +81,8 @@ class small_DQN_EE(nn.Module):
 
         # Last linear for class probability distribution
         # DELETE: Is this the same as the first part of the classifier?
-        self.fc2 = nn.Linear(500, self._num_classes)
-        self.logSoftmax = nn.LogSoftmax(dim=1)
+        # self.fc2 = nn.Linear(500, self._num_classes)
+        # self.logSoftmax = nn.LogSoftmax(dim=1)
 
         # TODO: Clean up all these
         self.input_shape = (self._in_channels, self._img_width, self._img_height)
@@ -110,6 +110,7 @@ class small_DQN_EE(nn.Module):
             nn.Linear(500, num_classes),
             nn.LogSoftmax(dim=1),
         )
+        self.pool = nn.AdaptiveAvgPool2d(1)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
@@ -117,18 +118,21 @@ class small_DQN_EE(nn.Module):
         preds, confs = list(), list()
 
         # First layer
-        x = F.leaky_relu(self.bn1(self.conv1(x)))
+        x = self.conv1(x)
 
         # First EE block
         pred, conf = self.exits[0](x)
+
         if not self.training and conf.item() > self.exit_threshold:
             return pred, 0, self.cost[0], conf.item()
 
         preds.append(pred)
         confs.append(conf)
 
+        x = F.leaky_relu(self.bn1(x))
+
         # Second layer
-        x = F.leaky_relu(self.bn2(self.conv2(x)))
+        x = self.conv2(x)
 
         # Second EE block
         pred, conf = self.exits[1](x)
@@ -138,8 +142,15 @@ class small_DQN_EE(nn.Module):
         preds.append(pred)
         confs.append(conf)
 
+        x = F.leaky_relu(self.bn2(x))
+
         # Third layer
-        x = F.leaky_relu(self.bn3(self.conv3(x)))
+        x = self.conv3(x)
+
+        conf = self.confidence(x)
+        pred = self.classifier(x)
+
+        x = F.leaky_relu(self.bn3(x))
         x = x.view(x.size(0), -1)
         x = F.leaky_relu(self.fc1(x))
         x = self.dropout(x)
@@ -147,12 +158,10 @@ class small_DQN_EE(nn.Module):
         # TODO: Find out if this is the same as running through conf
         # x = self.fc2(x)
 
-        conf = self.confidence(x)
-        pred = self.classifier(x)
-
         if not self.training:
             return pred, len(self.exits), 1.0, conf.item()
 
         preds.append(pred)
         confs.append(conf)
+
         return preds, confs, self.cost
