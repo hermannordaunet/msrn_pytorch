@@ -103,11 +103,11 @@ class small_DQN_EE(nn.Module):
             )
         )
         self.confidence = nn.Sequential(
-            nn.Linear(500, 1),
+            nn.Linear(30976, 1),
             nn.Sigmoid(),
         )
         self.classifier = nn.Sequential(
-            nn.Linear(500, num_classes),
+            nn.Linear(30976, num_classes),
             nn.LogSoftmax(dim=1),
         )
         self.pool = nn.AdaptiveAvgPool2d(1)
