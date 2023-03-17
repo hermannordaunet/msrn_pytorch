@@ -30,10 +30,7 @@ def get_max_min_conf(conf_list: list()) -> tuple():
     # Calculate max and min conf of each exit suring training
     # get the number of columns
 
-    if isinstance(conf_list[0], list()):
-        num_cols = len(conf_list[0])
-    else:
-        num_cols=1
+    num_cols = len(conf_list[0])
 
     # initialize lists to store the min and max values for each column
     min_vals = [float("inf")] * num_cols
@@ -176,7 +173,7 @@ def main():
         min_vals, max_vals = get_max_min_conf(conf_min_max)
 
         print(f"\n[TRAIN]: Min values at each exit: {min_vals}")
-        print(f"[TRAIN]: Max values at each exit: {max_vals}\n")
+        print(f"[TRAIN]: Max values at each exit: {max_vals}")
 
         exit_points = [0] * (len(model.exits) + 1)
         conf_min_max = list()
@@ -191,7 +188,7 @@ def main():
                 data, target = data.to(device), target.to(device, dtype=torch.int64)
                 # make the predictions and calculate the validation loss
                 pred, idx, cost, conf = model(data)
-                conf_min_max.append(conf)
+                conf_min_max.append([conf])
                 loss = torch.nn.functional.nll_loss(pred, target) + 1.0 * cost
                 exit_points[idx] += 1
 
@@ -213,7 +210,7 @@ def main():
             "cost_loss_sem": round(stats.sem(cost_losses), 2),
         }
 
-        print(f"\n\nResults:\n{result}\n\n")
+        print(f"\nResults:\n{result}\n")
 
         # print the model training and validation information
         print("[INFO] EPOCH: {}/{}".format(e + 1, EPOCHS))
