@@ -51,13 +51,6 @@ def get_max_min_conf(conf_list: list()) -> tuple():
 
 
 def main():
-
-    test_list = [[1,2,3], [2,3,4]]
-
-    min_vals, max_vals = get_max_min_conf(test_list)
-
-    print(min_vals, max_vals)
-    exit()
     # define training hyperparameters
     INIT_LR = 1e-3
     BATCH_SIZE = 64
