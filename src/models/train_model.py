@@ -232,10 +232,10 @@ def main():
             )
         )
 
-        min_vals, max_vals = get_max_min_conf(conf_min_max)
+        # min_vals, max_vals = get_max_min_conf(conf_min_max)
 
-        print(f"\n[EVAL]: Min values at each exit: {min_vals}")
-        print(f"[EVAL]: Max values at each exit: {max_vals}\n")
+        # print(f"\n[EVAL]: Min values at each exit: {min_vals}")
+        # print(f"[EVAL]: Max values at each exit: {max_vals}\n")
 
     # finish measuring how long training took
     endTime = time.time()
