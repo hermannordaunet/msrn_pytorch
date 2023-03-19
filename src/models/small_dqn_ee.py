@@ -146,7 +146,7 @@ class small_DQN_EE(nn.Module):
 
         # Third layer
         x = self.conv3(x)
-        
+
         e_x = x.view(x.size(0), -1)
         conf = self.confidence(e_x)
         pred = self.classifier(e_x)
