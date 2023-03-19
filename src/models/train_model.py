@@ -25,7 +25,6 @@ from small_dqn_ee import small_DQN_EE
 from utils.loss_functions import loss_v1, loss_v2
 
 
-
 def get_max_min_conf(conf_list: list()) -> tuple():
     # Calculate max and min conf of each exit suring training
     # get the number of columns
