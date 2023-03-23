@@ -121,6 +121,7 @@ def main():
     # Load the sizes of dataset
     NUM_CLASSES = len(trainData.classes)
     _, IMG_WIDTH, IMG_HEIGHT = trainData.data.shape
+    IN_CHANNELS = 1  # TODO: Make this more dynamic?
 
     # calculate the train/validation split
     print("[INFO] generating the train/validation split...")
