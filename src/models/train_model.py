@@ -25,11 +25,12 @@ from small_dqn_ee import small_DQN_EE
 from utils.loss_functions import loss_v1, loss_v2
 
 
-def random_max_min_conf_from_batch(conf_list: list()) -> tuple():
+def random_max_min_conf_from_batch(conf_list: list(), seed=None) -> tuple():
     # Calculate max and min conf of each exit suring training
     # get the number of columns
-    
-    random_idx = np.random.randint(0, len(conf_list))
+    rng = np.random.default_rng(seed)
+
+    random_idx = rng.randint(0, len(conf_list))
     tensor_of_conf = torch.cat(conf_list[random_idx], dim=1)
 
     min_vals, _ = torch.min(tensor_of_conf, dim=0)
