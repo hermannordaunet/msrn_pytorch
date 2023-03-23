@@ -179,6 +179,7 @@ def main():
 
         valCorrect = 0
         totalValLoss = 0
+        valCorrect = 0
 
         exit_points = [0] * (len(model.exits) + 1)
         conf_min_max = list()
