@@ -64,7 +64,11 @@ def train(model, train_loader, optimizer, device: str()):
             cost.append(torch.tensor(1.0).to(device))
             conf_min_max.append(conf)
             # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
-            cum_loss, pred_loss, cost_loss = loss_v1(num_ee, pred, target, conf, cost)
+            cum_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
+        else:
+            print("No training loop implemented for other model arcitectures")
+            # TODO: Add exit code to this exit.
+            exit()
 
         # zero out the gradients, perform the backpropagation step,
         # and update the weights
