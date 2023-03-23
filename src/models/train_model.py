@@ -36,6 +36,9 @@ def random_max_min_conf_from_batch(conf_list: list(), seed=None) -> tuple():
     min_vals, _ = torch.min(tensor_of_conf, dim=0)
     max_vals, _ = torch.max(tensor_of_conf, dim=0)
 
+    min_vals = min_vals.tolist()
+    max_vals = max_vals.tolist()
+
     return (min_vals, max_vals)
 
 
