@@ -130,7 +130,7 @@ def main():
     (trainData, valData) = random_split(
         trainData,
         [numTrainSamples, numValSamples],
-        generator=torch.Generator().manual_seed(42),
+        generator=torch.Generator().manual_seed(SEED),
     )
 
     # initialize the train, validation, and test data loaders
@@ -172,7 +172,7 @@ def main():
             model, trainDataLoader, optimizer, device
         )
 
-        min_vals, max_vals = random_max_min_conf_from_batch(batch_confs)
+        min_vals, max_vals = random_max_min_conf_from_batch(batch_confs, seed=SEED)
 
         print(f"\n[TRAIN]: Min exit conf at random batch: {min_vals}")
         print(f"[TRAIN]: Max exit conf at random batch: {max_vals}")
