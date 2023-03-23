@@ -30,7 +30,7 @@ def random_max_min_conf_from_batch(conf_list: list(), seed=None) -> tuple():
     # get the number of columns
     rng = np.random.default_rng(seed)
 
-    random_idx = rng.randint(0, len(conf_list))
+    random_idx = rng.integers(low=0, high=len(conf_list))
     tensor_of_conf = torch.cat(conf_list[random_idx], dim=1)
 
     min_vals, _ = torch.min(tensor_of_conf, dim=0)
