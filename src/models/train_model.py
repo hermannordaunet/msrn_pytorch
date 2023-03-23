@@ -177,7 +177,6 @@ def main():
         print(f"\n[TRAIN]: Min exit conf at random batch: {min_vals}")
         print(f"[TRAIN]: Max exit conf at random batch: {max_vals}")
 
-        valCorrect = 0
         totalValLoss = 0
         valCorrect = 0
 
