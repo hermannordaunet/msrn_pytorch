@@ -225,7 +225,7 @@ def main():
             )
         )
         print(
-            "Val loss: {:.6f}, Val accuracy: {:.4f}\n, Exit points: {}".format(
+            "Average val loss: {:.6f}, Val accuracy: {:.4f}\n, Exit points: {}".format(
                 avgValLoss, valCorrect, exit_points
             )
         )
