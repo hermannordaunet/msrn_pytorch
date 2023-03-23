@@ -1,10 +1,12 @@
-# import torch
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
 # Local import
 from src.models.utils.exitblock import ExitBlock
+from src.models.utils.classifier import simple_classifier
+from src.models.utils.confidence import simple_confidence
 
 
 class small_DQN_EE(nn.Module):
@@ -102,14 +104,8 @@ class small_DQN_EE(nn.Module):
                 HIDDEN_LAYER_2_OUT, self._num_classes, self.input_shape, self.exit_type
             )
         )
-        self.confidence = nn.Sequential(
-            nn.Linear(30976, 1),
-            nn.Sigmoid(),
-        )
-        self.classifier = nn.Sequential(
-            nn.Linear(30976, num_classes),
-            nn.LogSoftmax(dim=1),
-        )
+        self.last_confidence = simple_confidence(30976)
+        self.last_classifier = simple_classifier(num_classes, 30976)
         self.pool = nn.AdaptiveAvgPool2d(1)
 
     # Called with either one element to determine next action, or a batch
@@ -148,8 +144,8 @@ class small_DQN_EE(nn.Module):
         x = self.conv3(x)
 
         e_x = x.view(x.size(0), -1)
-        conf = self.confidence(e_x)
-        pred = self.classifier(e_x)
+        conf = self.last_confidence(e_x)
+        pred = self.last_classifier(e_x)
 
         x = F.leaky_relu(self.bn3(x))
         x = x.view(x.size(0), -1)

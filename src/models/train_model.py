@@ -25,28 +25,62 @@ from small_dqn_ee import small_DQN_EE
 from utils.loss_functions import loss_v1, loss_v2
 
 
-def get_max_min_conf(conf_list: list()) -> tuple():
+def random_max_min_conf_from_batch(conf_list: list()) -> tuple():
     # Calculate max and min conf of each exit suring training
     # get the number of columns
+    
+    random_idx = np.random.randint(0, len(conf_list))
+    tensor_of_conf = torch.cat(conf_list[random_idx], dim=1)
 
-    num_cols = len(conf_list[0])
-
-    # initialize lists to store the min and max values for each column
-    min_vals = [float("inf")] * num_cols
-    max_vals = [float("-inf")] * num_cols
-
-    # iterate over the rows and columns and update the min and max values
-    for row in conf_list:
-        for col_idx in range(num_cols):
-            col_vals = row[col_idx]
-            col_min = col_vals.min().item()
-            col_max = col_vals.max().item()
-            if col_min < min_vals[col_idx]:
-                min_vals[col_idx] = col_min
-            if col_max > max_vals[col_idx]:
-                max_vals[col_idx] = col_max
+    min_vals, _ = torch.min(tensor_of_conf, dim=0)
+    max_vals, _ = torch.max(tensor_of_conf, dim=0)
 
     return (min_vals, max_vals)
+
+
+def train(model, train_loader, optimizer, device: str()):
+    losses, pred_losses, cost_losses = (
+        list(),
+        list(),
+        list(),
+    )
+    conf_min_max = list()
+    num_ee = len(model.exits)
+
+    # setting model in train mode.
+    model.train()
+    # loop over the training set
+    for data, target in train_loader:
+        # send the input to the device
+        data, target = data.to(device), target.to(device, dtype=torch.int64)
+
+        # TODO: Find out when to use this
+        optimizer.zero_grad()
+
+        # perform a forward pass and calculate the losses
+        if isinstance(model, small_DQN_EE):
+            pred, conf, cost = model(data)
+            cost.append(torch.tensor(1.0).to(device))
+            conf_min_max.append(conf)
+            # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
+            cum_loss, pred_loss, cost_loss = loss_v1(num_ee, pred, target, conf, cost)
+
+        # zero out the gradients, perform the backpropagation step,
+        # and update the weights
+        losses.append(float(cum_loss))
+        pred_losses.append(float(pred_loss))
+        cost_losses.append(float(cost_loss))
+        cum_loss.backward()
+        optimizer.step()
+        # add the loss to the total training loss so far and
+        # calculate the number of correct predictions
+
+        # TODO: Check if we need this
+        # totalTrainLoss += loss
+
+        # trainCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
+
+    return losses, pred_losses, cost_losses, conf_min_max
 
 
 def main():
@@ -106,15 +140,14 @@ def main():
         num_classes=NUM_CLASSES,
     ).to(device)
 
-    num_ee = len(model.exits)
     # initialize our optimizer and loss function
     optimizer = Adam(model.parameters(), lr=INIT_LR)
 
     # TODO: Implement loss function
     # lossFn = nn.NLLLoss()
 
-    # initialize a dictionary to store training history
-    H = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
+    # # initialize a dictionary to store training history
+    # H = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
     # measure how long training is going to take
     print("[INFO] training the network...")
 
@@ -125,54 +158,17 @@ def main():
     for e in range(0, EPOCHS):
         # set the model in training mode
 
-        losses, pred_losses, cost_losses = (
-            list(),
-            list(),
-            list(),
+        losses, pred_losses, cost_losses, batch_confs = train(
+            model, trainDataLoader, optimizer, device
         )
-        conf_min_max = list()
+
+        min_vals, max_vals = random_max_min_conf_from_batch(batch_confs)
+
+        print(f"\n[TRAIN]: Min exit conf at random batch: {min_vals}")
+        print(f"[TRAIN]: Max exit conf at random batch: {max_vals}")
 
         valCorrect = 0
         totalValLoss = 0
-
-        # loop over the training set
-        for data, target in trainDataLoader:
-            model.train()
-            # send the input to the device
-            data, target = data.to(device), target.to(device, dtype=torch.int64)
-
-            # TODO: Find out when to use this
-            optimizer.zero_grad()
-
-            # perform a forward pass and calculate the losses
-            if isinstance(model, small_DQN_EE):
-                pred, conf, cost = model(data)
-                cost.append(torch.tensor(1.0).to(device))
-                conf_min_max.append(conf)
-                # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
-                cum_loss, pred_loss, cost_loss = loss_v1(
-                    num_ee, pred, target, conf, cost
-                )
-
-            # zero out the gradients, perform the backpropagation step,
-            # and update the weights
-            losses.append(float(cum_loss))
-            pred_losses.append(float(pred_loss))
-            cost_losses.append(float(cost_loss))
-            cum_loss.backward()
-            optimizer.step()
-            # add the loss to the total training loss so far and
-            # calculate the number of correct predictions
-
-            # TODO: Check if we need this
-            # totalTrainLoss += loss
-
-            # trainCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
-
-        min_vals, max_vals = get_max_min_conf(conf_min_max)
-
-        print(f"\n[TRAIN]: Min values at each exit: {min_vals}")
-        print(f"[TRAIN]: Max values at each exit: {max_vals}")
 
         exit_points = [0] * (len(model.exits) + 1)
         conf_min_max = list()

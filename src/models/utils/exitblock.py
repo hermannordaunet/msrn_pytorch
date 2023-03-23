@@ -1,5 +1,7 @@
 import torch.nn as nn
 
+from src.models.utils.classifier import simple_classifier
+from src.models.utils.confidence import simple_confidence
 
 class ExitBlock(nn.Module):
     """Exit Block defition.
