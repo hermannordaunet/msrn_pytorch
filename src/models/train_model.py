@@ -92,11 +92,15 @@ def main():
     # define training hyperparameters
     INIT_LR = 1e-3
     BATCH_SIZE = 64
-    TEST_BATCH_SIZE = 1  # exit block cant handle batch size > 1 in eval mode
+    TEST_BATCH_SIZE = 1  # CRITICAL: exit block cant handle batch size > 1 in eval mode
     EPOCHS = 25
+
     # define the train and val splits
     TRAIN_SPLIT = 0.75
     VAL_SPLIT = 1 - TRAIN_SPLIT
+
+    # For numpy and torch random
+    SEED = 1804
 
     # set the device we will be using to train the model
     # device = torch.device("mps" if torch.backends.mps.is_available() else "cpu")
