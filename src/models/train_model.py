@@ -153,15 +153,11 @@ def main():
     # initialize our optimizer and loss function
     optimizer = Adam(model.parameters(), lr=INIT_LR)
 
-    # TODO: Implement loss function
-    # lossFn = nn.NLLLoss()
-
     # # initialize a dictionary to store training history
     # H = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
-    # measure how long training is going to take
     print("[INFO] training the network...")
 
-    # Timing
+    # Timing the training and validation loop
     startTime = time.time()
     print(f"[INFO] started training {time.ctime(startTime)}")
 
