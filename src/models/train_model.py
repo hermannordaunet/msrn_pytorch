@@ -25,7 +25,7 @@ from small_dqn_ee import small_DQN_EE
 from utils.loss_functions import loss_v1, loss_v2
 
 
-def max_min_conf_from_dataset(conf_list: list(), seed=None) -> tuple():
+def min_max_conf_from_dataset(conf_list: list(), seed=None) -> tuple():
     # Calculate max and min conf of each exit suring training
     # get the number of columns
     # rng = np.random.default_rng(seed)
@@ -174,7 +174,7 @@ def main():
             model, trainDataLoader, optimizer, device
         )
 
-        min_vals, max_vals = random_max_min_conf_from_batch(batch_confs, seed=SEED)
+        min_vals, max_vals = min_max_conf_from_dataset(batch_confs, seed=SEED)
 
         print(f"\n[TRAIN]: Min exit conf at random batch: {min_vals}")
         print(f"[TRAIN]: Max exit conf at random batch: {max_vals}")
