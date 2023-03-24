@@ -89,7 +89,7 @@ class small_DQN_EE(nn.Module):
         self.exit_type = "bnpool"
 
         # TODO: Make this dynamic in terms of how far into the network the exit is
-        self.cost = [0.08, 0.26]
+        self.cost = [0.001, 0.02]
 
         self.exits.append(
             ExitBlock(
