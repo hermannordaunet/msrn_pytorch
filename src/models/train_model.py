@@ -150,9 +150,7 @@ def main():
     # initialize the small DQN EE model
     print("[INFO] initializing the small_DQN model...")
     model = small_DQN_EE(
-        in_channels=IN_CHANNELS,
-        img_height=IMG_HEIGHT,
-        img_width=IMG_WIDTH,
+        input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
     ).to(device)
 
