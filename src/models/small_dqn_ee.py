@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-
 # Local import
 from src.models.utils.exitblock import ExitBlock
 from src.models.utils.classifier import simple_classifier
