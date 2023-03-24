@@ -12,9 +12,7 @@ from src.models.utils.confidence import simple_confidence
 class small_DQN_EE(nn.Module):
     def __init__(
         self,
-        in_channels=3,
-        img_height=280,
-        img_width=280,
+        input_shape=(3, 280, 280),
         num_classes=10,
         dropout_prob=0.5,
     ):
@@ -26,9 +24,9 @@ class small_DQN_EE(nn.Module):
         KERNEL_SIZE = 3  # original = 5
         STRIDE = 1  # original = 2
 
-        self._in_channels = in_channels
-        self._img_height = img_height
-        self._img_width = img_width
+        self._in_channels = input_shape[0]
+        self._img_height = input_shape[1]
+        self._img_width = input_shape[2]
         self._num_classes = num_classes
 
         self.exits = nn.ModuleList()
