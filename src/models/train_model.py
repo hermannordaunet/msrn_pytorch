@@ -96,7 +96,7 @@ def train(model, train_loader, optimizer, device: str()):
 
 def main():
     # define training hyperparameters
-    INIT_LR = 1e-3
+    INIT_LR = 1e-2
     BATCH_SIZE = 64
     TEST_BATCH_SIZE = 1  # CRITICAL: exit block cant handle batch size > 1 in eval mode
     EPOCHS = 25
