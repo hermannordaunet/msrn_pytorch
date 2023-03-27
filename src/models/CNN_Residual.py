@@ -49,9 +49,14 @@ class CNN_residual(nn.Module):
         self.layers.append(
             nn.Sequential(
                 nn.Conv2d(
-                    self.channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+                    self.channel,
+                    self.inplanes,
+                    kernel_size=7,
+                    stride=2,
+                    padding=3,
+                    bias=False,
                 ),
-                nn.BatchNorm2d(64),
+                nn.BatchNorm2d(self.inplanes),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             )
@@ -74,7 +79,7 @@ class CNN_residual(nn.Module):
             for _ in range(1, repetition):
                 self.layers.append(block(self.inplanes, planes))
 
-            planes = self.planes[idx+1]
+            planes = self.planes[idx + 1]
             stride = 2
 
         planes = self.planes[-1]
