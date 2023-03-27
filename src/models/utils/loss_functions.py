@@ -5,7 +5,7 @@ def loss_v1(num_ee, pred, target, conf, cost, lambda_coef=1.0):
     """loss version 1
 
     Arguments are
-    * args:     command line arguments entered by user.
+    * num_ee:   number of early exit blocks
     * pred:     prediction result of each exit point.
     * target:   target prediction values.
     * conf:     confidence value of each exit point.
@@ -35,7 +35,7 @@ def loss_v2(num_ee, pred, target, conf, cost, lambda_coef=1.0):
     """loss version 2
 
     Arguments are
-    * args:     command line arguments entered by user.
+    * num_ee:   number of early exit blocks
     * pred:     prediction result of each exit point.
     * target:   target prediction values.
     * conf:     confidence value of each exit point.
