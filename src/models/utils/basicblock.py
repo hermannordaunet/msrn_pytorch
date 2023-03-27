@@ -9,7 +9,7 @@ class BasicBlock(nn.Module):
     """
 
     # TODO: Needed?
-    # expansion = 1
+    expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None):
         super(BasicBlock, self).__init__()

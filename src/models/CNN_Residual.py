@@ -8,23 +8,76 @@ from src.models.utils.classifier import simple_classifier
 from src.models.utils.confidence import simple_confidence
 from src.models.utils.basicblock import BasicBlock
 
+
+def conv1x1(in_planes, out_planes, stride=1):
+    """1x1 convolution"""
+    return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+
+
 class CNN_residual(nn.Module):
     def __init__(
         self,
-        input_shape=(3, 280, 280), 
+        input_shape=(3, 280, 280),
         num_classes=10,
-        block=BasicBlock, 
+        block=BasicBlock,
+        repetitions=[],
+        planes=[],
         dropout_prob=0.5,
     ):
         super(CNN_residual, self).__init__()
+        self.input_shape = input_shape
+        self.channel = self.input_shape(0)
+        self.num_classes = num_classes
+        self.block = block
+        self.planes = planes
+
+        # self.num_ee = num_ee
+        # self.exit_type = exit_type
+        # self.exit_threshold = exit_threshold
+
         self.layers = nn.ModuleList()
-        self.exits = nn.ModuleList()
+        # self.exits = nn.ModuleList()
         self.stages = nn.ModuleList()
 
-        self.cost = []
+        # self.cost = []
         self.complexity = []
 
         self.stage_id = 0
+        self.inplanes = self.planes[0]
 
+        # Inital layer
+        self.layers.append(
+            nn.Sequential(
+                nn.Conv2d(
+                    self.channel, 64, kernel_size=7, stride=2, padding=3, bias=False
+                ),
+                nn.BatchNorm2d(64),
+                nn.ReLU(inplace=True),
+                nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
+            )
+        )
+
+        planes = self.inplanes
+        stride = 1
+
+        for idx, repetition in enumerate(repetitions):
+            downsample = None
+            if stride != 1 or self.inplanes != planes * block.expansion:
+                downsample = nn.Sequential(
+                    conv1x1(self.inplanes, planes * block.expansion, stride),
+                    nn.BatchNorm2d(planes * block.expansion),
+                )
+
+            self.layers.append(block(self.inplanes, planes, stride, downsample))
+            self.inplanes = planes * block.expansion
+
+            for _ in range(1, repetition):
+                self.layers.append(block(self.inplanes, planes))
+
+            planes = self.planes[idx+1]
+            stride = 2
+
+        planes = self.planes[-1]
+        self.layers.append(nn.AdaptiveAvgPool2d(1))
+        self.layers.append(nn.Linear(planes * block.expansion, num_classes)) 
         
-

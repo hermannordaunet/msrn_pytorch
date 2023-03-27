@@ -25,7 +25,7 @@ from small_dqn_ee import small_DQN_EE
 from utils.loss_functions import loss_v1, loss_v2
 
 
-def min_max_conf_from_dataset(conf_list: list(), seed=None) -> tuple():
+def min_max_conf_from_dataset(conf_list: list()) -> tuple():
     # Calculate max and min conf of each exit suring training
     # get the number of columns
     # rng = np.random.default_rng(seed)
@@ -72,7 +72,7 @@ def train(model, train_loader, optimizer, device: str()):
             # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
             cum_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
         else:
-            print("No training loop implemented for other model arcitectures")
+            print("No training loop implemented for other model architectures")
             # TODO: Add exit code to this exit.
             exit()
 
@@ -172,7 +172,7 @@ def main():
             model, trainDataLoader, optimizer, device
         )
 
-        min_vals, max_vals = min_max_conf_from_dataset(batch_confs, seed=SEED)
+        min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
 
         print(
             f"\n[TRAIN]: Min exit conf at random batch: 0: {min_vals[0]:.2%}, 1: {min_vals[1]:.2%}, 2: {min_vals[2]:.2%}"
