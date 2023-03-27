@@ -14,7 +14,7 @@ def conv1x1(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
 
 
-class CNN_residual(nn.Module):
+class CNN_Residual(nn.Module):
     def __init__(
         self,
         input_shape=(3, 280, 280),
@@ -24,9 +24,9 @@ class CNN_residual(nn.Module):
         planes=[],
         dropout_prob=0.5,
     ):
-        super(CNN_residual, self).__init__()
+        super(CNN_Residual, self).__init__()
         self.input_shape = input_shape
-        self.channel = self.input_shape(0)
+        self.channel = self.input_shape[0]
         self.num_classes = num_classes
         self.block = block
         self.planes = planes
