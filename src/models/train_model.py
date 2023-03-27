@@ -22,6 +22,7 @@ from scipy import stats
 # Local import
 from small_dqn import small_DQN
 from small_dqn_ee import small_DQN_EE
+from ee_cnn_residual import EE_CNN_Residual
 from utils.loss_functions import loss_v1, loss_v2
 
 
@@ -66,6 +67,12 @@ def train(model, train_loader, optimizer, device: str()):
 
         # perform a forward pass and calculate the losses
         if isinstance(model, small_DQN_EE):
+            pred, conf, cost = model(data)
+            cost.append(torch.tensor(1.0).to(device))
+            conf_min_max.append(conf)
+            # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
+            cum_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
+        elif isinstance(model, EE_CNN_Residual):
             pred, conf, cost = model(data)
             cost.append(torch.tensor(1.0).to(device))
             conf_min_max.append(conf)
@@ -148,13 +155,22 @@ def main():
     valSteps = len(valDataLoader.dataset) // TEST_BATCH_SIZE
 
     # initialize the small DQN EE model
-    print("[INFO] initializing the small_DQN model...")
-    model = small_DQN_EE(
+    # print("[INFO] initializing the small_DQN model...")
+    # model = small_DQN_EE(
+    #     input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
+    #     num_classes=NUM_CLASSES,
+    # ).to(device)
+
+    print("[INFO] initializing the EE_CNN_Residual model...")
+    model = EE_CNN_Residual(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
+        repetitions=[2, 2],
+        planes=[32, 64, 64],
+        distribution="fine",
     ).to(device)
 
-    # initialize our optimizer and loss function
+    # initialize our optimizer
     optimizer = Adam(model.parameters(), lr=INIT_LR)
 
     # # initialize a dictionary to store training history
