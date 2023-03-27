@@ -78,6 +78,11 @@ class CNN_residual(nn.Module):
             stride = 2
 
         planes = self.planes[-1]
-        self.layers.append(nn.AdaptiveAvgPool2d(1))
-        self.layers.append(nn.Linear(planes * block.expansion, num_classes)) 
-        
+    def forward(self, x):
+        x = self.stages(x)
+
+        x = self.avgpool(x)
+        x = x.view(x.size(0), -1)
+        x = self.fully_connected(x)
+
+        return x
