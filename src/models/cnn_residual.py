@@ -35,11 +35,7 @@ class CNN_Residual(nn.Module):
         # self.exit_threshold = exit_threshold
 
         self.layers = nn.ModuleList()
-        self.stages = None
-        # self.exits = nn.ModuleList()
-
-        # self.cost = []
-        # self.complexity = []
+        self.stage = None
 
         self.stage_id = 0
         self.inplanes = self.planes[0]
