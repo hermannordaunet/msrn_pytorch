@@ -29,7 +29,6 @@ class EE_CNN_Residual(nn.Module):
         repetitions=list(),
         planes=list(),
         distribution=None,
-        dropout_prob=0.5,
     ):
         super(EE_CNN_Residual, self).__init__()
 
