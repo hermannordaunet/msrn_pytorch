@@ -20,9 +20,8 @@ class CNN_Residual(nn.Module):
         input_shape=(3, 280, 280),
         num_classes=10,
         block=BasicBlock,
-        repetitions=[],
-        planes=[],
-        dropout_prob=0.5,
+        repetitions=list(),
+        planes=list(),
     ):
         super(CNN_Residual, self).__init__()
         self.input_shape = input_shape
