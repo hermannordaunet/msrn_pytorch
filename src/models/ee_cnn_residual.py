@@ -95,11 +95,13 @@ class EE_CNN_Residual(nn.Module):
             self.inplanes = planes * block.expansion
             if self.is_suitable_for_exit():
                 self.add_exit_block(exit_type, total_flops)
+                print(f"Added exit at repetition: {idx+1}, after first block")
 
             for _ in range(1, repetition):
                 self.layers.append(block(self.inplanes, planes))
                 if self.is_suitable_for_exit():
                     self.add_exit_block(exit_type, total_flops)
+                    print(f"Added exit at repetition: {idx+1}, after second block")
 
             planes = self.planes[idx + 1]
             stride = 2
