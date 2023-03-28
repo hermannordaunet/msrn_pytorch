@@ -24,6 +24,7 @@ from small_dqn import small_DQN
 from small_dqn_ee import small_DQN_EE
 from ee_cnn_residual import EE_CNN_Residual
 from utils.loss_functions import loss_v1, loss_v2
+from utils.print_utils import print_min_max_conf, print_cost_of_exits
 
 
 def min_max_conf_from_dataset(conf_list: list()) -> tuple():
