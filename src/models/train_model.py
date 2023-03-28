@@ -192,13 +192,7 @@ def main():
         )
 
         min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
-
-        print(
-            f"\n[TRAIN]: Min exit conf at random batch: 0: {min_vals[0]:.2%}, 1: {min_vals[1]:.2%}, 2: {min_vals[2]:.2%}"
-        )
-        print(
-            f"[TRAIN]: Max exit conf at random batch: 0: {max_vals[0]:.2%}, 1: {max_vals[1]:.2%}, 2: {max_vals[2]:.2%}"
-        )
+        print_min_max_conf(min_vals, max_vals)
 
         totalValLoss = 0
         valCorrect = 0
