@@ -174,6 +174,8 @@ def main():
     # initialize our optimizer
     optimizer = Adam(model.parameters(), lr=INIT_LR)
 
+    print_cost_of_exits(model)
+
     # # initialize a dictionary to store training history
     # H = {"train_loss": [], "train_acc": [], "val_loss": [], "val_acc": []}
     print("[INFO] training the network...")
