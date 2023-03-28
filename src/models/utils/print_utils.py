@@ -18,13 +18,9 @@ def print_cost_of_exits(model):
     total_flops, _ = model.complexity[-1]
     for i, (flops, params) in enumerate(model.complexity[:-1]):
         print(
-            "ee-block-{}: flops={}, params={}, cost-rate={:.2f}".format(
-                i, flops_to_string(flops), params_to_string(params), flops / total_flops
-            )
+            f"ee-block-{i}: flops={flops_to_string(flops)}, params={params_to_string(params)}, cost-rate={(flops / total_flops):.2f}"
         )
     flops, params = model.complexity[-1]
     print(
-        "exit-full-model: flops={}, params={}, cost-rate={:.2f}".format(
-            flops_to_string(flops), params_to_string(params), flops / total_flops
-        )
+        f"exit-full-model: flops={flops_to_string(flops)}, params={params_to_string(params)}, cost-rate={(flops / total_flops):.2f}"
     )
