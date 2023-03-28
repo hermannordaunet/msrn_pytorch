@@ -62,9 +62,6 @@ class small_DQN_EE(nn.Module):
         )
         self.bn3 = nn.BatchNorm2d(HIDDEN_LAYER_3_OUT)
 
-        # Dropout layer for generalization and overfitting
-        self.dropout = nn.Dropout(dropout_prob)
-
         # Number of Linear input connections depends on output of conv2d layers
         # and therefore the input image size. This function computes it
         def conv2d_size_out(size, kernel_size=KERNEL_SIZE, stride=STRIDE):
