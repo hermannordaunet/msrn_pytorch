@@ -236,7 +236,7 @@ def main():
             "cost_loss_sem": round(stats.sem(cost_losses), 2),
         }
 
-        print(f"\nResults:\n{result}\n")
+        # print(f"\nResults:\n{result}\n")
 
         # print the model training and validation information
         print("[INFO] EPOCH: {}/{}".format(e + 1, EPOCHS))
