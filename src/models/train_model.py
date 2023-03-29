@@ -184,7 +184,7 @@ def main():
 
     # Timing the training and validation loop
     startTime = time.time()
-    print(f"[INFO] started training {time.ctime(startTime)}")
+    print(f"[INFO] started training @ {time.ctime(startTime)}")
 
     for e in range(0, EPOCHS):
         # set the model in training mode
