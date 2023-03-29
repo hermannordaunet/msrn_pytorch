@@ -125,7 +125,7 @@ def main():
     else:
         device = "cpu"
 
-    print(f"Device is: {device}")
+    print(f"[INFO] Device is: {device}")
 
     # load the KMNIST dataset
     print("[INFO] loading the KMNIST dataset...")
