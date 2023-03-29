@@ -31,6 +31,7 @@ def loss_v1(num_ee, pred, target, conf, cost, lambda_coef=1.0):
 
     return cum_loss, pred_loss, cost_loss
 
+
 def loss_v2(num_ee, pred, target, conf, cost, lambda_coef=1.0):
     """loss version 2
 
