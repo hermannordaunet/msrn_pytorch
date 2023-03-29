@@ -166,7 +166,7 @@ def main():
     model = EE_CNN_Residual(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
-        num_ee=2, 
+        num_ee=2,
         exit_threshold=0.5,
         repetitions=[2, 2],
         planes=[32, 64, 64],
