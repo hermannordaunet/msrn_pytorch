@@ -220,6 +220,8 @@ def main():
                 # calculate the number of correct predictions
                 valCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
 
+        # min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
+        # print_min_max_conf(min_vals, max_vals)
         # trainCorrect = trainCorrect / len(trainDataLoader.dataset)
 
         avgValLoss = totalValLoss / valSteps
