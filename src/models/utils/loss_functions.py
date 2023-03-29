@@ -49,8 +49,8 @@ def loss_v2(num_ee, pred, target, conf, cost, lambda_coef=1.0):
 
     # TODO: Find out why they do .log here:
     # ASK: ^
-    # log_cum_pred = cum_pred[-1].log()
-    log_cum_pred = cum_pred[-1]
+    log_cum_pred = cum_pred[-1].log()
+    # log_cum_pred = cum_pred[-1]
 
     pred_loss = F.nll_loss(log_cum_pred, target)
     cum_loss = pred_loss + lambda_coef * cum_cost[-1].mean()
