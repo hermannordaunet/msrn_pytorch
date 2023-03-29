@@ -206,8 +206,9 @@ class EE_CNN_Residual(nn.Module):
             x = self.stages[idx](x)
             pred, conf = exitblock(x)
 
-            if not self.training and conf.item() > self.exit_threshold:
-                return pred, idx, self.cost[idx], conf.item()
+            if not self.training:
+                if conf.item() > self.exit_threshold:
+                    return pred, idx, self.cost[idx], conf.item()
             
             preds.append(pred)
             confs.append(conf)
