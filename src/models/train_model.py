@@ -187,7 +187,8 @@ def main():
     print(f"[INFO] started training @ {time.ctime(startTime)}")
 
     for e in range(0, EPOCHS):
-        # set the model in training mode
+
+        print("[INFO] EPOCH: {}/{}".format(e + 1, EPOCHS))
 
         losses, pred_losses, cost_losses, batch_confs = train(
             model, trainDataLoader, optimizer, device
@@ -239,7 +240,6 @@ def main():
         # print(f"\nResults:\n{result}\n")
 
         # print the model training and validation information
-        print("[INFO] EPOCH: {}/{}".format(e + 1, EPOCHS))
         print(
             "Train loss: {:.6f}, Prediction loss: {:.4f}, Cost Loss: {:.4f}".format(
                 result["train_loss"], result["pred_loss"], result["cost_loss"]
