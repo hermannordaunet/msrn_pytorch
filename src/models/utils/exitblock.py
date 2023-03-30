@@ -3,6 +3,7 @@ import torch.nn as nn
 from src.models.utils.classifier import simple_classifier
 from src.models.utils.confidence import simple_confidence
 
+
 class ExitBlock(nn.Module):
     """Exit Block defition.
 
@@ -27,7 +28,9 @@ class ExitBlock(nn.Module):
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
+
         x = x.view(x.size(0), -1)
         conf = self.confidence(x)
         pred = self.classifier(x)
+
         return pred, conf
