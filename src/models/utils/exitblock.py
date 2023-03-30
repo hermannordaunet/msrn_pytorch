@@ -20,14 +20,9 @@ class ExitBlock(nn.Module):
         if exit_type != "plain":
             self.layers.append(nn.AdaptiveAvgPool2d(1))
 
-        self.confidence = nn.Sequential(
-            nn.Linear(inplanes * self.expansion, 1),
-            nn.Sigmoid(),
-        )
-        self.classifier = nn.Sequential(
-            nn.Linear(inplanes * self.expansion, num_classes),
-            nn.LogSoftmax(dim=1),
-        )
+        in_size = inplanes * self.expansion
+        self.confidence = simple_confidence(in_size)
+        self.classifier = simple_classifier(num_classes, in_size)
 
     def forward(self, x):
         for layer in self.layers:
