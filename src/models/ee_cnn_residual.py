@@ -77,7 +77,12 @@ class EE_CNN_Residual(nn.Module):
         self.layers.append(
             nn.Sequential(
                 nn.Conv2d(
-                    self.channel, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
+                    self.channel,
+                    self.inplanes,
+                    kernel_size=7,
+                    stride=2,
+                    padding=3,
+                    bias=False,
                 ),
                 nn.BatchNorm2d(self.inplanes),
                 nn.ReLU(inplace=True),
@@ -123,7 +128,7 @@ class EE_CNN_Residual(nn.Module):
         self.confidence = simple_confidence(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
-        
+
         self.complexity.append((total_flops, total_params))
         self.parameter_initializer()
 
@@ -214,7 +219,7 @@ class EE_CNN_Residual(nn.Module):
             if not self.training:
                 if conf.item() > self.exit_threshold:
                     return pred, idx, self.cost[idx], conf.item()
-            
+
             preds.append(pred)
             confs.append(conf)
 
@@ -225,7 +230,7 @@ class EE_CNN_Residual(nn.Module):
 
         if not self.training:
             return pred, len(self.exits), 1.0, conf.item()
-        
+
         preds.append(pred)
         confs.append(conf)
 
