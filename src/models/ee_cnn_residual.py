@@ -21,6 +21,7 @@ class EE_CNN_Residual(nn.Module):
     def __init__(
         self,
         input_shape=(3, 280, 280),
+        frames_history=None,
         num_classes=10,
         block=BasicBlock,
         num_ee=1,
@@ -31,6 +32,10 @@ class EE_CNN_Residual(nn.Module):
         distribution=None,
     ):
         super(EE_CNN_Residual, self).__init__()
+
+        # Add depth of the history
+        if frames_history:
+            input_shape[0] = input_shape[0] * frames_history
 
         # Get the model just without the ee blocks
         counterpart_model = CNN_Residual(
