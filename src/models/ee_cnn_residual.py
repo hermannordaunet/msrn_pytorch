@@ -21,6 +21,7 @@ class EE_CNN_Residual(nn.Module):
     def __init__(
         self,
         input_shape=(3, 280, 280),
+        frames_history=None,
         num_classes=10,
         block=BasicBlock,
         num_ee=1,
@@ -31,6 +32,10 @@ class EE_CNN_Residual(nn.Module):
         distribution=None,
     ):
         super(EE_CNN_Residual, self).__init__()
+
+        # Add depth of the history
+        if frames_history:
+            input_shape[0] = input_shape[0] * frames_history
 
         # Get the model just without the ee blocks
         counterpart_model = CNN_Residual(
@@ -72,7 +77,12 @@ class EE_CNN_Residual(nn.Module):
         self.layers.append(
             nn.Sequential(
                 nn.Conv2d(
-                    self.channel, self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
+                    self.channel,
+                    self.inplanes,
+                    kernel_size=7,
+                    stride=2,
+                    padding=3,
+                    bias=False,
                 ),
                 nn.BatchNorm2d(self.inplanes),
                 nn.ReLU(inplace=True),
@@ -118,7 +128,7 @@ class EE_CNN_Residual(nn.Module):
         self.confidence = simple_confidence(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
-        
+
         self.complexity.append((total_flops, total_params))
         self.parameter_initializer()
 
@@ -200,7 +210,7 @@ class EE_CNN_Residual(nn.Module):
         self.stage_id += 1
 
     def forward(self, x):
-        preds, confs = list(), list()
+        preds, confs, cost = list(), list(), list()
 
         for idx, exitblock in enumerate(self.exits):
             x = self.stages[idx](x)
@@ -209,9 +219,10 @@ class EE_CNN_Residual(nn.Module):
             if not self.training:
                 if conf.item() > self.exit_threshold:
                     return pred, idx, self.cost[idx], conf.item()
-            
+
             preds.append(pred)
             confs.append(conf)
+            cost.append(self.cost[idx])
 
         x = self.stages[-1](x)
         x = x.view(x.size(0), -1)
@@ -220,8 +231,8 @@ class EE_CNN_Residual(nn.Module):
 
         if not self.training:
             return pred, len(self.exits), 1.0, conf.item()
-        
+
         preds.append(pred)
         confs.append(conf)
 
-        return preds, confs, self.cost
+        return preds, confs, cost

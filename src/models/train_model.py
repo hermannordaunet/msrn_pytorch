@@ -24,27 +24,8 @@ from small_dqn import small_DQN
 from small_dqn_ee import small_DQN_EE
 from ee_cnn_residual import EE_CNN_Residual
 from utils.loss_functions import loss_v1, loss_v2
+from utils.data_utils import min_max_conf_from_dataset
 from utils.print_utils import print_min_max_conf, print_cost_of_exits
-
-
-def min_max_conf_from_dataset(conf_list: list()) -> tuple():
-    # Calculate max and min conf of each exit suring training
-    # get the number of columns
-    # rng = np.random.default_rng(seed)
-    # random_idx = rng.integers(low=0, high=len(conf_list))
-
-    tensor_of_conf = torch.Tensor()
-    for batch_conf_list in conf_list:
-        tensor_of_conf_idx = torch.cat(batch_conf_list, dim=1).cpu()
-        tensor_of_conf = torch.cat((tensor_of_conf, tensor_of_conf_idx), dim=0)
-
-    min_vals, _ = torch.min(tensor_of_conf, dim=0)
-    max_vals, _ = torch.max(tensor_of_conf, dim=0)
-
-    min_vals = min_vals.tolist()
-    max_vals = max_vals.tolist()
-
-    return (min_vals, max_vals)
 
 
 def train(model, train_loader, optimizer, device: str()):
