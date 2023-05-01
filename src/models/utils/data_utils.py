@@ -2,7 +2,7 @@ import torch
 
 
 def min_max_conf_from_dataset(conf_list: list()) -> tuple():
-    # Calculate max and min conf of each exit suring training
+    # Calculate max and min conf of each exit during training
     # get the number of columns
     # rng = np.random.default_rng(seed)
     # random_idx = rng.integers(low=0, high=len(conf_list))
