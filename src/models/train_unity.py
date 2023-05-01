@@ -1,26 +1,22 @@
-import time
+# import time
 import torch
 import numpy as np
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
+
+from sys import platform
 
 # import the necessary torch packages
-from torch import nn
-from torch.optim import Adam
-from torch.utils.data import DataLoader
-from torch.utils.data import random_split
-
 from collections import deque
 
 # import the necessary sklearn packages
-from sklearn.metrics import classification_report
+# from sklearn.metrics import classification_report
 
 # import the necassary scipy packages
-from scipy import stats
+# from scipy import stats
 
 # Local import
 from utils.agent import Agent
 from ee_cnn_residual import EE_CNN_Residual
-from utils.loss_functions import loss_v1, loss_v2
 from utils.data_utils import min_max_conf_from_dataset
 from utils.print_utils import print_min_max_conf, print_cost_of_exits
 
@@ -31,15 +27,26 @@ from mlagents_envs.side_channel.environment_parameters_channel import (
     EnvironmentParametersChannel,
 )
 
+from utils.stats_side_channel import StatsSideChannel
 
-def get_grid_based_perception(agent_obs):
+
+def get_grid_based_perception_numpy(agent_obs):
     state = agent_obs[0]
     grid_based_perception = np.transpose(state, (2, 0, 1))
 
     return np.expand_dims(grid_based_perception, axis=0)
 
 
+def get_grid_based_perception(agent_obs):
+    state = agent_obs[0]
+    grid_based_perception = torch.tensor(state.transpose((2, 0, 1)), dtype=torch.float32)
+
+    return grid_based_perception.unsqueeze(0)
+
+
 def main():
+    print(platform)
+
     if torch.cuda.is_available():
         DEVICE = "cuda"
     elif torch.backends.mps.is_available():
@@ -50,19 +57,17 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     TRAIN_MODEL = True
-    VERBOSE = False
+    VERBOSE = True
 
     SEED = 1804
-    FILE_NAME = None
-    NO_GRAPHICS = False
+    NO_GRAPHICS = True
     FRAME_HISTORY_LEN = 4
     MEMORY_SIZE = int(1e5)
     NUM_EPISODES = 10
-    BENCHMARK_MEAN_REWARD = 30
+    BENCHMARK_MEAN_REWARD = 40
 
     INIT_LR = 1e-3
     BATCH_SIZE = 64
-    EPOCHS = 25
 
     # Environment parameters
     LASER_LENGTH = 1.5
@@ -70,7 +75,16 @@ def main():
 
     # Unity environment spesific
     float_parameter_channel = EnvironmentParametersChannel()
-    SIDE_CHANNELS = [float_parameter_channel]
+    stats_side_channel = StatsSideChannel()
+    SIDE_CHANNELS = [float_parameter_channel, stats_side_channel]
+
+
+    if platform == "linux" or platform == "linux2":
+        relative_path = "builds/Linus_FoodCollector_4_no_respawn.x86_64"
+        FILE_NAME = "../" + relative_path
+    else:
+        relative_path = "builds/FoodCollector_4_no_respawn.app"
+        FILE_NAME = relative_path
 
     env = UnityEnvironment(
         file_name=FILE_NAME,
@@ -118,8 +132,8 @@ def main():
     if TRAIN_MODEL:
         ee_qnetwork_local = EE_CNN_Residual(
             input_shape=input_size,
-            frames_history=2,
-            num_classes=3,
+            # frames_history=2,
+            num_classes=continuous_size,
             num_ee=2,
             repetitions=[2, 2],
             planes=[32, 64, 64],
@@ -128,13 +142,16 @@ def main():
 
         ee_qnetwork_target = EE_CNN_Residual(
             input_shape=input_size,
-            frames_history=2,
-            num_classes=3,
+            # frames_history=2,
+            num_classes=continuous_size,
             num_ee=2,
             repetitions=[2, 2],
             planes=[32, 64, 64],
             distribution="pareto",
         ).to(DEVICE)
+
+        ee_qnetwork_local.eval()
+        ee_qnetwork_target.eval()
 
         # TUNE: This object has some init values to look into.
         agent = Agent(
@@ -145,15 +162,18 @@ def main():
             memory_size=MEMORY_SIZE,
             prioritized_memory=False,
             batch_size=BATCH_SIZE,
+            device=DEVICE,
         )
 
         scores, episodes, last_avg_score = model_trainer(
             env,
             agent,
-            n_episodes=NUM_EPISODES,
+            num_episodes=NUM_EPISODES,
             early_stop=BENCHMARK_MEAN_REWARD,
             verbose=VERBOSE,
         )
+
+
 
 
 def model_trainer(
@@ -163,7 +183,7 @@ def model_trainer(
     print_range=10,
     eps_start=1.0,
     eps_end=0.01,
-    eps_decay=0.995,
+    eps_decay=0.95,
     early_stop=13,
     verbose=False,
 ):
@@ -171,12 +191,12 @@ def model_trainer(
 
     Params
     ======
-        n_episodes (int): maximum number of training episodes
+        num_episodes (int): maximum number of training episodes
         print_range (int): range to print partials results
         eps_start (float): starting value of epsilon, for epsilon-greedy action selection
         eps_end (float): minimum value of epsilon
         eps_decay (float): multiplicative factor (per episode) for decreasing epsilon
-        early_stop (int): Stop training when achieve a defined score respecting 10 min n_episodes.
+        early_stop (int): Stop training when achieve a defined score.
     """
 
     scores = list()  # list containing scores from each episode
@@ -204,7 +224,7 @@ def model_trainer(
         while True:
             if agent_id in agent_ids:
                 act = agent.act(state, eps)
-                move_action, laser_action, conf = act
+                move_action, laser_action, idx, cost, conf = act
 
                 env.set_action_for_agent(
                     env_object,
@@ -217,6 +237,7 @@ def model_trainer(
             decision_steps, terminal_steps = env.get_steps(env_object)
             agent_ids = decision_steps.agent_id
 
+            # ASK: This needs to be if agent not done?s
             if agent_id in agent_ids:
                 agent_obs = decision_steps[agent_id].obs
                 next_state = get_grid_based_perception(agent_obs)
