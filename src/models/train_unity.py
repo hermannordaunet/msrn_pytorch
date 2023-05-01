@@ -81,7 +81,7 @@ def main():
 
     if platform == "linux" or platform == "linux2":
         relative_path = "builds/Linus_FoodCollector_4_no_respawn.x86_64"
-        FILE_NAME = "../" + relative_path
+        FILE_NAME = relative_path
     else:
         relative_path = "builds/FoodCollector_4_no_respawn.app"
         FILE_NAME = relative_path
