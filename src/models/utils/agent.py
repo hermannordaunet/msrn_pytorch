@@ -2,12 +2,15 @@ import random
 import numpy as np
 
 import torch
-import torch.nn.functional as F
 import torch.optim as optim
 
-from replay_memory import ReplayMemory
-from prioritized_memory import PrioritizedMemory
+# Local imports 
+from utils.replay_memory import ReplayMemory
+from utils.prioritized_memory import PrioritizedMemory
+from utils.loss_functions import loss_v1, loss_v2, loss_v3
 
+from utils.print_utils import print_min_max_conf
+from utils.data_utils import min_max_conf_from_dataset
 
 class Agent:
     """Interacts with and learns from the environment."""
@@ -24,6 +27,7 @@ class Agent:
         gamma=0.999,
         tau=1e-3,
         update_every=4,
+        device=None
         # small_eps=1e-5, # For prioritized memory
     ):
         """Initialize an Agent object.
@@ -52,6 +56,7 @@ class Agent:
         self.gamma = gamma
         self.tau = tau
         self.update_every = update_every
+        self.device = device
         # self.small_eps = small_eps # For prioritized memory
 
         if self.prioritized_memory:
@@ -80,8 +85,12 @@ class Agent:
                 else:
                     experiences = self.memory.sample()
 
-                self.learn(experiences)
-    
+                cum_loss, pred_loss, cost_loss, conf_min_max = self.learn(experiences)
+
+                min_vals, max_vals = min_max_conf_from_dataset(conf_min_max)
+                print_min_max_conf(min_vals, max_vals)
+                print(cum_loss)
+
     def act(self, state, eps=0.0):
         """Returns actions for given state as per current policy.
 
@@ -91,75 +100,99 @@ class Agent:
             eps (float): epsilon, for epsilon-greedy action selection
         """
         # state = torch.from_numpy(state).float().to(self.device)
+        state = state.to(
+            self.device
+        )  # Try to get the state to the same device as model
+
         self.qnetwork_local.eval()
         with torch.no_grad():
-            action_values, conf = self.qnetwork_local(state)
+            action_values, idx, cost, conf = self.qnetwork_local(state)
 
         # Epsilon-greedy action selection
-        laser_action = np.zeros((1, 1))
-        move_action = np.zeros((1, self.qnetwork_local.outputs))
+
+        laser_action = np.zeros((1, 1))  # CRITICAL: Get this working
+        # Either new network or threshold on the output.
+
+        move_action = np.zeros((1, self.qnetwork_local.num_classes))
 
         if random.random() > eps:
+            # Returning action for network
             action_idx = action_values.max(1)[1].item()
             move_action[0][action_idx] = 1.0
         else:
-            high = self.qnetwork_local.outputs
+            # Returning a random action
+            high = self.qnetwork_local.num_classes
             random_action_idx = np.random.randint(0, high)
             move_action[0][random_action_idx] = 1.0
 
-        return move_action, laser_action, conf
-        
+        return move_action, laser_action, idx, cost, conf
+
     def learn(self, experiences):
-            """Update value parameters using given batch of experience tuples.
+        """Update value parameters using given batch of experience tuples.
 
-            Params
-            ======
-                experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples
-                gamma (float): discount factor
-                small_e (float):
-            """
-            if self.prioritized_memory:
-                (
-                    states,
-                    actions,
-                    rewards,
-                    next_states,
-                    dones,
-                    index,
-                    sampling_weights,
-                ) = experiences
+        Params
+        ======
+            experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples
+            gamma (float): discount factor
+            small_e (float):
+        """
 
-            else:
-                states, actions, rewards, next_states, dones = experiences
+        # CRITICAL: Understand all this code. Written for the IN5490 project. 
+        # I have forgotten all the details of the DQN training loop with the
+        # local and tarfet network. 
 
-            # Get max predicted Q values (for next states) from target model
-            pred, _ = self.qnetwork_target(next_states)
-            Q_targets_next = pred.detach().max(1)[0].unsqueeze(1)
+        conf_min_max = list()
+        num_ee = len(self.qnetwork_local.exits)
 
-            # Compute Q targets for current states
-            Q_targets = rewards + (self.gamma * Q_targets_next * (1 - dones))
+        # TODO: Check if this is the correct place to start the training
+        self.qnetwork_local.train()
+        self.qnetwork_target.train()
 
-            # Get expected Q values from local model
-            pred, _ = self.qnetwork_local(states)
-            Q_expected = pred.gather(1, actions)
+        self.optimizer.zero_grad()
 
-            # Compute loss
-            if self.prioritized_memory:
-                loss = self.mse_loss_prioritized(
-                    Q_expected, Q_targets, index, sampling_weights
-                )
-            else:
-                loss = F.mse_loss(Q_expected, Q_targets)
+        batch = self.memory.Transition(*zip(*experiences))
 
-            self.losses.append(loss)
+        # Adding all the variables to the device?
+        # TODO: does all the things needs to
+        # be on the device (MPS/GPU). Most likely only the state and next-state
+        state_batch = torch.cat(batch.state).to(self.device)
+        next_state_batch = torch.cat(batch.next_state).to(self.device)
+        action_batch = torch.tensor(batch.action).unsqueeze(1).to(self.device)
+        reward_batch = torch.tensor(batch.reward, dtype=torch.float32).unsqueeze(1).to(self.device)
+        dones_batch = torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
 
-            # Minimize the loss
-            self.optimizer.zero_grad()
-            loss.backward()
-            self.optimizer.step()
+        # Get max predicted Q values (for next states) from target model
+        pred, _, _ = self.qnetwork_target(next_state_batch)
+        # CRITICAL: Here we get the Q_targets from the last exit of the network 
+        Q_targets_next = pred[-1].detach().max(1)[0].unsqueeze(1)
 
-            # Update target network
-            self.soft_update(self.qnetwork_local, self.qnetwork_target, self.tau)
+        # Compute Q targets for current states
+        Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
+
+        # ASK: The Q_targets have no "info" of which action it took to get the score
+
+        # Get expected Q values from local model
+        pred, conf, cost = self.qnetwork_local(state_batch)
+        cost.append(torch.tensor(1.0).to(self.device))
+
+        Q_expected = list()
+        for p in pred:
+            expected_value = p.gather(1, action_batch)
+            Q_expected.append(expected_value)
+
+        cum_loss, pred_loss, cost_loss = loss_v3(num_ee, Q_expected, Q_targets, conf, cost)
+
+        # Minimize the loss
+        cum_loss.backward()
+        self.optimizer.step()
+
+        # Update target network
+        self.soft_update(self.qnetwork_local, self.qnetwork_target, self.tau)
+        
+        # Append conf to a list for debugging later
+        conf_min_max.append(conf)
+
+        return cum_loss, pred_loss, cost_loss, conf_min_max
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
