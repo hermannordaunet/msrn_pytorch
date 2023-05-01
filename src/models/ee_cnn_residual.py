@@ -210,7 +210,7 @@ class EE_CNN_Residual(nn.Module):
         self.stage_id += 1
 
     def forward(self, x):
-        preds, confs = list(), list()
+        preds, confs, cost = list(), list(), list()
 
         for idx, exitblock in enumerate(self.exits):
             x = self.stages[idx](x)
@@ -222,6 +222,7 @@ class EE_CNN_Residual(nn.Module):
 
             preds.append(pred)
             confs.append(conf)
+            cost.append(self.cost[idx])
 
         x = self.stages[-1](x)
         x = x.view(x.size(0), -1)
@@ -234,4 +235,4 @@ class EE_CNN_Residual(nn.Module):
         preds.append(pred)
         confs.append(conf)
 
-        return preds, confs, self.cost
+        return preds, confs, cost
