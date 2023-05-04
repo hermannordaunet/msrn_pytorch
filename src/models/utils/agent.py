@@ -91,7 +91,11 @@ class Agent:
                 else:
                     experiences = self.memory.sample()
 
-                self.learn(experiences)
+            self.learn(experiences)
+            return True
+        else:
+            return False
+
 
     def act(self, state, eps=0.0):
         """Returns actions for given state as per current policy.
