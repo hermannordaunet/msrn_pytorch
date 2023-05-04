@@ -191,9 +191,10 @@ class Agent:
         self.soft_update(self.qnetwork_local, self.qnetwork_target, self.tau)
         
         # Append conf to a list for debugging later
-        conf_min_max.append(conf)
-
-        return cum_loss, pred_loss, cost_loss, conf_min_max
+        self.cum_loss = cum_loss
+        self.pred_loss = pred_loss
+        self.cost_loss = cost_loss
+        self.train_conf = conf
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
