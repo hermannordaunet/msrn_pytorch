@@ -188,7 +188,7 @@ def main():
 
         # save scores plot
         plt.figure()
-        plt.plot(np.arange(len(scores)), scores.cpu())
+        plt.plot(np.arange(len(scores)), scores)
         plt.title(ENV_NAME)
         plt.ylabel("Score")
         plt.xlabel("Episode #")
@@ -196,7 +196,7 @@ def main():
 
         # save loss plot
         plt.figure()
-        plt.plot(np.arange(len(losses)), losses.cpu())
+        plt.plot(np.arange(len(losses)), losses)
         plt.title(ENV_NAME)
         plt.ylabel("Train loss")
         plt.xlabel("Episode #")
@@ -298,7 +298,7 @@ def model_trainer(
 
         scores_window.append(episode_score)  # save most recent score
         scores.append(episode_score)  # save most recent score
-        losses.append(agent.cum_loss)  # save most recent loss
+        losses.append(agent.cum_loss.item())  # save most recent loss
 
         eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
