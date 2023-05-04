@@ -2,8 +2,8 @@ from utils.flops_counter import flops_to_string, params_to_string
 
 
 def print_min_max_conf(min_conf, max_conf, mode="TRAIN"):
-    min_string = f"[{mode}]: Min exit conf at random batch: "
-    max_string = f"[{mode}]: Max exit conf at random batch: "
+    min_string = f"[{mode}]: Min exit conf from batch: "
+    max_string = f"[{mode}]: Max exit conf from batch: "
 
     for exit, (min_value, max_value) in enumerate(zip(min_conf, max_conf)):
         min_string += f"{exit}: {min_value:.2%}, "
