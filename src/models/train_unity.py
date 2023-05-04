@@ -1,7 +1,8 @@
 # import time
 import torch
 import numpy as np
-# import matplotlib.pyplot as plt
+
+import matplotlib.pyplot as plt
 
 from sys import platform
 
@@ -39,7 +40,9 @@ def get_grid_based_perception_numpy(agent_obs):
 
 def get_grid_based_perception(agent_obs):
     state = agent_obs[0]
-    grid_based_perception = torch.tensor(state.transpose((2, 0, 1)), dtype=torch.float32)
+    grid_based_perception = torch.tensor(
+        state.transpose((2, 0, 1)), dtype=torch.float32
+    )
 
     return grid_based_perception.unsqueeze(0)
 
@@ -56,6 +59,7 @@ def main():
 
     print(f"[INFO] Device is: {DEVICE}")
 
+    ENV_NAME = "FoodCollector"
     TRAIN_MODEL = True
     VERBOSE = True
 
@@ -77,7 +81,6 @@ def main():
     float_parameter_channel = EnvironmentParametersChannel()
     stats_side_channel = StatsSideChannel()
     SIDE_CHANNELS = [float_parameter_channel, stats_side_channel]
-
 
     if platform == "linux" or platform == "linux2":
         relative_path = "builds/Linus_FoodCollector_4_no_respawn.x86_64"
