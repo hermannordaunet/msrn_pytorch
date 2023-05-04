@@ -176,7 +176,13 @@ def main():
             verbose=VERBOSE,
         )
 
-
+        # plot the scores
+        plt.figure()
+        plt.plot(np.arange(len(scores)), scores)
+        plt.title(ENV_NAME)
+        plt.ylabel("Score")
+        plt.xlabel("Episode #")
+        plt.savefig(f"./reports/figures/{ENV_NAME}_train_scores.png")
 
 
 def model_trainer(
