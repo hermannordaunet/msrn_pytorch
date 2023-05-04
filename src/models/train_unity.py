@@ -274,7 +274,7 @@ def model_trainer(
             decision_steps, terminal_steps = env.get_steps(env_object)
             agent_ids = decision_steps.agent_id
 
-            # ASK: This needs to be if agent not done?s
+            # ASK: This needs to be if agent not done?
             if agent_id in agent_ids:
                 agent_obs = decision_steps[agent_id].obs
                 next_state = get_grid_based_perception(agent_obs)
