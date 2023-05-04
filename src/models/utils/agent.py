@@ -90,11 +90,7 @@ class Agent:
                 else:
                     experiences = self.memory.sample()
 
-                cum_loss, pred_loss, cost_loss, conf_min_max = self.learn(experiences)
-
-                min_vals, max_vals = min_max_conf_from_dataset(conf_min_max)
-                print_min_max_conf(min_vals, max_vals)
-                print(cum_loss)
+                self.learn(experiences)
 
     def act(self, state, eps=0.0):
         """Returns actions for given state as per current policy.
