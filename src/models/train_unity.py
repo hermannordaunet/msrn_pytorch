@@ -309,7 +309,7 @@ def model_trainer(
             )
             print(f"Last loss: {agent.cum_loss}")
 
-            min_vals, max_vals = min_max_conf_from_dataset(agent.train_conf)
+            min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
             print_min_max_conf(min_vals, max_vals)
 
         if early_stop:
