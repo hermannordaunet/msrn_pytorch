@@ -68,7 +68,7 @@ def main():
     FRAME_HISTORY_LEN = 4
     MEMORY_SIZE = int(1e5)
     NUM_EPISODES = 10
-    BENCHMARK_MEAN_REWARD = 40
+    BENCHMARK_MEAN_REWARD = None
 
     INIT_LR = 1e-3
     BATCH_SIZE = 64
@@ -303,23 +303,25 @@ def model_trainer(
         eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
         if verbose:
-            print(f"\rEpisode {i}/{num_episodes}", end="")
+            print(f"\rEpisode {i}/{num_episodes}: ")
             print(
                 f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
             )
             print(f"Last loss: {agent.cum_loss}")
 
-            min_vals, max_vals = min_max_conf_from_dataset(agent.train_conf)
+            min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
             print_min_max_conf(min_vals, max_vals)
 
-        if early_stop:
-            if np.mean(scores_window) >= early_stop and i > 10:
-                if verbose:
-                    print(
-                        "\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}".format(
-                            i, np.mean(scores_window)
-                        )
-                    )
+        if early_stop is None:
+            continue
+
+        if np.mean(scores_window) >= early_stop and i > 10:
+            print(
+                "\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}".format(
+                    i, np.mean(scores_window)
+                )
+            )
+        
             break
 
     return scores, i, scores_window, losses

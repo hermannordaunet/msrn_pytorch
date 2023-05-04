@@ -83,18 +83,38 @@ class Agent:
 
         # Learn every UPDATE_EVERY time steps.
         self.t_step = (self.t_step + 1) % self.update_every
-        if self.t_step == 0:
-            # If enough samples are available in memory, get random subset and learn
-            if len(self.memory) > self.batch_size:
-                if self.prioritized_memory:
-                    experiences = self.memory.sample(self.get_beta(i))
-                else:
-                    experiences = self.memory.sample()
 
-            self.learn(experiences)
-            return True
-        else:
+        if self.t_step != 0:
             return False
+
+        # If enough samples are available in memory, get random subset and learn
+        if len(self.memory) <= self.batch_size:
+            return False
+
+        if self.prioritized_memory:
+            experiences = self.memory.sample(self.get_beta(i))
+        else:
+            experiences = self.memory.sample()
+
+        self.learn(experiences)
+
+        return True
+    
+        # if self.t_step != 0:
+
+        #     # If enough samples are available in memory, get random subset and learn
+        #     if len(self.memory) > self.batch_size:
+
+        #         if self.prioritized_memory:
+        #             experiences = self.memory.sample(self.get_beta(i))
+        #         else:
+        #             experiences = self.memory.sample()
+
+        #         self.learn(experiences)
+
+        #         return True
+        # else:
+        #     return False
 
 
     def act(self, state, eps=0.0):
