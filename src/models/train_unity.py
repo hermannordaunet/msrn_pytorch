@@ -219,6 +219,7 @@ def model_trainer(
     """
 
     scores = list()  # list containing scores from each episode
+    losses = list()
     scores_window = deque(maxlen=print_range)
     eps = eps_start  # initialize epsilon
 
