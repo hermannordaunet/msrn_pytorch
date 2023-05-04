@@ -26,7 +26,7 @@ class Agent:
         prioritized_memory=False,
         batch_size=128,
         gamma=0.999,
-        tau=1e-3,
+        tau=5e-3,
         update_every=4,
         device=None
         # small_eps=1e-5, # For prioritized memory
