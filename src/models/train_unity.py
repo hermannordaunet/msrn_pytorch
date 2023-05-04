@@ -207,6 +207,7 @@ def main():
         plt.xlabel("Episode #")
         plt.savefig(f"./reports/figures/{ENV_NAME}_train_losses.png")
 
+        env.close()
         exit()
 
 
