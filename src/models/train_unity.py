@@ -306,13 +306,14 @@ def model_trainer(
             min_vals, max_vals = min_max_conf_from_dataset(agent.train_conf)
             print_min_max_conf(min_vals, max_vals)
 
-        if np.mean(scores_window) >= early_stop and i > 10:
-            if verbose:
-                print(
-                    "\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}".format(
-                        i, np.mean(scores_window)
+        if early_stop:
+            if np.mean(scores_window) >= early_stop and i > 10:
+                if verbose:
+                    print(
+                        "\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}".format(
+                            i, np.mean(scores_window)
+                        )
                     )
-                )
             break
 
     return scores, i, scores_window, losses
