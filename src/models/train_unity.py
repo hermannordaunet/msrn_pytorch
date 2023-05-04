@@ -133,6 +133,7 @@ def main():
     #     exit()
 
     if TRAIN_MODEL:
+        print("[INFO] Initalizing Q network local")
         ee_qnetwork_local = EE_CNN_Residual(
             input_shape=input_size,
             # frames_history=2,
@@ -143,6 +144,7 @@ def main():
             distribution="pareto",
         ).to(DEVICE)
 
+        print("[INFO] Initalizing Q network target")
         ee_qnetwork_target = EE_CNN_Residual(
             input_shape=input_size,
             # frames_history=2,
