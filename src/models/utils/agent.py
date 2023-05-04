@@ -4,13 +4,14 @@ import numpy as np
 import torch
 import torch.optim as optim
 
-# Local imports 
+# Local imports
 from utils.replay_memory import ReplayMemory
 from utils.prioritized_memory import PrioritizedMemory
 from utils.loss_functions import loss_v1, loss_v2, loss_v3
 
 from utils.print_utils import print_min_max_conf
 from utils.data_utils import min_max_conf_from_dataset
+
 
 class Agent:
     """Interacts with and learns from the environment."""
@@ -138,9 +139,9 @@ class Agent:
             small_e (float):
         """
 
-        # CRITICAL: Understand all this code. Written for the IN5490 project. 
+        # CRITICAL: Understand all this code. Written for the IN5490 project.
         # I have forgotten all the details of the DQN training loop with the
-        # local and tarfet network. 
+        # local and tarfet network.
 
         conf_min_max = list()
         num_ee = len(self.qnetwork_local.exits)
@@ -159,12 +160,16 @@ class Agent:
         state_batch = torch.cat(batch.state).to(self.device)
         next_state_batch = torch.cat(batch.next_state).to(self.device)
         action_batch = torch.tensor(batch.action).unsqueeze(1).to(self.device)
-        reward_batch = torch.tensor(batch.reward, dtype=torch.float32).unsqueeze(1).to(self.device)
-        dones_batch = torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
+        reward_batch = (
+            torch.tensor(batch.reward, dtype=torch.float32).unsqueeze(1).to(self.device)
+        )
+        dones_batch = (
+            torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
+        )
 
         # Get max predicted Q values (for next states) from target model
         pred, _, _ = self.qnetwork_target(next_state_batch)
-        # CRITICAL: Here we get the Q_targets from the last exit of the network 
+        # CRITICAL: Here we get the Q_targets from the last exit of the network
         Q_targets_next = pred[-1].detach().max(1)[0].unsqueeze(1)
 
         # Compute Q targets for current states
@@ -181,7 +186,9 @@ class Agent:
             expected_value = p.gather(1, action_batch)
             Q_expected.append(expected_value)
 
-        cum_loss, pred_loss, cost_loss = loss_v3(num_ee, Q_expected, Q_targets, conf, cost)
+        cum_loss, pred_loss, cost_loss = loss_v3(
+            num_ee, Q_expected, Q_targets, conf, cost
+        )
 
         # Minimize the loss
         cum_loss.backward()
@@ -189,7 +196,7 @@ class Agent:
 
         # Update target network
         self.soft_update(self.qnetwork_local, self.qnetwork_target, self.tau)
-        
+
         # Append conf to a list for debugging later
         self.cum_loss = cum_loss
         self.pred_loss = pred_loss
