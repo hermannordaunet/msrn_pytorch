@@ -1,4 +1,4 @@
-# import time
+import time
 import torch
 import numpy as np
 
@@ -168,6 +168,9 @@ def main():
             device=DEVICE,
         )
 
+        startTime = time.time()
+        print(f"[INFO] started training @ {time.ctime(startTime)}")
+
         scores, i, scores_window, losses = model_trainer(
             env,
             agent,
@@ -175,6 +178,13 @@ def main():
             early_stop=BENCHMARK_MEAN_REWARD,
             verbose=VERBOSE,
         )
+        
+        endTime = time.time()
+        print(
+        "[INFO] total time taken to train the model: {:.2f}s".format(
+            endTime - startTime
+        )
+    )
 
         # save scores plot
         plt.figure()
