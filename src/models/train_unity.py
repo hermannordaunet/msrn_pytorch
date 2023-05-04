@@ -251,6 +251,8 @@ def model_trainer(
         agent_obs = decision_steps[agent_id].obs
         state = get_grid_based_perception(agent_obs)
 
+        min_max_conf = list()
+
         while True:
             if agent_id in agent_ids:
                 act = agent.act(state, eps)
@@ -284,9 +286,13 @@ def model_trainer(
             )
 
             action = np.argmax(move_action)
-            agent.step(state, action, reward, next_state, done, i)
+            optimized = agent.step(state, action, reward, next_state, done, i)
             state = next_state
             episode_score += reward
+            
+            if optimized:
+                min_max_conf.append(agent.train_conf)
+
             if done:
                 break
 
