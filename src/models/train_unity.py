@@ -188,7 +188,7 @@ def main():
 
         # save scores plot
         plt.figure()
-        plt.plot(np.arange(len(scores)), scores)
+        plt.plot(np.arange(len(scores)), scores.cpu())
         plt.title(ENV_NAME)
         plt.ylabel("Score")
         plt.xlabel("Episode #")
@@ -196,7 +196,7 @@ def main():
 
         # save loss plot
         plt.figure()
-        plt.plot(np.arange(len(losses)), losses)
+        plt.plot(np.arange(len(losses)), losses.cpu())
         plt.title(ENV_NAME)
         plt.ylabel("Train loss")
         plt.xlabel("Episode #")
@@ -289,7 +289,7 @@ def model_trainer(
             optimized = agent.step(state, action, reward, next_state, done, i)
             state = next_state
             episode_score += reward
-            
+
             if optimized:
                 min_max_conf.append(agent.train_conf)
 
