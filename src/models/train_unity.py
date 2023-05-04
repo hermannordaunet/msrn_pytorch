@@ -281,18 +281,19 @@ def model_trainer(
 
         scores_window.append(episode_score)  # save most recent score
         scores.append(episode_score)  # save most recent score
+        losses.append(agent.cum_loss)  # save most recent loss
+
         eps = max(eps_end, eps_decay * eps)  # decrease epsilon
+
         if verbose:
+            print(f"\rEpisode {i}/{num_episodes}", end="")
             print(
-                "\rEpisode {}\tAverage Score: {:.2f}".format(i, np.mean(scores_window)),
-                end="",
+                f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
             )
-            if i % print_range == 0:
-                print(
-                    "\rEpisode {}\tAverage Score: {:.2f}".format(
-                        i, np.mean(scores_window)
-                    )
-                )
+            print(f"Last loss: {agent.cum_loss}")
+
+            min_vals, max_vals = min_max_conf_from_dataset(agent.train_conf)
+            print_min_max_conf(min_vals, max_vals)
 
         if np.mean(scores_window) >= early_stop and i > 10:
             if verbose:
