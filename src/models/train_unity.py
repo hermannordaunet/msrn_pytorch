@@ -178,13 +178,13 @@ def main():
             early_stop=BENCHMARK_MEAN_REWARD,
             verbose=VERBOSE,
         )
-        
+
         endTime = time.time()
         print(
-        "[INFO] total time taken to train the model: {:.2f}s".format(
-            endTime - startTime
+            "[INFO] total time taken to train the model: {:.2f}s".format(
+                endTime - startTime
+            )
         )
-    )
 
         # save scores plot
         plt.figure()
