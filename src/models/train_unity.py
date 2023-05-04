@@ -304,7 +304,7 @@ def model_trainer(
                 )
             break
 
-    return scores, i, np.mean(scores_window)
+    return scores, i, scores_window, losses
 
 
 if __name__ == "__main__":
