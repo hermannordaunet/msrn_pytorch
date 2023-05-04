@@ -289,7 +289,7 @@ def model_trainer(
             optimized = agent.step(state, action, reward, next_state, done, i)
             state = next_state
             episode_score += reward
-            
+
             if optimized:
                 min_max_conf.append(agent.train_conf)
 
@@ -303,7 +303,7 @@ def model_trainer(
         eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
         if verbose:
-            print(f"\rEpisode {i}/{num_episodes}", end="")
+            print(f"\rEpisode {i}/{num_episodes}: ")
             print(
                 f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
             )
