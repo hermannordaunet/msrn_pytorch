@@ -168,7 +168,7 @@ def main():
             device=DEVICE,
         )
 
-        scores, episodes, last_avg_score = model_trainer(
+        scores, i, scores_window, losses = model_trainer(
             env,
             agent,
             num_episodes=NUM_EPISODES,
