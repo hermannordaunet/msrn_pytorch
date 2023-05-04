@@ -59,6 +59,11 @@ class Agent:
         self.device = device
         # self.small_eps = small_eps # For prioritized memory
 
+        self.cum_loss = None
+        self.pred_loss = None
+        self.cost_loss = None
+        self.train_conf = None
+
         if self.prioritized_memory:
             self.memory = PrioritizedMemory(self.memory_size, self.batch_size)
         else:
