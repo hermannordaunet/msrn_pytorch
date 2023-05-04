@@ -82,12 +82,15 @@ def main():
     stats_side_channel = StatsSideChannel()
     SIDE_CHANNELS = [float_parameter_channel, stats_side_channel]
 
-    if platform == "linux" or platform == "linux2":
-        relative_path = "builds/Linus_FoodCollector_4_no_respawn.x86_64"
-        FILE_NAME = relative_path
+    if NO_GRAPHICS:
+        if platform == "linux" or platform == "linux2":
+            relative_path = "builds/Linus_FoodCollector_4_no_respawn.x86_64"
+            FILE_NAME = relative_path
+        else:
+            relative_path = "builds/FoodCollector_4_no_respawn.app"
+            FILE_NAME = relative_path
     else:
-        relative_path = "builds/FoodCollector_4_no_respawn.app"
-        FILE_NAME = relative_path
+        FILE_NAME = None
 
     env = UnityEnvironment(
         file_name=FILE_NAME,
