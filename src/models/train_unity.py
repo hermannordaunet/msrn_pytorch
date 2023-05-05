@@ -136,6 +136,14 @@ def main():
     #     exit()
 
     if TRAIN_MODEL:
+        timestamp = int(time.time())
+
+        results_directory = f"./results/{timestamp}"
+        # Check if the directory exists
+        if not os.path.exists(results_directory):
+            # If it doesn't exist, create it
+            os.makedirs(results_directory)
+
         print("[INFO] Initalizing Q network local")
         ee_qnetwork_local = EE_CNN_Residual(
             input_shape=input_size,
