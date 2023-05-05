@@ -208,12 +208,14 @@ def main():
 def model_trainer(
     env,
     agent,
+    env_name="",
     num_episodes=100,
     print_range=10,
     eps_start=1.0,
     eps_end=0.01,
     eps_decay=0.95,
     early_stop=13,
+    results_directory="./",
     verbose=False,
 ):
     """Deep Q-Learning trainer.
