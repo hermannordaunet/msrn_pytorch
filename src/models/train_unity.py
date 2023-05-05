@@ -201,22 +201,6 @@ def main():
             )
         )
 
-        # save scores plot
-        plt.figure()
-        plt.plot(np.arange(len(scores)), scores)
-        plt.title(ENV_NAME)
-        plt.ylabel("Score")
-        plt.xlabel("Episode #")
-        plt.savefig(f"./reports/figures/{ENV_NAME}_train_scores.png")
-
-        # save loss plot
-        plt.figure()
-        plt.plot(np.arange(len(losses)), losses)
-        plt.title(ENV_NAME)
-        plt.ylabel("Train loss")
-        plt.xlabel("Episode #")
-        plt.savefig(f"./reports/figures/{ENV_NAME}_train_losses.png")
-
         env.close()
         exit()
 
