@@ -167,7 +167,6 @@ class Agent:
         # I have forgotten all the details of the DQN training loop with the
         # local and tarfet network.
 
-        conf_min_max = list()
         num_ee = len(self.qnetwork_local.exits)
 
         # TODO: Check if this is the correct place to start the training
