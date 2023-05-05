@@ -314,6 +314,22 @@ def model_trainer(
             min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
             print_min_max_conf(min_vals, max_vals)
 
+        if len(losses) > 1:
+            plot_loss_from_list(
+                losses,
+                labels=["train"],
+                env_name=env_name,
+                result_dir=results_directory,
+            )
+
+        if len(scores) > 1:
+            plot_scores_from_list(
+                scores,
+                labels=["train"],
+                env_name=env_name,
+                result_dir=results_directory,
+            )
+
         if early_stop is None:
             continue
 
