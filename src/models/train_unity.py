@@ -2,8 +2,6 @@ import time
 import torch
 import numpy as np
 
-import matplotlib.pyplot as plt
-
 from sys import platform
 
 # import the necessary torch packages
