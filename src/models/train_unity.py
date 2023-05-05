@@ -339,7 +339,7 @@ def model_trainer(
                     i, np.mean(scores_window)
                 )
             )
-        
+
             break
 
     return scores, i, scores_window, losses
