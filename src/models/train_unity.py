@@ -187,8 +187,10 @@ def main():
         scores, i, scores_window, losses = model_trainer(
             env,
             agent,
+            env_name=ENV_NAME,
             num_episodes=NUM_EPISODES,
             early_stop=BENCHMARK_MEAN_REWARD,
+            results_directory=results_directory,
             verbose=VERBOSE,
         )
 
