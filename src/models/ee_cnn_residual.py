@@ -46,7 +46,7 @@ class EE_CNN_Residual(nn.Module):
             planes=planes,
         )
 
-        self.planes = planes
+        self.planes = planes # TODO: How to choose the right list for planes on the decloration.  
         self.input_shape = input_shape
         self.channel = self.input_shape[0]
         self.num_classes = num_classes
