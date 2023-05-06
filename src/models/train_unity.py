@@ -88,7 +88,6 @@ def main():
     # Unity environment spesific
     float_parameter_channel = EnvironmentParametersChannel()
     stats_side_channel = StatsSideChannel()
-    SIDE_CHANNELS = [float_parameter_channel, stats_side_channel]
 
     engine_config_channel = EngineConfigurationChannel()
     engine_config_channel.set_configuration_parameters()
@@ -102,7 +101,7 @@ def main():
         else:
             relative_path = "builds/FoodCollector_4_no_respawn.app"
             FILE_NAME = relative_path
-    else: 
+    else:
         FILE_NAME = None
 
     env = UnityEnvironment(
@@ -213,9 +212,6 @@ def main():
                 endTime - startTime
             )
         )
-
-        env.close()
-        exit()
 
 
 def model_trainer(
