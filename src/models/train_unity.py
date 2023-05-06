@@ -72,6 +72,7 @@ def main():
 
     SEED = 1804
     NO_GRAPHICS = True
+    USE_BUILD = True
     FRAME_HISTORY_LEN = 4
     MEMORY_SIZE = int(1e5)
     NUM_EPISODES = 10
