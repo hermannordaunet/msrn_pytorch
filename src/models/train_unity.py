@@ -27,7 +27,14 @@ from mlagents_envs.environment import UnityEnvironment
 from mlagents_envs.side_channel.environment_parameters_channel import (
     EnvironmentParametersChannel,
 )
-
+from mlagents_envs.side_channel.engine_configuration_channel import (
+    EngineConfigurationChannel,
+)
+from mlagents_envs.exception import (
+    UnityEnvironmentException,
+    UnityCommunicationException,
+    UnityCommunicatorStoppedException,
+)
 from utils.stats_side_channel import StatsSideChannel
 
 
@@ -82,14 +89,19 @@ def main():
     stats_side_channel = StatsSideChannel()
     SIDE_CHANNELS = [float_parameter_channel, stats_side_channel]
 
-    if NO_GRAPHICS:
+    engine_config_channel = EngineConfigurationChannel()
+    engine_config_channel.set_configuration_parameters()
+
+    SIDE_CHANNELS = [engine_config_channel, float_parameter_channel, stats_side_channel]
+
+    if USE_BUILD:
         if platform == "linux" or platform == "linux2":
-            relative_path = "builds/Linus_FoodCollector_4_no_respawn.x86_64"
+            relative_path = "builds/Linus_FoodCollector_4_no_respawn_headless.x86_64"
             FILE_NAME = relative_path
         else:
             relative_path = "builds/FoodCollector_4_no_respawn.app"
             FILE_NAME = relative_path
-    else:
+    else: 
         FILE_NAME = None
 
     env = UnityEnvironment(
@@ -235,112 +247,128 @@ def model_trainer(
     scores_window = deque(maxlen=print_range)
     eps = eps_start  # initialize epsilon
 
-    # Get the name of the environment object
-    env_object = list(env._env_specs)[0]
+    try:
+        # Get the name of the environment object
+        env_object = list(env._env_specs)[0]
 
-    # Get a random agent id for training
-    decision_steps, _ = env.get_steps(env_object)
-    agent_ids = decision_steps.agent_id
-    agent_id = agent_ids[0]
-
-    for i in range(1, num_episodes + 1):
-        env.reset()
-        decision_steps, terminal_steps = env.get_steps(env_object)
+        # Get a random agent id for training
+        decision_steps, _ = env.get_steps(env_object)
         agent_ids = decision_steps.agent_id
+        agent_id = agent_ids[0]
 
-        episode_score = 0
-
-        agent_obs = decision_steps[agent_id].obs
-        state = get_grid_based_perception(agent_obs)
-
-        min_max_conf = list()
-
-        while True:
-            if agent_id in agent_ids:
-                act = agent.act(state, eps)
-                move_action, laser_action, idx, cost, conf = act
-
-                env.set_action_for_agent(
-                    env_object,
-                    agent_id,
-                    ActionTuple(move_action, laser_action),
-                )
-
-            env.step()
-
+        for i in range(1, num_episodes + 1):
+            env.reset()
             decision_steps, terminal_steps = env.get_steps(env_object)
             agent_ids = decision_steps.agent_id
 
-            # ASK: This needs to be if agent not done?
-            if agent_id in agent_ids:
-                agent_obs = decision_steps[agent_id].obs
-                next_state = get_grid_based_perception(agent_obs)
-            else:
-                next_state = None
+            episode_score = 0
 
-            reward = decision_steps[agent_id].reward
+            agent_obs = decision_steps[agent_id].obs
+            state = get_grid_based_perception(agent_obs)
 
-            terminated_agent_ids = terminal_steps.agent_id
-            done = (
-                terminal_steps[agent_id].interrupted
-                if agent_id in terminated_agent_ids
-                else False
-            )
+            min_max_conf = list()
+            while True:
+                if agent_id in agent_ids:
+                    act = agent.act(state, eps)
+                    move_action, laser_action, idx, cost, conf = act
 
-            action = np.argmax(move_action)
-            optimized = agent.step(state, action, reward, next_state, done, i)
-            state = next_state
-            episode_score += reward
+                    env.set_action_for_agent(
+                        env_object,
+                        agent_id,
+                        ActionTuple(move_action, laser_action),
+                    )
 
-            if optimized:
-                min_max_conf.append(agent.train_conf)
+                env.step()
 
-            if done:
+                decision_steps, terminal_steps = env.get_steps(env_object)
+                agent_ids = decision_steps.agent_id
+
+                # ASK: This needs to be if agent not done?
+                if agent_id in agent_ids:
+                    agent_obs = decision_steps[agent_id].obs
+                    next_state = get_grid_based_perception(agent_obs)
+                else:
+                    next_state = None
+
+                reward = decision_steps[agent_id].reward
+
+                terminated_agent_ids = terminal_steps.agent_id
+                done = (
+                    terminal_steps[agent_id].interrupted
+                    if agent_id in terminated_agent_ids
+                    else False
+                )
+
+                action = np.argmax(move_action)
+                optimized = agent.step(state, action, reward, next_state, done, i)
+                state = next_state
+                episode_score += reward
+
+                if optimized:
+                    min_max_conf.append(agent.train_conf)
+
+                if done:
+                    break
+
+            scores_window.append(episode_score)  # save most recent score
+            scores.append(episode_score)  # save most recent score
+            losses.append(agent.cum_loss.item())  # save most recent loss
+
+            eps = max(eps_end, eps_decay * eps)  # decrease epsilon
+
+            if verbose:
+                print(f"\rEpisode {i}/{num_episodes}: ")
+                print(
+                    f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
+                )
+                print(f"Last loss: {agent.cum_loss}")
+
+                min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
+                print_min_max_conf(min_vals, max_vals)
+
+            if len(losses) > 1:
+                plot_loss_from_list(
+                    losses,
+                    labels=["train"],
+                    env_name=env_name,
+                    result_dir=results_directory,
+                )
+
+            if len(scores) > 1:
+                plot_scores_from_list(
+                    scores,
+                    labels=["train"],
+                    env_name=env_name,
+                    result_dir=results_directory,
+                )
+
+            if early_stop is None:
+                continue
+
+            if np.mean(scores_window) >= early_stop and i > 10:
+                print(
+                    "\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}".format(
+                        i, np.mean(scores_window)
+                    )
+                )
+
                 break
 
-        scores_window.append(episode_score)  # save most recent score
-        scores.append(episode_score)  # save most recent score
-        losses.append(agent.cum_loss.item())  # save most recent loss
-
-        eps = max(eps_end, eps_decay * eps)  # decrease epsilon
-
-        if verbose:
-            print(f"\rEpisode {i}/{num_episodes}: ")
-            print(
-                f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
-            )
-            print(f"Last loss: {agent.cum_loss}")
-
-            min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
-            print_min_max_conf(min_vals, max_vals)
-
-        if len(losses) > 1:
-            plot_loss_from_list(
-                losses,
-                labels=["train"],
-                env_name=env_name,
-                result_dir=results_directory,
-            )
-
-        if len(scores) > 1:
-            plot_scores_from_list(
-                scores,
-                labels=["train"],
-                env_name=env_name,
-                result_dir=results_directory,
-            )
-
-        if early_stop is None:
-            continue
-
-        if np.mean(scores_window) >= early_stop and i > 10:
-            print(
-                "\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}".format(
-                    i, np.mean(scores_window)
-                )
-            )
-
-            break
+    except (
+        KeyboardInterrupt,
+        UnityCommunicationException,
+        UnityEnvironmentException,
+        UnityCommunicatorStoppedException,
+    ) as ex:
+        print("-" * 100)
+        print("Exception has occured !!")
+        print("Learning was interrupted. Please wait while the model is saved.")
+        print("-" * 100)
+        # TODO: Add save model weights, logs, checkoint etc
+    finally:
+        env.close()
+        # CRITICAL: Save model here and the nessasary values
+        print("Model is saved & the Environment is closed...")
 
     return scores, i, scores_window, losses
 
