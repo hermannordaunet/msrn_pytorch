@@ -25,6 +25,7 @@ def plot_scores_from_list(scores: list(), labels=None, env_name="", result_dir="
 
     df = pd.DataFrame(scores.transpose(), columns=labels, index=x_values)
 
+    plt.figure()
     sns.set_theme(style="darkgrid")
     sns.lineplot(data=df)
     sns.despine()
@@ -57,6 +58,7 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
 
     df = pd.DataFrame(losses.transpose(), columns=labels, index=x_values)
 
+    plt.figure()
     sns.set_theme(style="darkgrid")
     sns.lineplot(data=df)
     sns.despine()
