@@ -55,8 +55,6 @@ def get_grid_based_perception(agent_obs):
 
 
 def main():
-    print(platform)
-
     if torch.cuda.is_available():
         DEVICE = "cuda"
     elif torch.backends.mps.is_available():
@@ -66,24 +64,54 @@ def main():
 
     print(f"[INFO] Device is: {DEVICE}")
 
-    ENV_NAME = "FoodCollector"
-    TRAIN_MODEL = True
+    model_param = {
+        "num_ee": 2,
+        "repetitions": [2, 2],
+        "planes": [32, 64, 64],
+        "distribution": "pareto",
+        # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
+        "data_dir": None,  # data directory
+        "models_dir": None,
+        "mode_setups": {"train": True, "val": False},
+        "manual_seed": 1804,  # TODO: Seed everything
+        "device": DEVICE,
+    }
+
+    config = {
+        "env_name": "FoodCollector",
+        "use_build": True,
+        "no_graphics": True,
+        "laser_length": 1.5,
+        "agent_scale": 1,
+        "prioritized_memory": False,
+        "memory_size": int(1e5),
+        "batch_size": 2048,  # Training batch size
+        "num_episodes": 500,
+        "benchmarks_mean_reward": None,
+        "optimizer": "adamW",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
+        "learningRate": {"lr": 1e-3},  # learning rate to the optimizer
+        "weight_decay": 0,  # weight_decay value # TUNE: originally 0.00001
+        "scheduler_milestones": [75, 90],  # 45,70 end at 80? or 60, 80
+        "scheduler_factor": 0.2,  # +0.25 dropout
+        "print_range": 10,
+    }
+
+    dqn_param = {
+        "gamma": 0.999,
+        "tau": 5e-3,
+        "update_every": 4,
+    }
+
+    epsilon_greedy_param = {
+        "eps_start": 1.0,
+        "eps_end": 0.01,
+        "eps_decay": 0.95,
+    }
+
+    TRAIN_MODEL = model_param["mode_setups"]["train"]
     VERBOSE = True
 
-    SEED = 1804
-    NO_GRAPHICS = True
-    USE_BUILD = True
-    FRAME_HISTORY_LEN = 4
-    MEMORY_SIZE = int(1e5)
-    NUM_EPISODES = 10
-    BENCHMARK_MEAN_REWARD = None
-
-    INIT_LR = 1e-3
-    BATCH_SIZE = 64
-
-    # Environment parameters
-    LASER_LENGTH = 1.5
-    AGENT_SCALE = 1
+    FRAME_HISTORY_LEN = 4  # TODO: Should I add this?
 
     # Unity environment spesific
     float_parameter_channel = EnvironmentParametersChannel()
@@ -94,7 +122,7 @@ def main():
 
     SIDE_CHANNELS = [engine_config_channel, float_parameter_channel, stats_side_channel]
 
-    if USE_BUILD:
+    if config["use_build"]:
         if platform == "linux" or platform == "linux2":
             relative_path = "builds/Linus_FoodCollector_4_no_respawn_headless.x86_64"
             FILE_NAME = relative_path
@@ -106,14 +134,14 @@ def main():
 
     env = UnityEnvironment(
         file_name=FILE_NAME,
-        seed=SEED,
         side_channels=SIDE_CHANNELS,
-        no_graphics=NO_GRAPHICS,
+        seed=model_param["manual_seed"],
+        no_graphics=config["no_graphics"],
     )
 
     # Unity environment spesific
-    float_parameter_channel.set_float_parameter("laser_length", LASER_LENGTH)
-    float_parameter_channel.set_float_parameter("agent_scale", AGENT_SCALE)
+    float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
+    float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
 
     env.reset()
 
@@ -135,10 +163,11 @@ def main():
 
     observation_spec = observation_spec_list[0]
     continuous_size = action_spec.continuous_size
-    discrete_size = action_spec.discrete_size
+    # discrete_size = action_spec.discrete_size
 
-    input_size = observation_spec[-1].shape[::-1]
-    channels, screen_width, screen_height = input_size
+    model_param["input_size"] = observation_spec[-1].shape[::-1]
+    model_param["num_classes"] = continuous_size
+    # channels, screen_width, screen_height = input_size
 
     # TODO: Implement a test to see if the agents has the same observation specs
     # if len(set(observation_spec_list)) == 2:
@@ -155,27 +184,31 @@ def main():
         if not os.path.exists(results_directory):
             # If it doesn't exist, create it
             os.makedirs(results_directory)
+            models_directory = f"{results_directory}/models"
+            os.makedirs(models_directory)
+
+            model_param["models_dir"] = models_directory
 
         print("[INFO] Initalizing Q network local")
         ee_qnetwork_local = EE_CNN_Residual(
-            input_shape=input_size,
             # frames_history=2,
-            num_classes=continuous_size,
-            num_ee=2,
-            repetitions=[2, 2],
-            planes=[32, 64, 64],
-            distribution="pareto",
+            num_ee=model_param["num_ee"],
+            planes=model_param["planes"],
+            input_shape=model_param["input_size"],
+            num_classes=model_param["num_classes"],
+            repetitions=model_param["repetitions"],
+            distribution=model_param["distribution"],
         ).to(DEVICE)
 
         print("[INFO] Initalizing Q network target")
         ee_qnetwork_target = EE_CNN_Residual(
-            input_shape=input_size,
             # frames_history=2,
-            num_classes=continuous_size,
-            num_ee=2,
-            repetitions=[2, 2],
-            planes=[32, 64, 64],
-            distribution="pareto",
+            num_ee=model_param["num_ee"],
+            planes=model_param["planes"],
+            input_shape=model_param["input_size"],
+            num_classes=model_param["num_classes"],
+            repetitions=model_param["repetitions"],
+            distribution=model_param["distribution"],
         ).to(DEVICE)
 
         ee_qnetwork_local.eval()
@@ -185,12 +218,9 @@ def main():
         agent = Agent(
             ee_qnetwork_local,
             ee_qnetwork_target,
-            seed=SEED,
-            learning_rate=INIT_LR,
-            memory_size=MEMORY_SIZE,
-            prioritized_memory=False,
-            batch_size=BATCH_SIZE,
-            device=DEVICE,
+            model_param=model_param,
+            config=config,
+            dqn_param=dqn_param,
         )
 
         startTime = time.time()
@@ -199,9 +229,8 @@ def main():
         scores, i, scores_window, losses = model_trainer(
             env,
             agent,
-            env_name=ENV_NAME,
-            num_episodes=NUM_EPISODES,
-            early_stop=BENCHMARK_MEAN_REWARD,
+            config=config,
+            epsilon_greedy_param=epsilon_greedy_param,
             results_directory=results_directory,
             verbose=VERBOSE,
         )
@@ -217,13 +246,8 @@ def main():
 def model_trainer(
     env,
     agent,
-    env_name="",
-    num_episodes=100,
-    print_range=10,
-    eps_start=1.0,
-    eps_end=0.01,
-    eps_decay=0.95,
-    early_stop=13,
+    config=None,
+    epsilon_greedy_param=None,
     results_directory="./",
     verbose=False,
 ):
@@ -231,18 +255,26 @@ def model_trainer(
 
     Params
     ======
-        num_episodes (int): maximum number of training episodes
         print_range (int): range to print partials results
-        eps_start (float): starting value of epsilon, for epsilon-greedy action selection
-        eps_end (float): minimum value of epsilon
-        eps_decay (float): multiplicative factor (per episode) for decreasing epsilon
+        epsilon_greedy_param (dict): all the epsilon greedy parameters
         early_stop (int): Stop training when achieve a defined score.
+
     """
 
     scores = list()  # list containing scores from each episode
     losses = list()
     scores_window = deque(maxlen=print_range)
-    eps = eps_start  # initialize epsilon
+
+    # initialize epsilon greedy param
+    eps_start = epsilon_greedy_param["eps_start"]
+    eps_end = epsilon_greedy_param["eps_end"]
+    eps_decay = epsilon_greedy_param["eps_decay"]
+    eps = eps_start
+
+    print_range = config["print_range"]
+    early_stop = config["benchmarks_mean_reward"]
+
+    num_episodes = config["num_episodes"]
 
     try:
         # Get the name of the environment object
@@ -327,7 +359,7 @@ def model_trainer(
                 plot_loss_from_list(
                     losses,
                     labels=["train"],
-                    env_name=env_name,
+                    env_name=config["env_name"],
                     result_dir=results_directory,
                 )
 
@@ -335,7 +367,7 @@ def model_trainer(
                 plot_scores_from_list(
                     scores,
                     labels=["train"],
-                    env_name=env_name,
+                    env_name=config["env_name"],
                     result_dir=results_directory,
                 )
 

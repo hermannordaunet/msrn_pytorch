@@ -20,15 +20,9 @@ class Agent:
         self,
         qnetwork_local,
         qnetwork_target,
-        seed=1412,
-        learning_rate=1e-3,
-        memory_size=int(1e5),
-        prioritized_memory=False,
-        batch_size=128,
-        gamma=0.999,
-        tau=5e-3,
-        update_every=4,
-        device=None
+        model_param=None,
+        config=None,
+        dqn_param=None,
         # small_eps=1e-5, # For prioritized memory
     ):
         """Initialize an Agent object.
@@ -47,17 +41,37 @@ class Agent:
             small_eps (float): Pending
             update_every (int): Pending
         """
+
+        if model_param is None:
+            print("Cannot initialize agent without model_param dict")
+            exit()
+        
+        if config is None:
+            print("Cannot initialize agent without config dict")
+            exit()
+
+        if dqn_param is None:
+            print("Cannot initialize agent without dqn_param dict")
+            exit()
+
+        self.model_param = model_param
+        self.config = config
+        self.dqn_param = dqn_param
+        
         self.qnetwork_local = qnetwork_local
         self.qnetwork_target = qnetwork_target
-        self.seed = random.seed(seed)
-        self.learning_rate = learning_rate
-        self.memory_size = memory_size
-        self.prioritized_memory = prioritized_memory
-        self.batch_size = batch_size
-        self.gamma = gamma
-        self.tau = tau
-        self.update_every = update_every
-        self.device = device
+
+        self.seed = self.model_param["manual_seed"]
+        self.learning_rate = self.config["learningRate"]["lr"]
+        self.memory_size = self.config["memory_size"]
+        self.prioritized_memory = self.config["prioritized_memory"]
+        self.batch_size = self.config["batch_size"]
+
+        self.gamma = self.dqn_param["gamma"]
+        self.tau = self.dqn_param["tau"]
+        self.update_every = self.dqn_param["update_every"]
+
+        self.device = self.model_param["device"]
         # self.small_eps = small_eps # For prioritized memory
 
         self.cum_loss = None
@@ -70,6 +84,7 @@ class Agent:
         else:
             self.memory = ReplayMemory(self.memory_size, self.batch_size)
 
+        self.optimizer = initalize_optimizer()
         self.optimizer = optim.Adam(
             self.qnetwork_local.parameters(), lr=self.learning_rate
         )
@@ -99,7 +114,7 @@ class Agent:
         self.learn(experiences)
 
         return True
-    
+
         # if self.t_step != 0:
 
         #     # If enough samples are available in memory, get random subset and learn
@@ -115,7 +130,6 @@ class Agent:
         #         return True
         # else:
         #     return False
-
 
     def act(self, state, eps=0.0):
         """Returns actions for given state as per current policy.
@@ -242,3 +256,32 @@ class Agent:
             target_param.data.copy_(
                 tau * local_param.data + (1.0 - tau) * target_param.data
             )
+
+    def initalize_optimizer(self):
+        if self.config["optimizer"] == "adam":
+            self.optimizer = optim.Adam(
+                self.net.parameters(),
+                lr=self.config["learningRate"]["lr"],
+                weight_decay=self.config["weight_decay"],
+            )
+        elif self.config["optimizer"] == "adamW":
+            self.optimizer = optim.AdamW(
+                self.net.parameters(),
+                lr=self.config["learningRate"]["lr"],
+                weight_decay=self.config["weight_decay"],
+            )
+        elif self.config["optimizer"] == "SGD":
+            self.optimizer = optim.SGD(
+                self.net.parameters(),
+                lr=self.config["learningRate"]["lr"],
+                weight_decay=self.config["weight_decay"],
+            )
+        elif self.config["optimizer"] == "RMSprop":
+            self.optimizer = optim.RMSprop(
+                self.net.parameters(),
+                lr=self.config["learningRate"]["lr"],
+                weight_decay=self.config["weight_decay"],
+            )
+        else:
+            raise Exception("invalid optimizer")
+
