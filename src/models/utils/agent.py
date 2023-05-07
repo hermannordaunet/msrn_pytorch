@@ -258,30 +258,32 @@ class Agent:
             )
 
     def initalize_optimizer(self):
+        # Getting the network parameters
+        parameters = self.qnetwork_local.parameters()
+
         if self.config["optimizer"] == "adam":
             self.optimizer = optim.Adam(
-                self.net.parameters(),
+                parameters,
                 lr=self.config["learningRate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "adamW":
             self.optimizer = optim.AdamW(
-                self.net.parameters(),
+                parameters,
                 lr=self.config["learningRate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "SGD":
             self.optimizer = optim.SGD(
-                self.net.parameters(),
+                parameters,
                 lr=self.config["learningRate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "RMSprop":
             self.optimizer = optim.RMSprop(
-                self.net.parameters(),
+                parameters,
                 lr=self.config["learningRate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         else:
             raise Exception("invalid optimizer")
-
