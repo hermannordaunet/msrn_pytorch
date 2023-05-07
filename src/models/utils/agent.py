@@ -84,10 +84,19 @@ class Agent:
         else:
             self.memory = ReplayMemory(self.memory_size, self.batch_size)
 
-        self.optimizer = initalize_optimizer()
-        self.optimizer = optim.Adam(
-            self.qnetwork_local.parameters(), lr=self.learning_rate
-        )
+        self.optimizer = self.initalize_optimizer()
+
+        if config["use_lr_scheduler"]:
+            if (config["scheduler_milestones"] is not None) and (
+                config["scheduler_factor"] is not None
+            ):
+                self.scheduler = optim.lr_scheduler.MultiStepLR(
+                    self.optimizer,
+                    milestones=config["scheduler_milestones"],
+                    gamma=config["scheduler_factor"],
+                )
+        else:
+            self.scheduler = None
 
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
