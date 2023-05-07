@@ -230,6 +230,8 @@ class Agent:
         # Minimize the loss
         cum_loss.backward()
         self.optimizer.step()
+        if self.scheduler is not None:
+            self.scheduler.step()
 
         # Update target network
         self.soft_update(self.qnetwork_local, self.qnetwork_target, self.tau)
