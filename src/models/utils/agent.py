@@ -45,7 +45,7 @@ class Agent:
         if model_param is None:
             print("Cannot initialize agent without model_param dict")
             exit()
-        
+
         if config is None:
             print("Cannot initialize agent without config dict")
             exit()
@@ -57,7 +57,7 @@ class Agent:
         self.model_param = model_param
         self.config = config
         self.dqn_param = dqn_param
-        
+
         self.qnetwork_local = qnetwork_local
         self.qnetwork_target = qnetwork_target
 
