@@ -65,12 +65,11 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "num_ee": 2,
+        "num_ee": 0,
         "repetitions": [2, 2],
         "planes": [32, 64, 64],
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
-        "data_dir": None,  # data directory
         "models_dir": None,
         "mode_setups": {"train": True, "val": False},
         "manual_seed": 1804,  # TODO: Seed everything
@@ -88,11 +87,12 @@ def main():
         "batch_size": 2048,  # Training batch size
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
-        "optimizer": "adamW",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
+        "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learningRate": {"lr": 1e-3},  # learning rate to the optimizer
         "weight_decay": 0,  # weight_decay value # TUNE: originally 0.00001
-        "scheduler_milestones": [75, 90],  # 45,70 end at 80? or 60, 80
-        "scheduler_factor": 0.2,  # +0.25 dropout
+        "use_lr_scheduler": True,
+        "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
+        "scheduler_factor": 0.1,
         "print_range": 10,
     }
 
@@ -109,6 +109,7 @@ def main():
     }
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
+    VAL_MODEL = model_param["mode_setups"]["val"]
     VERBOSE = True
 
     FRAME_HISTORY_LEN = 4  # TODO: Should I add this?
@@ -118,7 +119,7 @@ def main():
     stats_side_channel = StatsSideChannel()
 
     engine_config_channel = EngineConfigurationChannel()
-    engine_config_channel.set_configuration_parameters()
+    engine_config_channel.set_configuration_parameters(time_scale=10)
 
     SIDE_CHANNELS = [engine_config_channel, float_parameter_channel, stats_side_channel]
 
