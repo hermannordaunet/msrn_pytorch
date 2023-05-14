@@ -261,6 +261,7 @@ class Agent:
                 lr=self.config["learningRate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
+
         elif self.config["optimizer"] == "adamW":
             self.optimizer = optim.AdamW(
                 parameters,
