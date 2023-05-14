@@ -125,22 +125,6 @@ class Agent:
 
         return True
 
-        # if self.t_step != 0:
-
-        #     # If enough samples are available in memory, get random subset and learn
-        #     if len(self.memory) > self.batch_size:
-
-        #         if self.prioritized_memory:
-        #             experiences = self.memory.sample(self.get_beta(i))
-        #         else:
-        #             experiences = self.memory.sample()
-
-        #         self.learn(experiences)
-
-        #         return True
-        # else:
-        #     return False
-
     def act(self, state, eps=0.0):
         """Returns actions for given state as per current policy.
 
