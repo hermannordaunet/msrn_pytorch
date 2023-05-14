@@ -84,7 +84,8 @@ class Agent:
         else:
             self.memory = ReplayMemory(self.memory_size, self.batch_size)
 
-        self.optimizer = self.initalize_optimizer()
+        # self.optimizer = None
+        self.initalize_optimizer()
 
         if config["use_lr_scheduler"]:
             if (config["scheduler_milestones"] is not None) and (
@@ -182,8 +183,6 @@ class Agent:
         Params
         ======
             experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples
-            gamma (float): discount factor
-            small_e (float):
         """
 
         # CRITICAL: Understand all this code. Written for the IN5490 project.
