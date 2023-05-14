@@ -212,13 +212,29 @@ class EE_CNN_Residual(nn.Module):
     def forward(self, x):
         preds, confs, cost = list(), list(), list()
 
+        if not self.training:
+            self.val_pred = torch.zeros(x.shape[0], self.num_classes)
+            self.val_conf = torch.zeros(x.shape[0], 1)
+            self.val_idx = torch.zeros(x.shape[0], 1)
+            self.val_cost = torch.zeros(x.shape[0], 1)
+        else:
+            self.val_pred = None
+            self.val_conf = None
+            self.val_idx = None
+            self.val_cost = None
+
         for idx, exitblock in enumerate(self.exits):
             x = self.stages[idx](x)
             pred, conf = exitblock(x)
 
             if not self.training:
-                if conf.item() > self.exit_threshold:
-                    return pred, idx, self.cost[idx], conf.item()
+                if conf.shape[0] > 1:
+                    idx_to_remove = self.find_conf_above_threshold(conf)
+                    self.construct_validation_output()
+                    x = self.remove_exited_pred_from_batch(x, idx_to_remove)
+                else:
+                    if conf.item() > self.exit_threshold:
+                        return pred, idx, self.cost[idx], conf.item()
 
             preds.append(pred)
             confs.append(conf)
@@ -236,3 +252,32 @@ class EE_CNN_Residual(nn.Module):
         confs.append(conf)
 
         return preds, confs, cost
+
+    def find_conf_above_threshold(self, conf, threshold=None):
+
+        if threshold:
+            exit_threshold = threshold
+        else:
+            exit_threshold = self.exit_threshold
+
+        idx = torch.where(conf > exit_threshold)[0]
+
+        return idx  
+
+    def construct_validation_output(self, idx):
+        
+        return
+
+    def remove_exited_pred_from_batch(x, idx):
+        # Create a mask tensor with True for indices to keep and False for indices to remove
+        mask = torch.ones_like(x, dtype=torch.bool)
+        mask[idx, :, :, :] = False
+
+        # Apply the mask to the tensor
+        x_filtered = x[mask]
+
+        # Reshape the filtered tensor to match the original shape
+        new_shape = (x.shape[0] - len(idx), x.shape[1], x.shape[2], x.shape[3])
+        x_filtered = x_filtered.reshape(new_shape)
+
+        return x_filtered
