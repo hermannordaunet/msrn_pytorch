@@ -236,6 +236,12 @@ class Agent:
             num_ee, Q_expected, Q_targets, conf, cost
         )
 
+        # Append conf to a list for debugging later
+        self.cum_loss = cum_loss
+        self.pred_loss = pred_loss
+        self.cost_loss = cost_loss
+        self.train_conf = conf
+
         # Minimize the loss
         cum_loss.backward()
         self.optimizer.step()
@@ -244,12 +250,6 @@ class Agent:
 
         # Update target network
         self.soft_update(self.qnetwork_local, self.qnetwork_target, self.tau)
-
-        # Append conf to a list for debugging later
-        self.cum_loss = cum_loss
-        self.pred_loss = pred_loss
-        self.cost_loss = cost_loss
-        self.train_conf = conf
 
     def soft_update(self, local_model, target_model, tau):
         """Soft update model parameters.
