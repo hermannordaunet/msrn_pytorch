@@ -79,8 +79,8 @@ def main():
 
     config = {
         "env_name": "FoodCollector",
-        "use_build": True,
-        "no_graphics": True,
+        "use_build": False,
+        "no_graphics": False,
         "laser_length": 1.5,
         "agent_scale": 1,
         "prioritized_memory": False,
