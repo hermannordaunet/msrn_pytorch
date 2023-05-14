@@ -263,10 +263,6 @@ def model_trainer(
 
     """
 
-    scores = list()  # list containing scores from each episode
-    losses = list()
-    scores_window = deque(maxlen=print_range)
-
     # initialize epsilon greedy param
     eps_start = epsilon_greedy_param["eps_start"]
     eps_end = epsilon_greedy_param["eps_end"]
@@ -278,27 +274,42 @@ def model_trainer(
 
     num_episodes = config["num_episodes"]
 
+    scores, losses = list(), list()  # list containing scores/losses from each episode
+    scores_window = deque(maxlen=print_range)
+
     try:
         # Get the name of the environment object
-        env_object = list(env._env_specs)[0]
+        # env_object = list(env._env_specs)[0]
+        # decision_steps, _ = env.get_steps(env_object)
+        # agent_ids = decision_steps.agent_id
+        # agent_id = agent_ids[0]
 
-        # Get a random agent id for training
-        decision_steps, _ = env.get_steps(env_object)
-        agent_ids = decision_steps.agent_id
-        agent_id = agent_ids[0]
+        training_agents = dict()
+        team_name_list = list(env.behavior_specs.keys())
+
+        for team in team_name_list:
+            # Get a random agent id for training
+            decision_steps, _ = env.get_steps(team)
+            training_agents[team] = {
+                "agent_id": decision_steps.agent_id[-1],
+                "episode_score": 0,
+            }
 
         for i in range(1, num_episodes + 1):
-            env.reset()
-            decision_steps, terminal_steps = env.get_steps(env_object)
-            agent_ids = decision_steps.agent_id
+            env.reset()  # TODO: Test with and without this
 
-            episode_score = 0
+            for team in team_name_list:
+                decision_steps, terminal_steps = env.get_steps(team)
+                agent_id = training_agents[team]
+                agent_ids = decision_steps.agent_id
+
+            episode_score = 0  # TODO: Change this to the second in the dict list
 
             agent_obs = decision_steps[agent_id].obs
             state = get_grid_based_perception(agent_obs)
 
             min_max_conf = list()
-            while True:
+            while len(agent.memory) < config["batch_size"]:
                 if agent_id in agent_ids:
                     act = agent.act(state, eps)
                     move_action, laser_action, idx, cost, conf = act
@@ -338,8 +349,8 @@ def model_trainer(
                 if optimized:
                     min_max_conf.append(agent.train_conf)
 
-                if done:
-                    break
+                # if done:
+                #     break
 
             scores_window.append(episode_score)  # save most recent score
             scores.append(episode_score)  # save most recent score
@@ -399,7 +410,12 @@ def model_trainer(
     finally:
         env.close()
         # CRITICAL: Save model here and the nessasary values
-        print("Model is saved & the Environment is closed...")
+        save_model(agent.qnetwork_local, agent.model_param["models_dir"])
+        save_dict_to_json(agent.model_param, f"{results_directory}_model_param.json")
+        save_dict_to_json(agent.config, f"{results_directory}_config.json")
+        save_dict_to_json(agent.dqn_param, f"{results_directory}_dqn_param.json")
+
+        print("Model is saved, parameters is saved & the Environment is closed...")
 
     return scores, i, scores_window, losses
 
