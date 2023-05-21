@@ -296,38 +296,46 @@ def model_trainer(
         training_agents = dict()
         team_name_list = list(env.behavior_specs.keys())
 
-        for team in team_name_list:
-            # Get a random agent id for training
-            decision_steps, _ = env.get_steps(team)
-            training_agents[team] = {
-                "agent_id": decision_steps.agent_id[-1],
-                "episode_score": 0,
-            }
+        num_teams = len(team_name_list)
+        state_size = agent.model_param["input_size"]
 
+        state_batch_tensor = torch.zeros((num_teams, *state_size))
+
+    
         for i in range(1, num_episodes + 1):
             env.reset()  # TODO: Test with and without this
 
-            for team in team_name_list:
-                decision_steps, terminal_steps = env.get_steps(team)
-                agent_id = training_agents[team]
-                agent_ids = decision_steps.agent_id
+            for team_idx, team in enumerate(team_name_list):
+                decision_steps, _ = env.get_steps(team)
+                training_agents[team] = {
+                    "agent_id": decision_steps.agent_id[-1],
+                    "episode_score": 0,
+                    # "state": None,
+                }
 
-            episode_score = 0  # TODO: Change this to the second in the dict list
+            # min_max_conf = list()
+            while True:
+                for team_idx, team in enumerate(team_name_list):
+                    decision_steps, terminal_steps = env.get_steps(team)
+                    agent_id = training_agents[team]["agent_id"]
+                    agent_ids = decision_steps.agent_id
+                    if agent_id in agent_ids:
+                        agent_obs = decision_steps[agent_id].obs
+                        state = get_grid_based_perception(agent_obs)
+                        state_batch_tensor[team_idx, :, :, :] = state
+                    else:
+                        print(f"No state for the agent {agent_id} in {team}")
+                        exit()
 
-            agent_obs = decision_steps[agent_id].obs
-            state = get_grid_based_perception(agent_obs)
+                # if agent_id in agent_ids:
+                act = agent.act(state_batch_tensor, eps=eps, num_teams=num_teams)
+                move_action, laser_action, idx, cost, conf = act
 
-            min_max_conf = list()
-            while len(agent.memory) < config["batch_size"]:
-                if agent_id in agent_ids:
-                    act = agent.act(state, eps)
-                    move_action, laser_action, idx, cost, conf = act
-
-                    env.set_action_for_agent(
-                        env_object,
-                        agent_id,
-                        ActionTuple(move_action, laser_action),
-                    )
+                env.set_action_for_agent(
+                    env_object,
+                    agent_id,
+                    ActionTuple(move_action, laser_action),
+                )
 
                 env.step()
 
