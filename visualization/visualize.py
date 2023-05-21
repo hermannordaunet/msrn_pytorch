@@ -76,4 +76,22 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
 
 # Eval loss and score
 
-# Grid images.
+
+def plot_grid_based_perception(image_tensor, team_id):
+    image_tensor = image_tensor.squeeze()
+    num_cols = image_tensor.shape[0]
+    fig, ax = plt.subplots(nrows=1, ncols=num_cols)
+
+    labels = ["food", "agent", "wall", "badFood", "frozenAgent"]
+
+    for col in range(num_cols):
+        cur_ax = ax[col]
+        cur_ax.imshow(image_tensor[col, :, :])
+        
+        cur_ax.set_title(labels[col])
+        cur_ax.axis('off')
+
+    fig.suptitle(f'Agent observation: {team_id}')
+    
+    plt.tight_layout()
+    plt.show()
