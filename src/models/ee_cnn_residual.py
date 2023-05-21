@@ -210,18 +210,20 @@ class EE_CNN_Residual(nn.Module):
         self.stage_id += 1
 
     def forward(self, x):
-        preds, confs, cost = list(), list(), list()
+        if self.training:
+            preds, confs, cost = list(), list(), list()
+            self.val_batch_pred = None
+            self.val_batch_conf = None
+            self.val_batch_exit = None
+            self.val_batch_cost = None
 
         if not self.training:
-            self.val_pred = torch.zeros(x.shape[0], self.num_classes)
-            self.val_conf = torch.zeros(x.shape[0], 1)
-            self.val_idx = torch.zeros(x.shape[0], 1)
-            self.val_cost = torch.zeros(x.shape[0], 1)
-        else:
-            self.val_pred = None
-            self.val_conf = None
-            self.val_idx = None
-            self.val_cost = None
+            self.val_batch_pred = torch.zeros(x.shape[0], self.num_classes)
+            self.val_batch_conf = torch.zeros(x.shape[0], 1)
+            self.val_batch_exit = torch.zeros(x.shape[0], 1)
+            self.val_batch_cost = torch.zeros(x.shape[0], 1)
+
+            original_idx = torch.arange(x.shape[0])
 
         for idx, exitblock in enumerate(self.exits):
             x = self.stages[idx](x)
@@ -229,16 +231,27 @@ class EE_CNN_Residual(nn.Module):
 
             if not self.training:
                 if conf.shape[0] > 1:
-                    idx_to_remove = self.find_conf_above_threshold(conf)
-                    self.construct_validation_output()
+                    idx_to_remove = self.find_conf_above_threshold(conf.cpu())
+                    self.construct_validation_output(
+                        pred.cpu(),
+                        conf.cpu(),
+                        idx_to_remove,
+                        original_idx,
+                        self.cost[idx],
+                        idx,
+                    )
                     x = self.remove_exited_pred_from_batch(x, idx_to_remove)
+                    original_idx = self.remove_indices_from_tensor(
+                        original_idx, idx_to_remove
+                    )
                 else:
                     if conf.item() > self.exit_threshold:
                         return pred, idx, self.cost[idx], conf.item()
 
-            preds.append(pred)
-            confs.append(conf)
-            cost.append(self.cost[idx])
+            if self.training:
+                preds.append(pred)
+                confs.append(conf)
+                cost.append(self.cost[idx])
 
         x = self.stages[-1](x)
         x = x.view(x.size(0), -1)
@@ -246,7 +259,28 @@ class EE_CNN_Residual(nn.Module):
         conf = self.confidence(x)
 
         if not self.training:
-            return pred, len(self.exits), 1.0, conf.item()
+            if conf.shape[0] == 1:
+                return pred, len(self.exits), 1.0, conf.item()
+
+            idx_to_remove = self.find_conf_above_threshold(
+                conf.cpu(), threshold=float("-inf")
+            )
+
+            self.construct_validation_output(
+                pred.cpu(),
+                conf.cpu(),
+                idx_to_remove,
+                original_idx,
+                1,
+                len(self.exits),
+            )
+
+            return (
+                self.val_batch_pred,
+                self.val_batch_exit,
+                self.val_batch_cost,
+                self.val_batch_conf,
+            )
 
         preds.append(pred)
         confs.append(conf)
@@ -264,11 +298,20 @@ class EE_CNN_Residual(nn.Module):
 
         return idx  
 
-    def construct_validation_output(self, idx):
-        
-        return
+    def construct_validation_output(
+        self, pred, conf, threshold_idx, original_idx, cost, exit_idx
+    ):
+        sample_idx = self.get_elements_from_indices(original_idx, threshold_idx)
+        self.val_batch_pred[sample_idx, :] = pred[threshold_idx, :]
+        self.val_batch_conf[sample_idx, :] = conf[threshold_idx, :]
+        self.val_batch_exit[sample_idx, :] = torch.full(
+            (int(len(threshold_idx)), 1), exit_idx, dtype=torch.float32
+        )
+        self.val_batch_cost[sample_idx, :] = torch.full(
+            (int(len(threshold_idx)), 1), cost, dtype=torch.float32
+        )
 
-    def remove_exited_pred_from_batch(x, idx):
+    def remove_exited_pred_from_batch(self, x, idx):
         # Create a mask tensor with True for indices to keep and False for indices to remove
         mask = torch.ones_like(x, dtype=torch.bool)
         mask[idx, :, :, :] = False
@@ -281,3 +324,18 @@ class EE_CNN_Residual(nn.Module):
         x_filtered = x_filtered.reshape(new_shape)
 
         return x_filtered
+
+    def remove_indices_from_tensor(self, tensor, indices):
+        mask = torch.ones(tensor.numel(), dtype=torch.bool)
+        mask[indices] = False
+        filtered_tensor = tensor[mask]
+
+        return filtered_tensor
+
+    def get_elements_from_indices(self, tensor, indices):
+        if tensor.shape == indices.shape:
+            return tensor
+
+        sliced_tensor = tensor[indices]
+
+        return sliced_tensor
