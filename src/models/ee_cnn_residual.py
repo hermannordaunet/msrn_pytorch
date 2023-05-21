@@ -3,13 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # Local import
+from src.models.cnn_residual import CNN_Residual
 from src.models.utils.exitblock import ExitBlock
+from src.models.utils.basicblock import BasicBlock
 from src.models.utils.classifier import simple_classifier
 from src.models.utils.confidence import simple_confidence
-from src.models.utils.basicblock import BasicBlock
-from cnn_residual import CNN_Residual
 
-from utils.flops_counter import get_model_complexity_info
+from src.models.utils.flops_counter import get_model_complexity_info
 
 
 def conv1x1(in_planes, out_planes, stride=1):
