@@ -87,7 +87,7 @@ def main():
     # define training hyperparameters
     INIT_LR = 1e-3
     BATCH_SIZE = 64
-    TEST_BATCH_SIZE = 1  # CRITICAL: exit block cant handle batch size > 1 in eval mode
+    TEST_BATCH_SIZE = 64  # CRITICAL: exit block cant handle batch size > 1 in eval mode
     EPOCHS = 25
 
     # define the train and val splits
@@ -147,8 +147,8 @@ def main():
     model = EE_CNN_Residual(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
-        num_ee=2,
-        exit_threshold=0.5,
+        num_ee=0,
+        exit_threshold=0.9,
         repetitions=[2, 2],
         planes=[32, 64, 64],
         distribution="fine",
@@ -168,7 +168,6 @@ def main():
     print(f"[INFO] started training @ {time.ctime(startTime)}")
 
     for e in range(0, EPOCHS):
-
         print("[INFO] EPOCH: {}/{}".format(e + 1, EPOCHS))
 
         losses, pred_losses, cost_losses, batch_confs = train(
