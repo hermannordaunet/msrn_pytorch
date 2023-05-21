@@ -185,15 +185,20 @@ def main():
     if TRAIN_MODEL:
         timestamp = int(time.time())
 
-        results_directory = f"./results/{timestamp}"
+        results_directory = f"./results/{timestamp}/"
         # Check if the directory exists
         if not os.path.exists(results_directory):
             # If it doesn't exist, create it
             os.makedirs(results_directory)
-            models_directory = f"{results_directory}/models"
+            models_directory = f"{results_directory}/models/"
             os.makedirs(models_directory)
 
             model_param["models_dir"] = models_directory
+
+        # TODO: Save here? Or later?
+        # save_dict_to_json(agent.model_param, f"{results_directory}_model_param.json")
+        # save_dict_to_json(agent.config, f"{results_directory}_config.json")
+        # save_dict_to_json(agent.dqn_param, f"{results_directory}_dqn_param.json")
 
         print("[INFO] Initalizing Q network local")
         ee_qnetwork_local = EE_CNN_Residual(
