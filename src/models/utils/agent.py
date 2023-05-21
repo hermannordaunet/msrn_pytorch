@@ -125,7 +125,7 @@ class Agent:
 
         return True
 
-    def act(self, state, eps=0.0):
+    def act(self, state, eps=0.0, num_teams=1):
         """Returns actions for given state as per current policy.
 
         Params
@@ -133,33 +133,67 @@ class Agent:
             state (array_like): current state
             eps (float): epsilon, for epsilon-greedy action selection
         """
-        # state = torch.from_numpy(state).float().to(self.device)
-        state = state.to(
-            self.device
-        )  # Try to get the state to the same device as model
 
-        self.qnetwork_local.eval()
-        with torch.no_grad():
-            action_values, idx, cost, conf = self.qnetwork_local(state)
+        if num_teams > 1:
+            # state = torch.from_numpy(state).float().to(self.device)
+            state = state.to(
+                self.device
+            )  # Try to get the state to the same device as model
 
-        # Epsilon-greedy action selection
+            self.qnetwork_local.eval()
+            with torch.no_grad():
+                action_values, exits, costs, confs = self.qnetwork_local(state)
+            
+            # Same for everyone
+            laser_action = np.zeros((1, 1))
 
-        laser_action = np.zeros((1, 1))  # CRITICAL: Get this working
-        # Either new network or threshold on the output.
+            move_actions_batch = np.zeros((num_teams, 1, self.qnetwork_local.num_classes))
 
-        move_action = np.zeros((1, self.qnetwork_local.num_classes))
+            if random.random() > eps:
+                # Returning action for network
+                action_indexes = torch.max(action_values, dim=1)[1]
+                # CRITICAL: LOOP - Slow for-loop?
+                for count in range(num_teams):
+                    move_actions_batch[count, :, action_indexes[count]] = 1.0
 
-        if random.random() > eps:
-            # Returning action for network
-            action_idx = action_values.max(1)[1].item()
-            move_action[0][action_idx] = 1.0
+            else:
+                # Returning a random action
+                high = self.qnetwork_local.num_classes
+                random_action_idx = np.random.randint(0, high, size=num_teams)
+                # CRITICAL: LOOP - Slow for-loop?
+                for count in range(num_teams):
+                    move_actions_batch[count, :, random_action_idx[count]] = 1.0
+            
+            return
+        
         else:
-            # Returning a random action
-            high = self.qnetwork_local.num_classes
-            random_action_idx = np.random.randint(0, high)
-            move_action[0][random_action_idx] = 1.0
+            # state = torch.from_numpy(state).float().to(self.device)
+            state = state.to(
+                self.device
+            )  # Try to get the state to the same device as model
 
-        return move_action, laser_action, idx, cost, conf
+            self.qnetwork_local.eval()
+            with torch.no_grad():
+                action_values, idx, cost, conf = self.qnetwork_local(state)
+
+            # Epsilon-greedy action selection
+
+            laser_action = np.zeros((1, 1))  # CRITICAL: Get this working
+            # Either new network or threshold on the output.
+
+            move_action = np.zeros((1, self.qnetwork_local.num_classes))
+
+            if random.random() > eps:
+                # Returning action for network
+                action_idx = action_values.max(1)[1].item()
+                move_action[0][action_idx] = 1.0
+            else:
+                # Returning a random action
+                high = self.qnetwork_local.num_classes
+                random_action_idx = np.random.randint(0, high)
+                move_action[0][random_action_idx] = 1.0
+
+            return move_action, laser_action, idx, cost, conf
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
