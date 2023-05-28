@@ -95,7 +95,7 @@ def main():
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
-        "learningRate": {"lr": 1e-3},  # learning rate to the optimizer
+        "learning_rate": {"lr": 1e-3},  # learning rate to the optimizer
         "weight_decay": 0,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": True,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
@@ -403,6 +403,7 @@ def model_trainer(
                     f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
                 )
                 print(f"Last loss: {agent.cum_loss}")
+                print(f"Number of transistions in memory: {len(agent.memory)}")
 
                 # min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
                 # print_min_max_conf(min_vals, max_vals)
@@ -452,6 +453,7 @@ def model_trainer(
         save_dict_to_json(agent.model_param, f"{parameter_directory}/model_param.json")
         save_dict_to_json(agent.config, f"{parameter_directory}/config.json")
         save_dict_to_json(agent.dqn_param, f"{parameter_directory}/dqn_param.json")
+        save_dict_to_json(epsilon_greedy_param, f"{parameter_directory}/epsilon_greedy_param.json")
 
         print("Model is saved, parameters is saved & the Environment is closed...")
 

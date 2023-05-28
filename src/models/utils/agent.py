@@ -62,7 +62,7 @@ class Agent:
         self.qnetwork_target = qnetwork_target
 
         self.seed = self.model_param["manual_seed"]
-        self.learning_rate = self.config["learningRate"]["lr"]
+        self.learning_rate = self.config["learning_rate"]["lr"]
         self.memory_size = self.config["memory_size"]
         self.minimal_memory_size = self.config["minimal_memory_size"]
         self.prioritized_memory = self.config["prioritized_memory"]
@@ -298,26 +298,26 @@ class Agent:
         if self.config["optimizer"] == "adam":
             self.optimizer = optim.Adam(
                 parameters,
-                lr=self.config["learningRate"]["lr"],
+                lr=self.config["learning_rate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
 
         elif self.config["optimizer"] == "adamW":
             self.optimizer = optim.AdamW(
                 parameters,
-                lr=self.config["learningRate"]["lr"],
+                lr=self.config["learning_rate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "SGD":
             self.optimizer = optim.SGD(
                 parameters,
-                lr=self.config["learningRate"]["lr"],
+                lr=self.config["learning_rate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "RMSprop":
             self.optimizer = optim.RMSprop(
                 parameters,
-                lr=self.config["learningRate"]["lr"],
+                lr=self.config["learning_rate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         else:
