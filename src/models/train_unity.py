@@ -84,8 +84,8 @@ def main():
 
     config = {
         "env_name": "FoodCollector",
-        "use_build": False,
-        "no_graphics": False,
+        "use_build": True,
+        "no_graphics": True,
         "laser_length": 1.5,
         "agent_scale": 1,
         "prioritized_memory": False,
@@ -132,7 +132,7 @@ def main():
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
-            relative_path = "builds/Linus_FoodCollector_4_no_respawn_headless.x86_64"
+            relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             FILE_NAME = relative_path
         else:
             relative_path = "builds/FoodCollector_4_no_respawn.app"
