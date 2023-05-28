@@ -24,6 +24,7 @@ from visualization.visualize import (
     plot_scores_from_list,
     plot_loss_from_list,
     plot_grid_based_perception,
+    plot_scores_from_nested_list,
 )
 
 # unity imports
@@ -89,6 +90,7 @@ def main():
         "agent_scale": 1,
         "prioritized_memory": False,
         "memory_size": int(1e5),
+        "minimal_memory_size": int(2e3),
         "batch_size": 2048,  # Training batch size
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
@@ -104,7 +106,7 @@ def main():
     dqn_param = {
         "gamma": 0.999,
         "tau": 5e-3,
-        "update_every": 4,
+        "update_every": 20,
     }
 
     epsilon_greedy_param = {
@@ -186,6 +188,7 @@ def main():
         timestamp = int(time.time())
 
         results_directory = f"./results/{timestamp}/"
+        parameter_directory = f"{results_directory}parameters/"
         # Check if the directory exists
         if not os.path.exists(results_directory):
             # If it doesn't exist, create it
@@ -194,6 +197,11 @@ def main():
             os.makedirs(models_directory)
 
             model_param["models_dir"] = models_directory
+
+        if not os.path.exists(parameter_directory):
+            os.makedirs(parameter_directory)
+
+            model_param["parameter_dir"] = parameter_directory
 
         # TODO: Save here? Or later?
         # save_dict_to_json(agent.model_param, f"{results_directory}_model_param.json")
@@ -237,12 +245,13 @@ def main():
         startTime = time.time()
         print(f"[INFO] started training @ {time.ctime(startTime)}")
 
-        scores, i, scores_window, losses = model_trainer(
+        scores, episode, scores_window, losses = model_trainer(
             env,
             agent,
             config=config,
             epsilon_greedy_param=epsilon_greedy_param,
             results_directory=results_directory,
+            parameter_directory=parameter_directory,
             verbose=VERBOSE,
         )
 
@@ -260,6 +269,7 @@ def model_trainer(
     config=None,
     epsilon_greedy_param=None,
     results_directory="./",
+    parameter_directory="./parameters/",
     verbose=False,
 ):
     """Deep Q-Learning trainer.
@@ -301,8 +311,10 @@ def model_trainer(
 
         state_batch_tensor = torch.zeros((num_teams, *state_size))
 
-    
-        for i in range(1, num_episodes + 1):
+        for episode in range(1, num_episodes + 1):
+            if verbose:
+                print(f"Episode {episode}/{num_episodes} started")
+
             env.reset()  # TODO: Test with and without this
 
             for team_idx, team in enumerate(team_name_list):
@@ -314,7 +326,8 @@ def model_trainer(
                 }
 
             # min_max_conf = list()
-            while True:
+            episode_done = False
+            while not episode_done:
                 for team_idx, team in enumerate(team_name_list):
                     decision_steps, terminal_steps = env.get_steps(team)
                     agent_id = training_agents[team]["agent_id"]
@@ -331,59 +344,68 @@ def model_trainer(
                 act = agent.act(state_batch_tensor, eps=eps, num_teams=num_teams)
                 move_action, laser_action, idx, cost, conf = act
 
-                env.set_action_for_agent(
-                    env_object,
-                    agent_id,
-                    ActionTuple(move_action, laser_action),
-                )
+                for team_idx, team in enumerate(team_name_list):
+                    agent_id = training_agents[team]["agent_id"]
+                    move_action_squeeze = move_action[team_idx, :, :]
+                    laser_action_squeeze = laser_action[team_idx, :, :]
+                    env.set_action_for_agent(
+                        team,
+                        agent_id,
+                        ActionTuple(move_action_squeeze, laser_action_squeeze),
+                    )
 
                 env.step()
 
-                decision_steps, terminal_steps = env.get_steps(env_object)
-                agent_ids = decision_steps.agent_id
+                for team_idx, team in enumerate(team_name_list):
+                    decision_steps, terminal_steps = env.get_steps(team)
+                    agent_ids = decision_steps.agent_id
+                    agent_id = training_agents[team]["agent_id"]
 
-                # ASK: This needs to be if agent not done?
-                if agent_id in agent_ids:
-                    agent_obs = decision_steps[agent_id].obs
-                    next_state = get_grid_based_perception(agent_obs)
-                else:
-                    next_state = None
+                    # ASK: This needs to be if agent not done?
+                    if agent_id in agent_ids:
+                        agent_obs = decision_steps[agent_id].obs
+                        next_state = get_grid_based_perception(agent_obs)
+                    else:
+                        next_state = None
 
-                reward = decision_steps[agent_id].reward
+                    reward = decision_steps[agent_id].reward
 
-                terminated_agent_ids = terminal_steps.agent_id
-                done = (
-                    terminal_steps[agent_id].interrupted
-                    if agent_id in terminated_agent_ids
-                    else False
-                )
+                    terminated_agent_ids = terminal_steps.agent_id
+                    done = (
+                        terminal_steps[agent_id].interrupted
+                        if agent_id in terminated_agent_ids
+                        else False
+                    )
 
-                action = np.argmax(move_action)
-                optimized = agent.step(state, action, reward, next_state, done, i)
-                state = next_state
-                episode_score += reward
+                    action = np.argmax(move_action)
+                    state = state_batch_tensor[team_idx, :, :, :].unsqueeze(0)
+                    optimized = agent.step(
+                        state, action, reward, next_state, done, episode
+                    )
+                    state = next_state
+                    training_agents[team]["episode_score"] += reward
 
-                if optimized:
-                    min_max_conf.append(agent.train_conf)
+                    episode_done = done
 
-                # if done:
-                #     break
+            scores_all_training_agents = [
+                team_info["episode_score"] for team_info in training_agents.values()
+            ]
 
-            scores_window.append(episode_score)  # save most recent score
-            scores.append(episode_score)  # save most recent score
+            scores_window.append(scores_all_training_agents)  # save most recent score
+            scores.append(scores_all_training_agents)  # save most recent score
             losses.append(agent.cum_loss.item())  # save most recent loss
 
             eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
-                print(f"\rEpisode {i}/{num_episodes}: ")
+                print(f"\rEpisode {episode}/{num_episodes} stats: ")
                 print(
                     f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
                 )
                 print(f"Last loss: {agent.cum_loss}")
 
-                min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
-                print_min_max_conf(min_vals, max_vals)
+                # min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
+                # print_min_max_conf(min_vals, max_vals)
 
             if len(losses) > 1:
                 plot_loss_from_list(
@@ -394,7 +416,7 @@ def model_trainer(
                 )
 
             if len(scores) > 1:
-                plot_scores_from_list(
+                plot_scores_from_nested_list(
                     scores,
                     labels=["train"],
                     env_name=config["env_name"],
@@ -404,11 +426,10 @@ def model_trainer(
             if early_stop is None:
                 continue
 
-            if np.mean(scores_window) >= early_stop and i > 10:
+            avg_score = np.mean(scores_window)
+            if avg_score >= early_stop and episode > 10:
                 print(
-                    "\nEnvironment solved in {:d} episodes!\tAverage Score: {:.2f}".format(
-                        i, np.mean(scores_window)
-                    )
+                    f"\nEnvironment solved in {episode} episodes!\tAverage Score: {avg_score:.2f}"
                 )
 
                 break
@@ -428,13 +449,13 @@ def model_trainer(
         env.close()
         # CRITICAL: Save model here and the nessasary values
         save_model(agent.qnetwork_local, agent.model_param["models_dir"])
-        save_dict_to_json(agent.model_param, f"{results_directory}_model_param.json")
-        save_dict_to_json(agent.config, f"{results_directory}_config.json")
-        save_dict_to_json(agent.dqn_param, f"{results_directory}_dqn_param.json")
+        save_dict_to_json(agent.model_param, f"{parameter_directory}/model_param.json")
+        save_dict_to_json(agent.config, f"{parameter_directory}/config.json")
+        save_dict_to_json(agent.dqn_param, f"{parameter_directory}/dqn_param.json")
 
         print("Model is saved, parameters is saved & the Environment is closed...")
 
-    return scores, i, scores_window, losses
+    return scores, episode, scores_window, losses
 
 
 if __name__ == "__main__":

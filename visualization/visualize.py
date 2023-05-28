@@ -20,7 +20,7 @@ def plot_scores_from_list(scores: list(), labels=None, env_name="", result_dir="
     if labels:
         if scores.ndim > 1:
             if scores.shape[0] > len(labels):
-                print("Need provide enough labels to get legend on the plot")
+                print("Need to provide enough labels to get legend on the plot")
                 labels = None
 
     df = pd.DataFrame(scores.transpose(), columns=labels, index=x_values)
@@ -38,7 +38,42 @@ def plot_scores_from_list(scores: list(), labels=None, env_name="", result_dir="
     if labels:
         plt.legend()
 
-    plt.savefig(f"{result_dir}/{env_name}_scores.png")
+    plt.savefig(f"{result_dir}/{env_name}_scores.pdf")
+
+
+def plot_scores_from_nested_list(
+    scores: list(), labels=None, env_name="", result_dir="./"
+):
+    scores = np.array(scores)
+
+    if labels:
+        if len(labels) == 1:
+            labels = labels[-1]
+
+        # Calculate mean, min, and max values for each time point
+    mean_values = np.mean(scores, axis=1)
+    min_values = np.min(scores, axis=1)
+    max_values = np.max(scores, axis=1)
+
+    # Create x-axis values (time points)
+    x = np.arange(1, scores.shape[0] + 1)
+
+    # Set Seaborn style
+    sns.set(style="darkgrid")
+
+    # Create the line plot with error bars
+    plt.figure()
+    sns.lineplot(x=x, y=mean_values, label=labels)
+    plt.fill_between(x, min_values, max_values, alpha=0.25)
+    sns.despine()
+    plt.title(f"{env_name} reward")
+    plt.ylabel("Reward")
+    plt.xlabel("Episode #")
+
+    if labels:
+        plt.legend()
+
+    plt.savefig(f"{result_dir}/{env_name}_scores_parallell_agents.pdf")
 
 
 # save loss plot
@@ -53,7 +88,7 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
     if labels:
         if losses.ndim > 1:
             if losses.shape[0] > len(labels):
-                print("Need provide enough labels to get legend on the plot")
+                print("Need to provide enough labels to get legend on the plot")
                 labels = None
 
     df = pd.DataFrame(losses.transpose(), columns=labels, index=x_values)
@@ -71,7 +106,7 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
     if labels:
         plt.legend()
 
-    plt.savefig(f"{result_dir}/{env_name}_losses.png")
+    plt.savefig(f"{result_dir}/{env_name}_losses.pdf")
 
 
 # Eval loss and score
@@ -87,11 +122,11 @@ def plot_grid_based_perception(image_tensor, team_id):
     for col in range(num_cols):
         cur_ax = ax[col]
         cur_ax.imshow(image_tensor[col, :, :])
-        
-        cur_ax.set_title(labels[col])
-        cur_ax.axis('off')
 
-    fig.suptitle(f'Agent observation: {team_id}')
-    
+        cur_ax.set_title(labels[col])
+        cur_ax.axis("off")
+
+    fig.suptitle(f"Agent observation: {team_id}")
+
     plt.tight_layout()
     plt.show()
