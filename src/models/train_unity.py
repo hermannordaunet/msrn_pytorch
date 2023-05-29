@@ -230,6 +230,7 @@ def main():
             num_classes=model_param["num_classes"],
             repetitions=model_param["repetitions"],
             distribution=model_param["distribution"],
+            initalize_parameters=False,
         ).to(DEVICE)
 
         # TODO: This is important to get the networks initalized with the same weigths
