@@ -307,7 +307,6 @@ def model_trainer(
     scores_window = deque(maxlen=print_range)
 
     try:
-
         training_agents = dict()
         team_name_list = list(env.behavior_specs.keys())
         num_teams = len(team_name_list)
