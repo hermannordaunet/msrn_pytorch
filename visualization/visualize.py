@@ -38,6 +38,7 @@ def plot_scores_from_list(scores: list(), labels=None, env_name="", result_dir="
 
     plt.tight_layout()
     plt.savefig(f"{result_dir}/{env_name}_scores.pdf")
+    plt.close()
 
 
 def plot_scores_from_nested_list(
@@ -74,6 +75,7 @@ def plot_scores_from_nested_list(
 
     plt.tight_layout()
     plt.savefig(f"{result_dir}/{env_name}_scores_parallell_agents.pdf")
+    plt.close()
 
 
 # save loss plot
@@ -106,6 +108,7 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
 
     plt.tight_layout()
     plt.savefig(f"{result_dir}/{env_name}_losses.pdf")
+    plt.close()
 
 
 # Eval loss and score
