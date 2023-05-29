@@ -135,7 +135,6 @@ def plot_grid_based_perception(image_tensor, team_id):
 
 
 def main():
-
     import time
     import random
 
@@ -143,9 +142,11 @@ def main():
     M = 450
 
     scores = [[random.random() for i in range(N)] for j in range(M)]
+    losses = [random.random() for i in range(M)]
 
     start_time = time.time()
-    plot_scores_from_nested_list(scores, labels=["train"], env_name="FoodCollector")
+    plot_scores_from_nested_list(scores, labels=["Train"], env_name="FoodCollector")
+    plot_loss_from_list(losses, labels=["Train"], env_name="FoodCollector")
     end_time = time.time()
 
     elapsed_time = end_time - start_time
