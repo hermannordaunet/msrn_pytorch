@@ -96,7 +96,7 @@ def main():
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {"lr": 1e-3},  # learning rate to the optimizer
-        "weight_decay": 0,  # weight_decay value # TUNE: originally 0.00001
+        "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": True,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
@@ -104,14 +104,14 @@ def main():
     }
 
     dqn_param = {
-        "gamma": 0.999,
-        "tau": 5e-3,
+        "gamma": 0.99,
+        "tau": 0.05,
         "update_every": 20,
     }
 
     epsilon_greedy_param = {
-        "eps_start": 1.0,
-        "eps_end": 0.01,
+        "eps_start": 0.9,
+        "eps_end": 0.05,
         "eps_decay": 0.95,
     }
 
