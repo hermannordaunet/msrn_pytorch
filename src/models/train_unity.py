@@ -89,10 +89,10 @@ def main():
         "laser_length": 1.5,
         "agent_scale": 1,
         "prioritized_memory": False,
-        "memory_size": 10_000, #10_000
-        "minimal_memory_size": 2_000, # Either batch_size or minimal_memory_size before training
+        "memory_size": 25_000,  # 10_000
+        "minimal_memory_size": 2_000,  # Either batch_size or minimal_memory_size before training
         "batch_size": 2048,  # Training batch size
-        "num_episodes": 500, 
+        "num_episodes": 500,
         "benchmarks_mean_reward": None,
         "optimizer": "adamW",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {"lr": 0.001},  # learning rate to the optimizer
