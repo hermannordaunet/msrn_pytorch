@@ -297,16 +297,12 @@ def model_trainer(
     scores_window = deque(maxlen=print_range)
 
     try:
-        # Get the name of the environment object
-        # env_object = list(env._env_specs)[0]
-        # decision_steps, _ = env.get_steps(env_object)
-        # agent_ids = decision_steps.agent_id
-        # agent_id = agent_ids[0]
 
         training_agents = dict()
         team_name_list = list(env.behavior_specs.keys())
 
         num_teams = len(team_name_list)
+
         state_size = agent.model_param["input_size"]
 
         state_batch_tensor = torch.zeros((num_teams, *state_size))
@@ -382,7 +378,9 @@ def model_trainer(
                     optimized = agent.step(
                         state, action, reward, next_state, done, episode
                     )
-                    state = next_state
+                    state = (
+                        next_state  # TODO: This is dobbel up on the for loop futher up
+                    )
                     training_agents[team]["episode_score"] += reward
 
                     episode_done = done
@@ -398,7 +396,7 @@ def model_trainer(
             eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
-                print(f"\rEpisode {episode}/{num_episodes} stats: ")
+                print(f"\nEpisode {episode}/{num_episodes} stats: ")
                 print(
                     f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
                 )
