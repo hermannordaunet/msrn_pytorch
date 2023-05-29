@@ -144,10 +144,11 @@ def main():
     start_time = time.time()
     plot_scores_from_nested_list(scores, labels=["train"], env_name="FoodCollector")
     end_time = time.time()
-    
+
     elapsed_time = end_time - start_time
 
     print(f"Elapsed time: {elapsed_time} seconds")
+
 
 if __name__ == "__main__":
     main()
