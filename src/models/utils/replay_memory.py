@@ -35,6 +35,7 @@ class ReplayMemory(object):
         )
         # return np.random.choice(self.memory, size=self.batch_size)
 
+        # CRITICAL: Think this is a bit to slow
         experiences = [self.memory[i] for i in indexes]
         # experiences = (self.memory[i] for i in indexes)
         # experiences = np.array(self.memory)[indexes]

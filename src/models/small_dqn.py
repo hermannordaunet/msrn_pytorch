@@ -24,9 +24,6 @@ class small_DQN(nn.Module):
         self._img_width = img_width
         self._num_classes = num_classes
 
-        # TODO: Add this back
-        # self.memory = memory
-
         # Layer 1 with batch norm
         self.conv1 = nn.Conv2d(
             self._in_channels,
