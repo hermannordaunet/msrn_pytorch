@@ -132,7 +132,9 @@ def main():
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
-            relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+            relative_path = (
+                "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+            )
             FILE_NAME = relative_path
         else:
             relative_path = "builds/FoodCollector_4_no_respawn.app"
