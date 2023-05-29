@@ -18,8 +18,8 @@ class Agent:
 
     def __init__(
         self,
-        qnetwork_local,
-        qnetwork_target,
+        policy_net,
+        target_net,
         model_param=None,
         config=None,
         dqn_param=None,
@@ -58,8 +58,8 @@ class Agent:
         self.config = config
         self.dqn_param = dqn_param
 
-        self.qnetwork_local = qnetwork_local
-        self.qnetwork_target = qnetwork_target
+        self.policy_net = policy_net
+        self.target_net = target_net
 
         self.seed = self.model_param["manual_seed"]
         self.learning_rate = self.config["learning_rate"]["lr"]
@@ -116,7 +116,7 @@ class Agent:
         # TODO: Add a minimal batch size?
         if len(self.memory) <= self.minimal_memory_size:
             return False
-        
+
         # If enough samples are available in memory, get random subset and learn
         # Redundant now that we have minimal_memory_size
         if len(self.memory) <= self.batch_size:
@@ -138,6 +138,7 @@ class Agent:
         ======
             state (array_like): current state
             eps (float): epsilon, for epsilon-greedy action selection
+            num_teams (int): how many environments in parallell
         """
 
         # if num_teams > 1:
@@ -146,14 +147,14 @@ class Agent:
             self.device
         )  # Try to get the state to the same device as model
 
-        self.qnetwork_local.eval()
+        self.policy_net.eval()
         with torch.no_grad():
-            action_values, exits, costs, confs = self.qnetwork_local(state)
+            action_values, exits, costs, confs = self.policy_net(state)
 
         # Same for everyone
         laser_action_batch = np.zeros((num_teams, 1, 1))
 
-        move_actions_batch = np.zeros((num_teams, 1, self.qnetwork_local.num_classes))
+        move_actions_batch = np.zeros((num_teams, 1, self.policy_net.num_classes))
 
         if random.random() > eps:
             # Returning action for network
@@ -164,7 +165,7 @@ class Agent:
 
         else:
             # Returning a random action
-            high = self.qnetwork_local.num_classes
+            high = self.policy_net.num_classes
             random_action_idx = np.random.randint(0, high, size=num_teams)
             # CRITICAL: LOOP - Slow for-loop?
             for count in range(num_teams):
@@ -213,11 +214,11 @@ class Agent:
         # I have forgotten all the details of the DQN training loop with the
         # local and tarfet network.
 
-        num_ee = len(self.qnetwork_local.exits)
+        num_ee = len(self.policy_net.exits)
 
         # TODO: Check if this is the correct place to start the training
-        self.qnetwork_local.train()
-        self.qnetwork_target.train()
+        self.policy_net.train()
+        self.target_net.train()
 
         self.optimizer.zero_grad()
 
@@ -237,7 +238,9 @@ class Agent:
         )
 
         # Get max predicted Q values (for next states) from target model
-        pred, _, _ = self.qnetwork_target(next_state_batch)
+        with torch.no_grad():
+            pred, _, _ = self.target_net(next_state_batch)
+
         # CRITICAL: Here we get the Q_targets from the last exit of the network
         Q_targets_next = pred[-1].detach().max(1)[0].unsqueeze(1)
 
@@ -247,7 +250,7 @@ class Agent:
         # ASK: The Q_targets have no "info" of which action it took to get the score
 
         # Get expected Q values from local model
-        pred, conf, cost = self.qnetwork_local(state_batch)
+        pred, conf, cost = self.policy_net(state_batch)
         cost.append(torch.tensor(1.0).to(self.device))
 
         Q_expected = list()
@@ -272,16 +275,16 @@ class Agent:
             self.scheduler.step()
 
         # Update target network
-        self.soft_update(self.qnetwork_local, self.qnetwork_target, self.tau)
+        self.soft_update(self.policy_net, self.target_net, self.tau)
 
-    def soft_update(self, local_model, target_model, tau):
+    def soft_update(self, policy_net, target_net, tau):
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
 
         Params
         ======
-            local_model (PyTorch model): weights will be copied from
-            target_model (PyTorch model): weights will be copied to
+            policy_net (PyTorch model): weights will be copied from
+            target_net (PyTorch model): weights will be copied to
             tau (float): interpolation parameter
         """
         for target_param, local_param in zip(
@@ -293,7 +296,7 @@ class Agent:
 
     def initalize_optimizer(self):
         # Getting the network parameters
-        parameters = self.qnetwork_local.parameters()
+        parameters = self.policy_net.parameters()
 
         if self.config["optimizer"] == "adam":
             self.optimizer = optim.Adam(

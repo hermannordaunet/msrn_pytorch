@@ -210,8 +210,8 @@ def main():
         # save_dict_to_json(agent.config, f"{results_directory}_config.json")
         # save_dict_to_json(agent.dqn_param, f"{results_directory}_dqn_param.json")
 
-        print("[INFO] Initalizing Q network local")
-        ee_qnetwork_local = EE_CNN_Residual(
+        print("[INFO] Initalizing Q network policy")
+        ee_policy_net = EE_CNN_Residual(
             # frames_history=2,
             num_ee=model_param["num_ee"],
             planes=model_param["planes"],
@@ -222,7 +222,7 @@ def main():
         ).to(DEVICE)
 
         print("[INFO] Initalizing Q network target")
-        ee_qnetwork_target = EE_CNN_Residual(
+        ee_target_net = EE_CNN_Residual(
             # frames_history=2,
             num_ee=model_param["num_ee"],
             planes=model_param["planes"],
@@ -232,13 +232,15 @@ def main():
             distribution=model_param["distribution"],
         ).to(DEVICE)
 
-        ee_qnetwork_local.eval()
-        ee_qnetwork_target.eval()
+        # TODO: This is important to get the networks initalized with the same weigths
+        ee_target_net.load_state_dict(ee_policy_net.state_dict())
 
-        # TUNE: This object has some init values to look into.
+        ee_policy_net.eval()
+        ee_target_net.eval()
+
         agent = Agent(
-            ee_qnetwork_local,
-            ee_qnetwork_target,
+            ee_policy_net,
+            ee_target_net,
             model_param=model_param,
             config=config,
             dqn_param=dqn_param,
@@ -449,11 +451,7 @@ def model_trainer(
     finally:
         env.close()
         # CRITICAL: Save model here and the nessasary values
-        save_model(agent.qnetwork_local, agent.model_param["models_dir"])
-        save_dict_to_json(agent.model_param, f"{parameter_directory}/model_param.json")
-        save_dict_to_json(agent.config, f"{parameter_directory}/config.json")
-        save_dict_to_json(agent.dqn_param, f"{parameter_directory}/dqn_param.json")
-        save_dict_to_json(epsilon_greedy_param, f"{parameter_directory}/epsilon_greedy_param.json")
+        save_model(agent.policy_net, agent.model_param["models_dir"])
 
         print("Model is saved, parameters is saved & the Environment is closed...")
 
