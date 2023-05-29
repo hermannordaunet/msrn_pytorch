@@ -316,7 +316,7 @@ def model_trainer(
 
         for episode in range(1, num_episodes + 1):
             if verbose:
-                print(f"Episode {episode}/{num_episodes} started")
+                print(f"\nEpisode {episode}/{num_episodes} started")
 
             env.reset()  # TODO: Test with and without this
 
@@ -403,7 +403,7 @@ def model_trainer(
             eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
-                print(f"\nEpisode {episode}/{num_episodes} stats: ")
+                print(f"Episode stats: ")
                 print(
                     f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
                 )
