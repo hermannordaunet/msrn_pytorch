@@ -30,6 +30,7 @@ class EE_CNN_Residual(nn.Module):
         repetitions=list(),
         planes=list(),
         distribution=None,
+        initalize_parameters=True,
     ):
         super(EE_CNN_Residual, self).__init__()
 
@@ -132,7 +133,9 @@ class EE_CNN_Residual(nn.Module):
         self.stages.append(nn.Sequential(*self.layers))
 
         self.complexity.append((total_flops, total_params))
-        self.parameter_initializer()
+
+        if initalize_parameters:
+            self.parameter_initializer()
 
     def set_thresholds(self, distribution, total_flops):
         """set thresholds
@@ -290,7 +293,6 @@ class EE_CNN_Residual(nn.Module):
         return preds, confs, cost
 
     def find_conf_above_threshold(self, conf, threshold=None):
-
         if threshold:
             exit_threshold = threshold
         else:
