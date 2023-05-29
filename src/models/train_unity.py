@@ -262,13 +262,12 @@ def main():
             config=config,
             epsilon_greedy_param=epsilon_greedy_param,
             results_directory=results_directory,
-            parameter_directory=parameter_directory,
             verbose=VERBOSE,
         )
 
         endTime = time.time()
         print(
-            "[INFO] total time taken to train the model: {:.2f}s".format(
+            "[INFO] total time taken to train the model: {:.2f} sec".format(
                 endTime - startTime
             )
         )
@@ -280,7 +279,6 @@ def model_trainer(
     config=None,
     epsilon_greedy_param=None,
     results_directory="./",
-    parameter_directory="./parameters/",
     verbose=False,
 ):
     """Deep Q-Learning trainer.
@@ -311,11 +309,9 @@ def model_trainer(
 
         training_agents = dict()
         team_name_list = list(env.behavior_specs.keys())
-
         num_teams = len(team_name_list)
 
         state_size = agent.model_param["input_size"]
-
         state_batch_tensor = torch.zeros((num_teams, *state_size))
 
         for episode in range(1, num_episodes + 1):
@@ -459,6 +455,12 @@ def model_trainer(
         env.close()
         # CRITICAL: Save model here and the nessasary values
         save_model(agent.policy_net, agent.model_param["models_dir"])
+        # save_dict_to_json(agent.model_param, f"{parameter_directory}/model_param.json")
+        # save_dict_to_json(agent.config, f"{parameter_directory}/config.json")
+        # save_dict_to_json(agent.dqn_param, f"{parameter_directory}/dqn_param.json")
+        # save_dict_to_json(
+        #     epsilon_greedy_param, f"{parameter_directory}/epsilon_greedy_param.json"
+        # )
 
         print("Model is saved, parameters is saved & the Environment is closed...")
 
