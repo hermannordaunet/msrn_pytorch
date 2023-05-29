@@ -343,3 +343,38 @@ class EE_CNN_Residual(nn.Module):
         sliced_tensor = tensor[indices]
 
         return sliced_tensor
+
+
+def main():
+    DEVICE = "mps"
+    ee_policy_net = EE_CNN_Residual(
+        # frames_history=2,
+        num_ee=0,
+        planes=[32, 64, 64],
+        input_shape=(5, 40, 40),
+        num_classes=3,
+        repetitions=[2, 2],
+        distribution="pareto",
+    ).to(DEVICE)
+
+    ee_target_net = EE_CNN_Residual(
+        # frames_history=2,
+        num_ee=0,
+        planes=[32, 64, 64],
+        input_shape=(5, 40, 40),
+        num_classes=3,
+        repetitions=[2, 2],
+        distribution="pareto",
+        initalize_parameters=False,
+    ).to(DEVICE)
+
+    ee_target_net.load_state_dict(ee_policy_net.state_dict())
+
+    input = torch.rand(1, 5, 40, 40).to(DEVICE)
+
+    out_policy = ee_policy_net(input)
+    out_target = ee_target_net(input)
+
+
+if __name__ == "__main__":
+    main()
