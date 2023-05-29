@@ -173,35 +173,6 @@ class Agent:
 
         return move_actions_batch, laser_action_batch, exits, costs, confs
 
-        # else:
-        #     # state = torch.from_numpy(state).float().to(self.device)
-        #     state = state.to(
-        #         self.device
-        #     )  # Try to get the state to the same device as model
-
-        #     self.qnetwork_local.eval()
-        #     with torch.no_grad():
-        #         action_values, idx, cost, conf = self.qnetwork_local(state)
-
-        #     # Epsilon-greedy action selection
-
-        #     laser_action = np.zeros((1, 1))  # CRITICAL: Get this working
-        #     # Either new network or threshold on the output.
-
-        #     move_action = np.zeros((1, self.qnetwork_local.num_classes))
-
-        #     if random.random() > eps:
-        #         # Returning action for network
-        #         action_idx = action_values.max(1)[1].item()
-        #         move_action[0][action_idx] = 1.0
-        #     else:
-        #         # Returning a random action
-        #         high = self.qnetwork_local.num_classes
-        #         random_action_idx = np.random.randint(0, high)
-        #         move_action[0][random_action_idx] = 1.0
-
-        #     return move_action, laser_action, idx, cost, conf
-
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
 
