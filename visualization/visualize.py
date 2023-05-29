@@ -33,11 +33,10 @@ def plot_scores_from_list(scores: list(), labels=None, env_name="", result_dir="
     plt.ylabel("Reward")
     plt.xlabel("Episode #")
 
-    plt.xticks(x_values)
-
     if labels:
         plt.legend()
 
+    plt.tight_layout()
     plt.savefig(f"{result_dir}/{env_name}_scores.pdf")
 
 
@@ -73,6 +72,7 @@ def plot_scores_from_nested_list(
     if labels:
         plt.legend()
 
+    plt.tight_layout()
     plt.savefig(f"{result_dir}/{env_name}_scores_parallell_agents.pdf")
 
 
@@ -101,11 +101,10 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
     plt.ylabel("Loss")
     plt.xlabel("Episode #")
 
-    plt.xticks(x_values)
-
     if labels:
         plt.legend()
 
+    plt.tight_layout()
     plt.savefig(f"{result_dir}/{env_name}_losses.pdf")
 
 
