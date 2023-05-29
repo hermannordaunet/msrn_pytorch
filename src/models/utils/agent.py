@@ -7,7 +7,7 @@ import torch.optim as optim
 # Local imports
 from utils.replay_memory import ReplayMemory
 from utils.prioritized_memory import PrioritizedMemory
-from utils.loss_functions import loss_v1, loss_v2, loss_v3
+from utils.loss_functions import loss_v1, loss_v2, loss_v3, loss_v4
 
 from utils.print_utils import print_min_max_conf
 from utils.data_utils import min_max_conf_from_dataset
@@ -229,7 +229,7 @@ class Agent:
             expected_value = p.gather(1, action_batch)
             Q_expected.append(expected_value)
 
-        cum_loss, pred_loss, cost_loss = loss_v3(
+        cum_loss, pred_loss, cost_loss = loss_v4(
             num_ee, Q_expected, Q_targets, conf, cost
         )
 
