@@ -158,7 +158,8 @@ class Agent:
 
         if random.random() > eps:
             # Returning action for network
-            action_indexes = torch.max(action_values, dim=1)[1]
+            # action_indexes = torch.max(action_values, dim=1)[1]
+            action_indexes = torch.argmax(action_values.squeeze(), dim=1)
             # CRITICAL: LOOP - Slow for-loop?
             for count in range(num_teams):
                 move_actions_batch[count, :, action_indexes[count]] = 1.0
