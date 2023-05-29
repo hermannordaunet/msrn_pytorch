@@ -89,13 +89,13 @@ def main():
         "laser_length": 1.5,
         "agent_scale": 1,
         "prioritized_memory": False,
-        "memory_size": int(1e5),
-        "minimal_memory_size": int(2e3),
+        "memory_size": 10_000, #10_000
+        "minimal_memory_size": 2_000, # Either batch_size or minimal_memory_size before training
         "batch_size": 2048,  # Training batch size
-        "num_episodes": 500,
+        "num_episodes": 500, 
         "benchmarks_mean_reward": None,
-        "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
-        "learning_rate": {"lr": 1e-3},  # learning rate to the optimizer
+        "optimizer": "adamW",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
+        "learning_rate": {"lr": 0.001},  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": True,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
