@@ -249,6 +249,13 @@ def main():
         startTime = time.time()
         print(f"[INFO] started training @ {time.ctime(startTime)}")
 
+        save_dict_to_json(model_param, f"{parameter_directory}/model_param.json")
+        save_dict_to_json(config, f"{parameter_directory}/config.json")
+        save_dict_to_json(dqn_param, f"{parameter_directory}/dqn_param.json")
+        save_dict_to_json(
+            epsilon_greedy_param, f"{parameter_directory}/epsilon_greedy_param.json"
+        )
+
         scores, episode, scores_window, losses = model_trainer(
             env,
             agent,
