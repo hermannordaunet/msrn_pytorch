@@ -2,7 +2,7 @@
 import torch.nn.functional as F
 
 
-def loss_v1(num_ee, pred, target, conf, cost, lambda_coef=1.0):
+def loss_v1(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
     """loss version 1
 
     Arguments are
@@ -66,7 +66,7 @@ def loss_v2(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
     return cumulative_loss, 0, 0
 
 
-def loss_v3(num_ee, pred, target, conf, cost, lambda_coef=1.0):
+def loss_v3(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
     """loss version 3
 
     Arguments are
@@ -103,7 +103,7 @@ def loss_v3(num_ee, pred, target, conf, cost, lambda_coef=1.0):
     return cumulative_loss, 0, 0
 
 
-def loss_v4(num_ee, pred, target, conf, cost, lambda_coef=1.0):
+def loss_v4(pred, target, num_ee=0, **kwargs):
     """loss version 3
 
     Arguments are
