@@ -221,7 +221,7 @@ class Agent:
 
         # ASK: The Q_targets have no "info" of which action it took to get the score
 
-        # Get expected Q values from local model
+        # Get expected Q values from policy model
         pred, conf, cost = self.policy_net(state_batch)
         cost.append(torch.tensor(1.0).to(self.device))
 
