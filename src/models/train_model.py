@@ -52,14 +52,14 @@ def train(model, train_loader, optimizer, device: str()):
             pred, conf, cost = model(data)
             cost.append(torch.tensor(1.0).to(device))
             conf_min_max.append(conf)
-            # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
-            cum_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
+            # cumulative_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
+            cumulative_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
         elif isinstance(model, EE_CNN_Residual):
             pred, conf, cost = model(data)
             cost.append(torch.tensor(1.0).to(device))
             conf_min_max.append(conf)
-            # cum_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
-            cum_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
+            # cumulative_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
+            cumulative_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
         else:
             print("No training loop implemented for other model architectures")
             # TODO: Add exit code to this exit.
@@ -67,10 +67,10 @@ def train(model, train_loader, optimizer, device: str()):
 
         # zero out the gradients, perform the backpropagation step,
         # and update the weights
-        losses.append(float(cum_loss))
+        losses.append(float(cumulative_loss))
         pred_losses.append(float(pred_loss))
         cost_losses.append(float(cost_loss))
-        cum_loss.backward()
+        cumulative_loss.backward()
         optimizer.step()
         # add the loss to the total training loss so far and
         # calculate the number of correct predictions

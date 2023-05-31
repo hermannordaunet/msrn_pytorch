@@ -1,0 +1,1 @@
+{"num_ee": 0, "repetitions": [2, 2], "planes": [32, 64, 64], "distribution": "pareto", "models_dir": "./results/1685375006//models/", "mode_setups": {"train": true, "val": false}, "manual_seed": 1804, "device": "mps", "input_size": [5, 40, 40], "num_classes": 3, "parameter_dir": "./results/1685375006/parameters/"}

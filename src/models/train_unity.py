@@ -398,7 +398,7 @@ def model_trainer(
 
             scores_window.append(scores_all_training_agents)  # save most recent score
             scores.append(scores_all_training_agents)  # save most recent score
-            losses.append(agent.cum_loss.item())  # save most recent loss
+            losses.append(agent.cumulative_loss.item())  # save most recent loss
 
             eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
@@ -407,7 +407,7 @@ def model_trainer(
                 print(
                     f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
                 )
-                print(f"Last loss: {agent.cum_loss}")
+                print(f"Last loss: {agent.cumulative_loss}")
                 print(f"Number of transistions in memory: {len(agent.memory)}")
 
                 # min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)

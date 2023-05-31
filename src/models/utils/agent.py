@@ -75,7 +75,7 @@ class Agent:
         self.device = self.model_param["device"]
         # self.small_eps = small_eps # For prioritized memory
 
-        self.cum_loss = None
+        self.cumulative_loss = None
         self.pred_loss = None
         self.cost_loss = None
         self.train_conf = None
@@ -230,18 +230,18 @@ class Agent:
             expected_value = p.gather(1, action_batch)
             Q_expected.append(expected_value)
 
-        cum_loss, pred_loss, cost_loss = loss_v4(
+        cumulative_loss, pred_loss, cost_loss = loss_v4(
             num_ee, Q_expected, Q_targets, conf, cost
         )
 
         # Append conf to a list for debugging later
-        self.cum_loss = cum_loss
+        self.cumulative_loss = cumulative_loss
         self.pred_loss = pred_loss
         self.cost_loss = cost_loss
         self.train_conf = conf
 
         # Minimize the loss
-        cum_loss.backward()
+        cumulative_loss.backward()
         self.optimizer.step()
         if self.scheduler is not None:
             self.scheduler.step()
