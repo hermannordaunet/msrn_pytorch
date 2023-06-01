@@ -84,8 +84,8 @@ def main():
 
     config = {
         "env_name": "FoodCollector",
-        "use_build": True,
-        "no_graphics": True,
+        "use_build": False,
+        "no_graphics": False,
         "laser_length": 1.5,
         "agent_scale": 1,
         "prioritized_memory": False,
@@ -94,9 +94,9 @@ def main():
         "batch_size": 2048,  # Training batch size
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
-        "optimizer": "adamW",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
+        "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {"lr": 0.001},  # learning rate to the optimizer
-        "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
+        "weight_decay": 0.00001 ,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": True,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
@@ -105,7 +105,7 @@ def main():
 
     dqn_param = {
         "gamma": 0.99,
-        "tau": 0.05,
+        "tau": 0.005, # TODO: Try one more 0.05 (5e-2) previous
         "update_every": 20,
     }
 

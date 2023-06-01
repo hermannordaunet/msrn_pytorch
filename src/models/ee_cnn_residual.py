@@ -245,8 +245,8 @@ class EE_CNN_Residual(nn.Module):
                         self.cost[idx],
                         idx,
                     )
-                    x = self.remove_exited_pred_from_batch(x, idx_to_remove)
-                    original_idx = self.remove_indices_from_tensor(
+                    x = remove_exited_pred_from_batch(x, idx_to_remove)
+                    original_idx = remove_indices_from_tensor(
                         original_idx, idx_to_remove
                     )
                 else:
@@ -305,7 +305,7 @@ class EE_CNN_Residual(nn.Module):
     def construct_validation_output(
         self, pred, conf, threshold_idx, original_idx, cost, exit_idx
     ):
-        sample_idx = self.get_elements_from_indices(original_idx, threshold_idx)
+        sample_idx = get_elements_from_indices(original_idx, threshold_idx)
         self.val_batch_pred[sample_idx, :] = pred[threshold_idx, :]
         self.val_batch_conf[sample_idx, :] = conf[threshold_idx, :]
         self.val_batch_exit[sample_idx, :] = torch.full(
@@ -315,41 +315,47 @@ class EE_CNN_Residual(nn.Module):
             (int(len(threshold_idx)), 1), cost, dtype=torch.float32
         )
 
-    def remove_exited_pred_from_batch(self, x, idx):
-        # Create a mask tensor with True for indices to keep and False for indices to remove
-        mask = torch.ones_like(x, dtype=torch.bool)
-        mask[idx, :, :, :] = False
 
-        # Apply the mask to the tensor
-        x_filtered = x[mask]
+def remove_indices_from_tensor(tensor, indices):
+    if len(indices) == 0:
+        return tensor
 
-        # Reshape the filtered tensor to match the original shape
-        new_shape = (x.shape[0] - len(idx), x.shape[1], x.shape[2], x.shape[3])
-        x_filtered = x_filtered.reshape(new_shape)
+    mask = torch.ones(tensor.numel(), dtype=torch.bool)
+    mask[indices] = False
+    filtered_tensor = tensor[mask]
 
-        return x_filtered
+    return filtered_tensor
 
-    def remove_indices_from_tensor(self, tensor, indices):
-        mask = torch.ones(tensor.numel(), dtype=torch.bool)
-        mask[indices] = False
-        filtered_tensor = tensor[mask]
 
-        return filtered_tensor
+def get_elements_from_indices(tensor, indices):
+    if tensor.shape == indices.shape:
+        return tensor
 
-    def get_elements_from_indices(self, tensor, indices):
-        if tensor.shape == indices.shape:
-            return tensor
+    sliced_tensor = tensor[indices]
 
-        sliced_tensor = tensor[indices]
+    return sliced_tensor
 
-        return sliced_tensor
+
+def remove_exited_pred_from_batch(x, idx):
+    # Create a mask tensor with True for indices to keep and False for indices to remove
+    mask = torch.ones_like(x, dtype=torch.bool)
+    mask[idx, :, :, :] = False
+
+    # Apply the mask to the tensor
+    x_filtered = x[mask]
+
+    # Reshape the filtered tensor to match the original shape
+    new_shape = (x.shape[0] - len(idx), x.shape[1], x.shape[2], x.shape[3])
+    x_filtered = x_filtered.reshape(new_shape)
+
+    return x_filtered
 
 
 def main():
     DEVICE = "mps"
     ee_policy_net = EE_CNN_Residual(
         # frames_history=2,
-        num_ee=0,
+        num_ee=1,
         planes=[32, 64, 64],
         input_shape=(5, 40, 40),
         num_classes=3,
@@ -359,7 +365,7 @@ def main():
 
     ee_target_net = EE_CNN_Residual(
         # frames_history=2,
-        num_ee=0,
+        num_ee=1,
         planes=[32, 64, 64],
         input_shape=(5, 40, 40),
         num_classes=3,
@@ -370,11 +376,15 @@ def main():
 
     ee_target_net.load_state_dict(ee_policy_net.state_dict())
 
-    input = torch.rand(1, 5, 40, 40).to(DEVICE)
+    ee_target_net.eval()
+    ee_policy_net.eval()
+
+    input = torch.rand(5, 5, 40, 40).to(DEVICE)
 
     out_policy = ee_policy_net(input)
     out_target = ee_target_net(input)
 
+    print(out_policy == out_target)
 
 if __name__ == "__main__":
     main()

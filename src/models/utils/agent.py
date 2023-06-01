@@ -192,8 +192,6 @@ class Agent:
         self.policy_net.train()
         self.target_net.train()
 
-        self.optimizer.zero_grad()
-
         batch = self.memory.Transition(*zip(*experiences))
 
         # Adding all the variables to the device?
@@ -241,8 +239,10 @@ class Agent:
         self.train_conf = conf
 
         # Minimize the loss
+        self.optimizer.zero_grad()
         cumulative_loss.backward()
         self.optimizer.step()
+        
         if self.scheduler is not None:
             self.scheduler.step()
 
