@@ -149,7 +149,7 @@ class Agent:
 
         self.policy_net.eval()
         with torch.no_grad():
-            action_values, exits, costs, confs = self.policy_net(state)
+            action_values, confs, exits, costs = self.policy_net(state)
 
         # Same for everyone
         laser_action_batch = np.zeros((num_teams, 1, 1))
