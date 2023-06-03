@@ -1,6 +1,9 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+# Local import
+from src.models.utils.classifier import simple_classifier
+from src.models.utils.confidence import simple_confidence
 
 class small_DQN(nn.Module):
     def __init__(
@@ -75,21 +78,35 @@ class small_DQN(nn.Module):
         # Last linear for class probability distribution
         self.fc2 = nn.Linear(500, self._num_classes)
 
+        self.classifier = simple_classifier(self._num_classes, linear_input_size)
+        self.confidence = simple_confidence(linear_input_size)
+
         self.logSoftmax = nn.LogSoftmax(dim=1)
 
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
+        if self.training:
+            preds, confs, costs = list(), list(), list()
+
         x = F.leaky_relu(self.bn1(self.conv1(x)))
         x = F.leaky_relu(self.bn2(self.conv2(x)))
         x = F.leaky_relu(self.bn3(self.conv3(x)))
         x = x.view(x.size(0), -1)
-        x = F.leaky_relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
+        # x = F.leaky_relu(self.fc1(x))
+        # x = self.dropout(x)
+        # x = self.fc2(x)
 
-        x = self.logSoftmax(x)
+        # x = self.logSoftmax(x)
 
+        pred = self.classifier(x)
+        conf = self.confidence(x)
+
+        preds.append(pred)
+        confs.append(conf)
         # DELETE: Remove the conf
         # conf = torch.max(self.softmax(x)).item()
-        return x  # , conf
+        if self.training:
+            return preds, confs, costs
+        else:
+            return preds, 1, costs, confs
