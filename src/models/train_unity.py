@@ -369,7 +369,7 @@ def model_trainer(
 
                 # if agent_id in agent_ids:
                 act = agent.act(state_batch_tensor, eps=eps, num_teams=num_teams)
-                move_action, laser_action, idx, cost, conf = act
+                move_action, laser_action = act  # , idx, cost, conf = act
 
                 for team_idx, team in enumerate(team_name_list):
                     agent_id = training_agents[team]["agent_id"]
