@@ -141,16 +141,6 @@ class Agent:
             num_teams (int): how many environments in parallell
         """
 
-        # if num_teams > 1:
-        # state = torch.from_numpy(state).float().to(self.device)
-        state = state.to(
-            self.device
-        )  # Try to get the state to the same device as model
-
-        self.policy_net.eval()
-        with torch.no_grad():
-            action_values, confs, exits, costs = self.policy_net(state)
-
         # Same for everyone
         laser_action_batch = np.zeros((num_teams, 1, 1))
 
@@ -159,6 +149,14 @@ class Agent:
         if random.random() > eps:
             # Returning action for network
             # action_indexes = torch.max(action_values, dim=1)[1]
+            state = state.to(
+                self.device
+            )  # Try to get the state to the same device as model
+
+            self.policy_net.eval()
+            with torch.no_grad():
+                action_values, confs, exits, costs = self.policy_net(state)
+
             action_indexes = torch.argmax(action_values, dim=1)
             # CRITICAL: Slow for-loop?
             for count in range(num_teams):
