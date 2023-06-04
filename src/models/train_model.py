@@ -52,14 +52,18 @@ def train(model, train_loader, optimizer, device: str()):
             pred, conf, cost = model(data)
             cost.append(torch.tensor(1.0).to(device))
             conf_min_max.append(conf)
-            # cumulative_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
-            cumulative_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
+
+            cumulative_loss, pred_loss, cost_loss = loss_v2(
+                pred, target, conf, cost, num_ee=num_ee
+            )
         elif isinstance(model, EE_CNN_Residual):
             pred, conf, cost = model(data)
             cost.append(torch.tensor(1.0).to(device))
             conf_min_max.append(conf)
-            # cumulative_loss, pred_loss, cost_loss = loss_v2(2, pred, target, conf, cost)
-            cumulative_loss, pred_loss, cost_loss = loss_v2(num_ee, pred, target, conf, cost)
+
+            cumulative_loss, pred_loss, cost_loss = loss_v2(
+                pred, target, conf, cost, num_ee=num_ee
+            )
         else:
             print("No training loop implemented for other model architectures")
             # TODO: Add exit code to this exit.
