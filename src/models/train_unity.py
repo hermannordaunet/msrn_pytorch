@@ -211,27 +211,37 @@ def main():
         # save_dict_to_json(agent.dqn_param, f"{results_directory}_dqn_param.json")
 
         print("[INFO] Initalizing Q network policy")
-        ee_policy_net = EE_CNN_Residual(
-            # frames_history=2,
-            num_ee=model_param["num_ee"],
-            planes=model_param["planes"],
+        # ee_policy_net = EE_CNN_Residual(
+        #     # frames_history=2,
+        #     num_ee=model_param["num_ee"],
+        #     planes=model_param["planes"],
+        #     input_shape=model_param["input_size"],
+        #     num_classes=model_param["num_classes"],
+        #     repetitions=model_param["repetitions"],
+        #     distribution=model_param["distribution"],
+        # ).to(DEVICE)
+
+        ee_policy_net = small_DQN(
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
-            repetitions=model_param["repetitions"],
-            distribution=model_param["distribution"],
-        ).to(DEVICE)
+        )
 
         print("[INFO] Initalizing Q network target")
-        ee_target_net = EE_CNN_Residual(
-            # frames_history=2,
-            num_ee=model_param["num_ee"],
-            planes=model_param["planes"],
+        # ee_target_net = EE_CNN_Residual(
+        #     # frames_history=2,
+        #     num_ee=model_param["num_ee"],
+        #     planes=model_param["planes"],
+        #     input_shape=model_param["input_size"],
+        #     num_classes=model_param["num_classes"],
+        #     repetitions=model_param["repetitions"],
+        #     distribution=model_param["distribution"],
+        #     initalize_parameters=False,
+        # ).to(DEVICE)
+
+        ee_target_net = small_DQN(
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
-            repetitions=model_param["repetitions"],
-            distribution=model_param["distribution"],
-            initalize_parameters=False,
-        ).to(DEVICE)
+        )
 
         # TODO: This is important to get the networks initalized with the same weigths
         ee_target_net.load_state_dict(ee_policy_net.state_dict())
