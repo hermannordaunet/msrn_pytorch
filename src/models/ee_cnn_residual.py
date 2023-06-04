@@ -247,7 +247,8 @@ class EE_CNN_Residual(nn.Module):
                         idx,
                     )
 
-                    x = remove_exited_pred_from_batch(x, idx_to_remove)
+                    if idx_to_remove is not None:
+                        x = remove_exited_pred_from_batch(x, idx_to_remove)
 
             else:
                 preds.append(pred)
@@ -288,8 +289,9 @@ class EE_CNN_Residual(nn.Module):
             exit_threshold = self.exit_threshold
 
         idx = torch.where(conf > exit_threshold)[0]
+        empty = idx.shape[0] == 0
 
-        return idx
+        return idx, empty
 
     def construct_validation_output(
         self,
@@ -305,13 +307,16 @@ class EE_CNN_Residual(nn.Module):
             self.val_batch_exit = torch.zeros_like(conf, dtype=torch.int)
             self.val_batch_cost = torch.zeros_like(conf)
 
-        if original_idx is None:
-            original_idx = torch.zeros_like(conf, dtype=torch.int).squeeze()
-            original_idx[:] = torch.arange(conf.shape[0])
+        if self.original_idx is None:
+            self.original_idx = torch.zeros_like(conf, dtype=torch.int).squeeze()
+            self.original_idx[:] = torch.arange(conf.shape[0])
 
-        idx_to_remove = self.find_conf_above_threshold(conf, threshold=threshold)
-        sample_idx = get_elements_from_indices(original_idx, idx_to_remove)
+        idx_to_remove, remove_idx_empty = self.find_conf_above_threshold(conf, threshold=threshold)
 
+        if remove_idx_empty:
+            return None
+
+        sample_idx = get_elements_from_indices(self.original_idx, idx_to_remove)
 
         self.val_batch_pred[sample_idx, :] = pred[idx_to_remove, :]
         self.val_batch_conf[sample_idx, :] = conf[idx_to_remove, :]
@@ -325,9 +330,7 @@ class EE_CNN_Residual(nn.Module):
 
 
 def remove_indices_from_tensor(tensor, indices):
-    if len(indices) == 0:
-        return tensor
-    
+    # return None if all the elements should be removed
     if len(tensor) == len(indices):
         return None
 
@@ -339,6 +342,7 @@ def remove_indices_from_tensor(tensor, indices):
 
 
 def get_elements_from_indices(tensor, indices):
+    # return the original tensor if we ask for all the indices in the tensor. 
     if tensor.shape == indices.shape:
         return tensor
 
@@ -348,10 +352,6 @@ def get_elements_from_indices(tensor, indices):
 
 
 def remove_exited_pred_from_batch(x, idx):
-    # Create a mask tensor with True for indices to keep and False for indices to remove
-    if idx is None:
-        return x
-
     mask = torch.ones_like(x, dtype=torch.bool)
     mask[idx, :, :, :] = False
 
