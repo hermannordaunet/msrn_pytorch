@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 # import the necessary torch packages
 from torch import nn
-from torch.optim import Adam
+from torch.optim import Adam, AdamW
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
 
