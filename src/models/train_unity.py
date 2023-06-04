@@ -225,7 +225,7 @@ def main():
         ee_policy_net = small_DQN(
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
-        )
+        ).to(DEVICE)
 
         print("[INFO] Initalizing Q network target")
         # ee_target_net = EE_CNN_Residual(
@@ -242,7 +242,7 @@ def main():
         ee_target_net = small_DQN(
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
-        )
+        ).to(DEVICE)
 
         # TODO: This is important to get the networks initalized with the same weigths
         print("[INFO] Copying weight from target net to policy net")
