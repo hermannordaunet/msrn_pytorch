@@ -373,12 +373,12 @@ def model_trainer(
 
                 for team_idx, team in enumerate(team_name_list):
                     agent_id = training_agents[team]["agent_id"]
-                    move_action_squeeze = move_action[team_idx, :, :]
-                    laser_action_squeeze = laser_action[team_idx, :, :]
+                    team_move_action = move_action[team_idx, :, :]
+                    team_laser_action = laser_action[team_idx, :, :]
                     env.set_action_for_agent(
                         team,
                         agent_id,
-                        ActionTuple(move_action_squeeze, laser_action_squeeze),
+                        ActionTuple(team_move_action, team_laser_action),
                     )
 
                 env.step()
