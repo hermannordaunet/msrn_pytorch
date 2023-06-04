@@ -61,6 +61,9 @@ class small_DQN(nn.Module):
             nn.Softmax(dim=1),
         )
 
+        self.exits = nn.ModuleList()
+        
+
         # Number of Linear input connections depends on output of conv2d layers
         # and therefore the input image size. This function computes it
         def conv2d_size_out(size, kernel_size=KERNEL_SIZE, stride=STRIDE):
@@ -101,11 +104,13 @@ class small_DQN(nn.Module):
         pred = self.classifier(x)
         conf = self.confidence(x)
 
-        preds.append(pred)
-        confs.append(conf)
+        if self.training:
+            preds.append(pred)
+            confs.append(conf)
+
         # DELETE: Remove the conf
         # conf = torch.max(self.softmax(x)).item()
         if self.training:
             return preds, confs, costs
         else:
-            return preds, confs, 1, costs
+            return pred, conf, 1, 1.0
