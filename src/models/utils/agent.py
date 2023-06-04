@@ -244,7 +244,7 @@ class Agent:
         self.optimizer.zero_grad()
         cumulative_loss.backward()
         self.optimizer.step()
-        
+
         if self.scheduler is not None:
             self.scheduler.step()
 
