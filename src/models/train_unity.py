@@ -340,21 +340,32 @@ def model_trainer(
                     "episode_score": 0,
                     # "state": None,
                 }
+                agent_id = training_agents[team]["agent_id"]
+                agent_ids = decision_steps.agent_id
+                if agent_id in agent_ids:
+                    agent_obs = decision_steps[agent_id].obs
+                    state = get_grid_based_perception(agent_obs)
+                    state_batch_tensor[team_idx, :, :, :] = state
+                else:
+                    print(
+                        f"No state for the agent {agent_id} in {team} in the first step"
+                    )
+                    exit()
 
             # min_max_conf = list()
             episode_done = False
             while not episode_done:
-                for team_idx, team in enumerate(team_name_list):
-                    decision_steps, terminal_steps = env.get_steps(team)
-                    agent_id = training_agents[team]["agent_id"]
-                    agent_ids = decision_steps.agent_id
-                    if agent_id in agent_ids:
-                        agent_obs = decision_steps[agent_id].obs
-                        state = get_grid_based_perception(agent_obs)
-                        state_batch_tensor[team_idx, :, :, :] = state
-                    else:
-                        print(f"No state for the agent {agent_id} in {team}")
-                        exit()
+                # for team_idx, team in enumerate(team_name_list):
+                #     decision_steps, terminal_steps = env.get_steps(team)
+                #     agent_id = training_agents[team]["agent_id"]
+                #     agent_ids = decision_steps.agent_id
+                #     if agent_id in agent_ids:
+                #         agent_obs = decision_steps[agent_id].obs
+                #         state = get_grid_based_perception(agent_obs)
+                #         state_batch_tensor[team_idx, :, :, :] = state
+                #     else:
+                #         print(f"No state for the agent {agent_id} in {team}")
+                #         exit()
 
                 # if agent_id in agent_ids:
                 act = agent.act(state_batch_tensor, eps=eps, num_teams=num_teams)
@@ -401,6 +412,8 @@ def model_trainer(
                     state = (
                         next_state  # TODO: This is dobbel up on the for loop futher up
                     )
+                    state_batch_tensor[team_idx, :, :, :] = state
+
                     training_agents[team]["episode_score"] += reward
 
                     episode_done = done
