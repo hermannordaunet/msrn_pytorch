@@ -226,8 +226,12 @@ class Agent:
             expected_value = p.gather(1, action_batch)
             Q_expected.append(expected_value)
 
+        # cumulative_loss, pred_loss, cost_loss = loss_v2(
+        #    Q_expected, Q_targets, conf, cost, num_ee=num_ee
+        # )
+
         cumulative_loss, pred_loss, cost_loss = loss_v4(
-            num_ee, Q_expected, Q_targets, conf, cost
+            Q_expected, Q_targets, num_ee=num_ee
         )
 
         # Append conf to a list for debugging later
