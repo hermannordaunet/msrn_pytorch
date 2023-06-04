@@ -367,38 +367,39 @@ def remove_exited_pred_from_batch(x, idx):
 
 def main():
     DEVICE = "mps"
-    ee_policy_net = EE_CNN_Residual(
-        # frames_history=2,
-        num_ee=1,
-        planes=[32, 64, 64],
-        input_shape=(5, 40, 40),
-        num_classes=3,
-        repetitions=[2, 2],
-        distribution="pareto",
-    ).to(DEVICE)
+    # ee_policy_net = EE_CNN_Residual(
+    #     # frames_history=2,
+    #     num_ee=1,
+    #     planes=[32, 64, 64],
+    #     input_shape=(5, 40, 40),
+    #     num_classes=3,
+    #     repetitions=[2, 2],
+    #     distribution="pareto",
+    # ).to(DEVICE)
 
-    ee_target_net = EE_CNN_Residual(
-        # frames_history=2,
-        num_ee=1,
-        planes=[32, 64, 64],
-        input_shape=(5, 40, 40),
-        num_classes=3,
-        repetitions=[2, 2],
-        distribution="pareto",
-        initalize_parameters=False,
-    ).to(DEVICE)
+    # ee_target_net = EE_CNN_Residual(
+    #     # frames_history=2,
+    #     num_ee=1,
+    #     planes=[32, 64, 64],
+    #     input_shape=(5, 40, 40),
+    #     num_classes=3,
+    #     repetitions=[2, 2],
+    #     distribution="pareto",
+    #     initalize_parameters=False,
+    # ).to(DEVICE)
 
-    ee_target_net.load_state_dict(ee_policy_net.state_dict())
+    # ee_target_net.load_state_dict(ee_policy_net.state_dict())
 
-    ee_target_net.eval()
-    ee_policy_net.eval()
+    # ee_target_net.eval()
+    # ee_policy_net.eval()
 
-    input = torch.rand(5, 5, 40, 40).to(DEVICE)
+    # input = torch.rand(5, 5, 40, 40).to(DEVICE)
 
-    out_policy = ee_policy_net(input)
-    out_target = ee_target_net(input)
+    # out_policy = ee_policy_net(input)
+    # out_target = ee_target_net(input)
 
-    print(out_policy == out_target)
+    # print(out_policy == out_target)
+
 
 if __name__ == "__main__":
     main()
