@@ -6,11 +6,12 @@ def loss_v1(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
     """loss version 1
 
     Arguments are
-    * num_ee:   number of early exit blocks
-    * pred:     prediction result of each exit point.
-    * target:   target prediction values.
-    * conf:     confidence value of each exit point.
-    * cost:     cost rate of the each exit point.
+    * pred:           prediction result of each exit point.
+    * target:         target prediction values.
+    * conf:           confidence value of each exit point.
+    * cost:           cost rate of the each exit point.
+    * num_ee:         number of early exit blocks
+    * lambda_coef:    
 
     This loss function is the fusion loss of the cross_entropy loss and cost loss.
     These loss parts are calculated in a recursive way as following:
@@ -37,11 +38,12 @@ def loss_v2(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
     """loss version 2
 
     Arguments are
-    * num_ee:   number of early exit blocks
-    * pred:     prediction result of each exit point.
-    * target:   target prediction values.
-    * conf:     confidence value of each exit point.
-    * cost:     cost rate of the each exit point.
+    * pred:           prediction result of each exit point.
+    * target:         target prediction values.
+    * conf:           confidence value of each exit point.
+    * cost:           cost rate of the each exit point.
+    * num_ee:         number of early exit blocks
+    * lambda_coef:  
 
     This loss function is the cumulative loss of loss_v1 by recursively.
     It aims to provide a more fair training.
@@ -59,7 +61,8 @@ def loss_v2(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
     for i in range(num_ee - 1, -1, -1):
         cumulative_pred[i] = conf[i] * pred[i] + (1 - conf[i]) * cumulative_pred[i + 1]
         cumulative_cost[i] = conf[i] * cost[i] + (1 - conf[i]) * cumulative_cost[i + 1]
-        pred_loss = F.nll_loss(cumulative_pred[i].log(), target)
+        log_cumulative_pred = cumulative_pred[i].log()
+        pred_loss = F.nll_loss(log_cumulative_pred, target)
         cost_loss = cumulative_cost[i].mean()
         cumulative_loss += pred_loss + lambda_coef * cost_loss
 
@@ -69,12 +72,12 @@ def loss_v2(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
 def loss_v3(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
     """loss version 3
 
-    Arguments are
-    * num_ee:   number of early exit blocks
-    * pred:     prediction result of each exit point.
-    * target:   target prediction values.
-    * conf:     confidence value of each exit point.
-    * cost:     cost rate of the each exit point.
+    * pred:           prediction result of each exit point.
+    * target:         target prediction values.
+    * conf:           confidence value of each exit point.
+    * cost:           cost rate of the each exit point.
+    * num_ee:         number of early exit blocks
+    * lambda_coef:  
 
     This loss function is the cumulative loss of loss_v1 by recursively.
     It aims to provide a more fair training.
@@ -107,11 +110,9 @@ def loss_v4(pred, target, num_ee=0, **kwargs):
     """loss version 3
 
     Arguments are
-    * num_ee:   number of early exit blocks
     * pred:     prediction result of each exit point.
     * target:   target prediction values.
-    * conf:     confidence value of each exit point.
-    * cost:     cost rate of the each exit point.
+    * num_ee:   number of early exit blocks
 
     This loss function is the cumulative loss of loss_v1 by recursively.
     It aims to provide a more fair training.
