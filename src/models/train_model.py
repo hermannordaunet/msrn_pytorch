@@ -151,15 +151,15 @@ def main():
     model = EE_CNN_Residual(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
-        num_ee=0,
-        exit_threshold=0.9,
+        num_ee=2,
+        exit_threshold=0.99,
         repetitions=[2, 2],
         planes=[32, 64, 64],
-        distribution="fine",
+        distribution="pareto",
     ).to(device)
 
     # initialize our optimizer
-    optimizer = Adam(model.parameters(), lr=INIT_LR)
+    optimizer = AdamW(model.parameters(), lr=INIT_LR)
 
     print_cost_of_exits(model)
 
