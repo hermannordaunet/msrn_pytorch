@@ -196,14 +196,27 @@ def main():
                 # send the input to the device
                 data, target = data.to(device), target.to(device, dtype=torch.int64)
                 # make the predictions and calculate the validation loss
-                pred, idx, cost, conf = model(data)
-                conf_min_max.append([conf])
-                loss = torch.nn.functional.nll_loss(pred, target) + 1.0 * cost
-                exit_points[idx] += 1
+                preds, confs, indices, costs = model(data)
+                conf_min_max.append([confs])
 
-                totalValLoss += loss
+                log_cumulative_pred = preds.log()
+                loss = torch.nn.functional.nll_loss(log_cumulative_pred, target) + 1.0 * costs
+
+                if isinstance(indices, torch.Tensor):
+                    samples_at_each_exit = torch.bincount(indices.squeeze())
+
+                    for index, count in enumerate(samples_at_each_exit):
+                        exit_points[index] += count.item()
+                
+                elif isinstance(indices, int):
+                    exit_points[indices] += 1
+                else:
+                    print("Why are you here?")
+                    exit()
+
+                totalValLoss += torch.sum(loss).item()
                 # calculate the number of correct predictions
-                valCorrect += (pred.argmax(1) == target).type(torch.float).sum().item()
+                valCorrect += (preds.argmax(1) == target).type(torch.float).sum().item()
 
         # min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
         # print_min_max_conf(min_vals, max_vals)
@@ -261,7 +274,7 @@ def main():
             # send the input to the device
             data = data.to(device)
             # make the predictions and add them to the list
-            pred, idx, cost, conf = model(data)
+            pred, conf, idx, cost = model(data)
             preds.extend(pred.argmax(axis=1).cpu().numpy())
     # generate a classification report
     print(
