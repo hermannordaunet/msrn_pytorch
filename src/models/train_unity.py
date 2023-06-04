@@ -394,6 +394,7 @@ def model_trainer(
                         next_state = get_grid_based_perception(agent_obs)
                     else:
                         next_state = None
+                        print(f"Got a None next state. team: {team}, episode {episode}")
 
                     reward = decision_steps[agent_id].reward
 
