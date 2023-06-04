@@ -220,8 +220,7 @@ class EE_CNN_Residual(nn.Module):
             preds, confs, cost = list(), list(), list()
 
         if not self.training:
-            original_idx = torch.arange(x.shape[0])
-            original_idx = None
+            self.original_idx = None
 
             self.val_batch_pred = None
             self.val_batch_conf = None
@@ -244,7 +243,6 @@ class EE_CNN_Residual(nn.Module):
                     idx_to_remove = self.construct_validation_output(
                         pred,
                         conf,
-                        original_idx,
                         self.cost[idx],
                         idx,
                     )
@@ -267,7 +265,7 @@ class EE_CNN_Residual(nn.Module):
                 return pred, conf.item(), len(self.exits), 1.0
             
             self.construct_validation_output(
-                pred, conf, original_idx, 1, len(self.exits), threshold=float("-inf")
+                pred, conf, 1, len(self.exits), threshold=float("-inf")
             )
 
 
@@ -297,7 +295,6 @@ class EE_CNN_Residual(nn.Module):
         self,
         pred,
         conf,
-        original_idx,
         cost,
         exit_idx,
         threshold=None,
@@ -321,9 +318,9 @@ class EE_CNN_Residual(nn.Module):
         self.val_batch_exit[sample_idx] = exit_idx
         self.val_batch_cost[sample_idx] = cost
 
-        original_idx = remove_indices_from_tensor(original_idx, idx_to_remove)
+        self.original_idx = remove_indices_from_tensor(self.original_idx, idx_to_remove)
 
-        if original_idx is None:
+        if self.original_idx is not None:
             return idx_to_remove
 
 
