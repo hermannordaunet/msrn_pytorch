@@ -24,7 +24,7 @@ class small_DQN(nn.Module):
         self._in_channels = input_shape[0]
         self._img_height = input_shape[1]
         self._img_width = input_shape[2]
-        self._num_classes = num_classes
+        self.num_classes = num_classes
 
         # Layer 1 with batch norm
         self.conv1 = nn.Conv2d(
@@ -75,9 +75,9 @@ class small_DQN(nn.Module):
         self.fc1 = nn.Linear(linear_input_size, 500)
 
         # Last linear for class probability distribution
-        self.fc2 = nn.Linear(500, self._num_classes)
+        self.fc2 = nn.Linear(500, self.num_classes)
 
-        self.classifier = simple_classifier(self._num_classes, linear_input_size)
+        self.classifier = simple_classifier(self.num_classes, linear_input_size)
         self.confidence = simple_confidence(linear_input_size)
 
         self.logSoftmax = nn.LogSoftmax(dim=1)
