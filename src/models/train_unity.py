@@ -251,7 +251,9 @@ def main():
         ee_policy_net.eval()
 
         # TODO: Find out if this needs to be in eval or train?
-        # ee_target_net.eval()
+        # To ensure the network always is in eval we need to
+        # specify it right after init
+        ee_target_net.eval()
 
         print("[INFO] Initalizing a Agent object")
         agent = Agent(
