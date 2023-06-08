@@ -91,8 +91,8 @@ def main():
         "agent_scale": 1,
         "prioritized_memory": False,
         "memory_size": 25_000,  # 10_000
-        "minimal_memory_size": 2_000,  # Either batch_size or minimal_memory_size before training
-        "batch_size": 2048,  # Training batch size
+        "minimal_memory_size": 999,  # Either batch_size or minimal_memory_size before training
+        "batch_size": 512,  # Training batch size
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
