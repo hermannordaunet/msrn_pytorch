@@ -212,7 +212,7 @@ class Agent:
             pred, _, _, _ = self.target_net(next_state_batch)
 
         # CRITICAL: Here we get the Q_targets from the last exit of the network
-        Q_targets_next = pred[-1].detach().max(1)[0].unsqueeze(1)
+        Q_targets_next = pred.detach().max(1)[0].unsqueeze(1)
 
         # Compute Q targets for current states
         Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
