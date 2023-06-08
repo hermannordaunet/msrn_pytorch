@@ -209,7 +209,7 @@ class Agent:
 
         # Get max predicted Q values (for next states) from target model
         with torch.no_grad():
-            pred, _, _ = self.target_net(next_state_batch)
+            pred, _, _, _ = self.target_net(next_state_batch)
 
         # CRITICAL: Here we get the Q_targets from the last exit of the network
         Q_targets_next = pred[-1].detach().max(1)[0].unsqueeze(1)
