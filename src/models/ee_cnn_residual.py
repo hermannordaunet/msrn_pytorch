@@ -255,7 +255,6 @@ class EE_CNN_Residual(nn.Module):
                 confs.append(conf)
                 cost.append(self.cost[idx])
 
-
         x = self.stages[-1](x)
         x = x.view(x.size(0), -1)
         pred = self.classifier(x)
@@ -264,11 +263,10 @@ class EE_CNN_Residual(nn.Module):
         if not self.training:
             if conf.shape[0] == 1:
                 return pred, conf.item(), len(self.exits), 1.0
-            
+
             self.construct_validation_output(
                 pred, conf, 1, len(self.exits), threshold=float("-inf")
             )
-
 
             return (
                 self.val_batch_pred,
@@ -311,7 +309,9 @@ class EE_CNN_Residual(nn.Module):
             self.original_idx = torch.zeros_like(conf, dtype=torch.int).squeeze()
             self.original_idx[:] = torch.arange(conf.shape[0])
 
-        idx_to_remove, remove_idx_empty = self.find_conf_above_threshold(conf, threshold=threshold)
+        idx_to_remove, remove_idx_empty = self.find_conf_above_threshold(
+            conf, threshold=threshold
+        )
 
         if remove_idx_empty:
             return None
@@ -342,7 +342,7 @@ def remove_indices_from_tensor(tensor, indices):
 
 
 def get_elements_from_indices(tensor, indices):
-    # return the original tensor if we ask for all the indices in the tensor. 
+    # return the original tensor if we ask for all the indices in the tensor.
     if tensor.shape == indices.shape:
         return tensor
 
