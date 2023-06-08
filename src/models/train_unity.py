@@ -328,6 +328,9 @@ def model_trainer(
         team_name_list = list(env.behavior_specs.keys())
         num_teams = len(team_name_list)
 
+        if verbose:
+            print(f"[INFO] Number of parallell environments during training: {num_teams}")
+
         state_size = agent.model_param["input_size"]
         state_batch_tensor = torch.zeros((num_teams, *state_size))
 
