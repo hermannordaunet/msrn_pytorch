@@ -107,6 +107,7 @@ class small_DQN(nn.Module):
         if self.training:
             preds.append(pred)
             confs.append(conf)
+            costs.append(1.0)
 
         # DELETE: Remove the conf
         # conf = torch.max(self.softmax(x)).item()
