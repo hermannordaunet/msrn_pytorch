@@ -104,7 +104,7 @@ def main():
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": True, "val": False},
+        "mode_setups": {"train": False, "val": False, "visualize" : True},
         "manual_seed": 1804,  # TODO: Seed everything
         "device": DEVICE,
     }
