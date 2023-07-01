@@ -143,7 +143,11 @@ def main():
     }
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
+    VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     VAL_MODEL = model_param["mode_setups"]["val"]
+
+    TIMESTAMP = None
+
     VERBOSE = True
 
     FRAME_HISTORY_LEN = 4  # TODO: Should I add this?
