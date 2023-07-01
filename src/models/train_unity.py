@@ -220,19 +220,21 @@ def main():
     if TRAIN_MODEL:
         timestamp = int(time.time())
 
-        results_directory = f"./results/{timestamp}/"
-        parameter_directory = f"{results_directory}parameters/"
+        
+        results_directory = Path(f"./results/{timestamp}/")
+        parameter_directory = results_directory / "parameters"
+
         # Check if the directory exists
-        if not os.path.exists(results_directory):
+        if not results_directory.exists():
             # If it doesn't exist, create it
-            os.makedirs(results_directory)
-            models_directory = f"{results_directory}/models/"
-            os.makedirs(models_directory)
+            results_directory.mkdir(parents=True)
+            models_directory = results_directory / "models"
+            models_directory.mkdir()
 
             model_param["models_dir"] = models_directory
 
-        if not os.path.exists(parameter_directory):
-            os.makedirs(parameter_directory)
+        if not parameter_directory.exists():
+            parameter_directory.mkdir()
 
             model_param["parameter_dir"] = parameter_directory
 
