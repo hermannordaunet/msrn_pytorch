@@ -321,6 +321,36 @@ def main():
                 endTime - startTime
             )
         )
+    elif VISUALIZE_MODEL:
+        # If we just trained a model, load that one. 
+        # If not, load the model from the timestamp provided. 
+        runs_directory = f"./results/"
+
+        if TRAIN_MODEL:
+            runs_directory = f"./results/"
+            results_directory, timestamp = get_latest_folder(runs_directory)
+            parameter_directory = results_directory / "parameters"
+            if not results_directory:
+                print("No folders found in the runs_directory.")
+                exit()
+
+        else:
+            if TIMESTAMP:
+                results_directory = Path.joinpath(runs_directory, TIMESTAMP)
+                parameter_directory = results_directory / "parameters"
+            else:
+                print("No timestamp provided in model_param. Cannot load model without it.")
+                exit()
+        
+
+        model_param = load_json_as_dict(f"{parameter_directory}_model_param.json")
+        config = load_json_as_dict(f"{parameter_directory}_config.json")
+        dqn_param = load_json_as_dict(f"{parameter_directory}_dqn_param.json")
+
+        
+
+
+        
 
 
 def model_trainer(
