@@ -63,6 +63,29 @@ def get_grid_based_perception(agent_obs):
 
     return grid_based_perception.unsqueeze(0)
 
+def get_latest_folder(runs_directory):
+    runs_directory = Path(runs_directory)
+    
+    # Get all subdirectories in the runs_directory
+    subdirectories = [d for d in runs_directory.iterdir() if d.is_dir()]
+    
+    # Filter out non-numeric folder names
+    subdirectories = [d for d in subdirectories if d.name.isnumeric()]
+    
+    if not subdirectories:
+        return None
+    
+    # Get the folder with the highest Unix timestamp
+    latest_folder = max(subdirectories, key=lambda d: int(d.name))
+    timestamp = latest_folder.stem
+    
+    return latest_folder, timestamp
+
+
+def load_json_as_dict(file_path):
+    with open(file_path, 'r') as json_file:
+        json_data = json.load(json_file)
+    return json_data
 
 def main():
     if torch.cuda.is_available():
