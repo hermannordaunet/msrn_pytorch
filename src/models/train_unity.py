@@ -63,29 +63,29 @@ def get_grid_based_perception(agent_obs):
 
     return grid_based_perception.unsqueeze(0)
 
-def get_latest_folder(runs_directory):
-    runs_directory = Path(runs_directory)
-    
+
+def get_latest_folder(runs_directory: Path):
     # Get all subdirectories in the runs_directory
     subdirectories = [d for d in runs_directory.iterdir() if d.is_dir()]
-    
+
     # Filter out non-numeric folder names
     subdirectories = [d for d in subdirectories if d.name.isnumeric()]
-    
+
     if not subdirectories:
         return None
-    
+
     # Get the folder with the highest Unix timestamp
     latest_folder = max(subdirectories, key=lambda d: int(d.name))
     timestamp = latest_folder.stem
-    
+
     return latest_folder, timestamp
 
 
 def load_json_as_dict(file_path):
-    with open(file_path, 'r') as json_file:
+    with open(file_path, "r") as json_file:
         json_data = json.load(json_file)
     return json_data
+
 
 def main():
     if torch.cuda.is_available():
@@ -98,20 +98,21 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
+        "model_class_name": "EE_CNN_Residual",
         "num_ee": 0,
         "repetitions": [2, 2],
         "planes": [32, 64, 64],
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": False, "val": False, "visualize" : True},
+        "mode_setups": {"train": True, "val": False, "visualize": False},
         "manual_seed": 1804,  # TODO: Seed everything
         "device": DEVICE,
     }
 
     config = {
         "env_name": "FoodCollector",
-        "use_build": True,
+        "use_build": False,
         "no_graphics": True,
         "laser_length": 1.5,
         "agent_scale": 1,
@@ -124,10 +125,13 @@ def main():
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {"lr": 0.001},  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
-        "use_lr_scheduler": True,
+        "use_lr_scheduler": False,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
         "print_range": 10,
+        "visualize": {
+            "episodes": 10,
+        },
     }
 
     dqn_param = {
@@ -217,10 +221,11 @@ def main():
     #     print("The agents has differing observation specs. Needs to be implemented")
     #     exit()
 
+    model_type = globals()[model_param["model_class_name"]]
+
     if TRAIN_MODEL:
         timestamp = int(time.time())
 
-        
         results_directory = Path(f"./results/{timestamp}/")
         parameter_directory = results_directory / "parameters"
 
@@ -231,49 +236,39 @@ def main():
             models_directory = results_directory / "models"
             models_directory.mkdir()
 
-            model_param["models_dir"] = models_directory
+            model_param["models_dir"] = f"./{models_directory}"
 
         if not parameter_directory.exists():
             parameter_directory.mkdir()
 
-            model_param["parameter_dir"] = parameter_directory
+            model_param["parameter_dir"] = f"./{parameter_directory}"
 
         # TODO: Save here? Or later?
         # save_dict_to_json(agent.model_param, f"{results_directory}_model_param.json")
         # save_dict_to_json(agent.config, f"{results_directory}_config.json")
         # save_dict_to_json(agent.dqn_param, f"{results_directory}_dqn_param.json")
 
-        print("[INFO] Initalizing Q network policy")
-        # ee_policy_net = EE_CNN_Residual(
-        #     # frames_history=2,
-        #     num_ee=model_param["num_ee"],
-        #     planes=model_param["planes"],
-        #     input_shape=model_param["input_size"],
-        #     num_classes=model_param["num_classes"],
-        #     repetitions=model_param["repetitions"],
-        #     distribution=model_param["distribution"],
-        # ).to(DEVICE)
-
-        ee_policy_net = small_DQN(
+        print(f"[INFO] Initalizing Q network policy of type {model_type}")
+        ee_policy_net = model_type(
+            # frames_history=2,
+            num_ee=model_param["num_ee"],
+            planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
+            repetitions=model_param["repetitions"],
+            distribution=model_param["distribution"],
         ).to(DEVICE)
 
-        print("[INFO] Initalizing Q network target")
-        # ee_target_net = EE_CNN_Residual(
-        #     # frames_history=2,
-        #     num_ee=model_param["num_ee"],
-        #     planes=model_param["planes"],
-        #     input_shape=model_param["input_size"],
-        #     num_classes=model_param["num_classes"],
-        #     repetitions=model_param["repetitions"],
-        #     distribution=model_param["distribution"],
-        #     initalize_parameters=False,
-        # ).to(DEVICE)
-
-        ee_target_net = small_DQN(
+        print(f"[INFO] Initalizing Q network target of type {model_type}")
+        ee_target_net = model_type(
+            # frames_history=2,
+            num_ee=model_param["num_ee"],
+            planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
+            repetitions=model_param["repetitions"],
+            distribution=model_param["distribution"],
+            initalize_parameters=False,
         ).to(DEVICE)
 
         # TODO: This is important to get the networks initalized with the same weigths
@@ -299,11 +294,11 @@ def main():
         startTime = time.time()
         print(f"[INFO] started training @ {time.ctime(startTime)}")
 
-        save_dict_to_json(model_param, f"{parameter_directory}/model_param.json")
-        save_dict_to_json(config, f"{parameter_directory}/config.json")
-        save_dict_to_json(dqn_param, f"{parameter_directory}/dqn_param.json")
+        save_dict_to_json(model_param, f"./{parameter_directory}/model_param.json")
+        save_dict_to_json(config, f"./{parameter_directory}/config.json")
+        save_dict_to_json(dqn_param, f"./{parameter_directory}/dqn_param.json")
         save_dict_to_json(
-            epsilon_greedy_param, f"{parameter_directory}/epsilon_greedy_param.json"
+            epsilon_greedy_param, f"./{parameter_directory}/epsilon_greedy_param.json"
         )
 
         scores, episode, scores_window, losses = model_trainer(
@@ -321,36 +316,91 @@ def main():
                 endTime - startTime
             )
         )
-    elif VISUALIZE_MODEL:
-        # If we just trained a model, load that one. 
-        # If not, load the model from the timestamp provided. 
-        runs_directory = f"./results/"
+
+    if VISUALIZE_MODEL:
+        # Close old env and start fresh
+        env.close()
+
+        env = UnityEnvironment(
+            file_name=FILE_NAME,
+            side_channels=SIDE_CHANNELS,
+            seed=model_param["manual_seed"],
+            no_graphics=False,
+        )
+
+        env.reset()
+        # If we just trained a model, load that one.
+        # If not, load the model from the timestamp provided.
+
+        runs_directory = Path(f"./results/")
 
         if TRAIN_MODEL:
-            runs_directory = f"./results/"
             results_directory, timestamp = get_latest_folder(runs_directory)
-            parameter_directory = results_directory / "parameters"
             if not results_directory:
                 print("No folders found in the runs_directory.")
                 exit()
 
         else:
             if TIMESTAMP:
-                results_directory = Path.joinpath(runs_directory, TIMESTAMP)
-                parameter_directory = results_directory / "parameters"
+                results_directory = runs_directory / str(TIMESTAMP)
             else:
-                print("No timestamp provided in model_param. Cannot load model without it.")
+                print("No timestamp provided. Cannot load model without it.")
                 exit()
-        
 
-        model_param = load_json_as_dict(f"{parameter_directory}_model_param.json")
-        config = load_json_as_dict(f"{parameter_directory}_config.json")
-        dqn_param = load_json_as_dict(f"{parameter_directory}_dqn_param.json")
+        parameter_directory = results_directory / "parameters"
 
-        
+        model_param = load_json_as_dict(f"{parameter_directory}/model_param.json")
+        config = load_json_as_dict(f"{parameter_directory}/config.json")
+        dqn_param = load_json_as_dict(f"{parameter_directory}/dqn_param.json")
 
+        print("[INFO] Loading the trained policy net")
+        # ee_policy_net = EE_CNN_Residual(
+        #     # frames_history=2,
+        #     num_ee=model_param["num_ee"],
+        #     planes=model_param["planes"],
+        #     input_shape=model_param["input_size"],
+        #     num_classes=model_param["num_classes"],
+        #     repetitions=model_param["repetitions"],
+        #     distribution=model_param["distribution"],
+        # ).to(DEVICE)
 
-        
+        ee_policy_net = model_type(
+            input_shape=model_param["input_size"],
+            num_classes=model_param["num_classes"],
+        )  # .to(DEVICE)
+
+        models_directory = model_param["models_dir"]
+        model_file = f"{models_directory}last_model.pt"
+        print(f"[INFO] Loading weights from {model_file}")
+
+        # Override trained device:
+        print("[INFO] Overriding the device used for training")
+        model_param["device"] = DEVICE
+
+        if ee_policy_net.__class__.__name__ == model_param["model_class_name"]:
+            ee_policy_net.load_state_dict(torch.load(model_file, map_location=DEVICE))
+            ee_policy_net.to(DEVICE)
+        else:
+            print(
+                "[EXIT] The network you want to load is not the same type as the declaired."
+            )
+            exit()
+
+        ee_target_net = None
+
+        # Setting the network in evaluation mode
+        ee_policy_net.eval()
+
+        print("[INFO] Initalizing a Agent object")
+        agent = Agent(
+            ee_policy_net,
+            ee_target_net,
+            model_param=model_param,
+            config=config,
+            dqn_param=dqn_param,
+        )
+
+        visualize_trained_model(env, agent, config, VERBOSE)
 
 
 def model_trainer(
@@ -391,7 +441,9 @@ def model_trainer(
         num_teams = len(team_name_list)
 
         if verbose:
-            print(f"[INFO] Number of parallell environments during training: {num_teams}")
+            print(
+                f"[INFO] Number of parallell environments during training: {num_teams}"
+            )
 
         state_size = agent.model_param["input_size"]
         state_batch_tensor = torch.zeros((num_teams, *state_size))
@@ -405,45 +457,29 @@ def model_trainer(
             for team_idx, team in enumerate(team_name_list):
                 decision_steps, _ = env.get_steps(team)
                 training_agents[team] = {
-                    "agent_id": decision_steps.agent_id[-1],
+                    "agent_id": decision_steps.agent_id[
+                        -1
+                    ],  # random agent from each team
                     "episode_score": 0,
-                    # "state": None,
                 }
                 agent_id = training_agents[team]["agent_id"]
-                agent_ids = decision_steps.agent_id
-                if agent_id in agent_ids:
-                    agent_obs = decision_steps[agent_id].obs
-                    state = get_grid_based_perception(agent_obs)
-                    state_batch_tensor[team_idx, :, :, :] = state
-                else:
-                    print(
-                        f"No state for the agent {agent_id} in {team} in the first step"
-                    )
-                    exit()
+                agent_obs = decision_steps[agent_id].obs
+                state = get_grid_based_perception(agent_obs)
+                state_batch_tensor[team_idx, ...] = state
 
             # min_max_conf = list()
             episode_done = False
             while not episode_done:
-                # for team_idx, team in enumerate(team_name_list):
-                #     decision_steps, terminal_steps = env.get_steps(team)
-                #     agent_id = training_agents[team]["agent_id"]
-                #     agent_ids = decision_steps.agent_id
-                #     if agent_id in agent_ids:
-                #         agent_obs = decision_steps[agent_id].obs
-                #         state = get_grid_based_perception(agent_obs)
-                #         state_batch_tensor[team_idx, :, :, :] = state
-                #     else:
-                #         print(f"No state for the agent {agent_id} in {team}")
-                #         exit()
+                move_action, laser_action = agent.act(
+                    state_batch_tensor, eps=eps, num_agents=num_teams
+                )
 
-                # if agent_id in agent_ids:
-                act = agent.act(state_batch_tensor, eps=eps, num_teams=num_teams)
-                move_action, laser_action = act  # , idx, cost, conf = act
+                # move_action, laser_action = act  # , idx, cost, conf = act
 
                 for team_idx, team in enumerate(team_name_list):
                     agent_id = training_agents[team]["agent_id"]
-                    team_move_action = move_action[team_idx, :, :]
-                    team_laser_action = laser_action[team_idx, :, :]
+                    team_move_action = move_action[team_idx, ...]
+                    team_laser_action = laser_action[team_idx, ...]
                     env.set_action_for_agent(
                         team,
                         agent_id,
@@ -454,11 +490,11 @@ def model_trainer(
 
                 for team_idx, team in enumerate(team_name_list):
                     decision_steps, terminal_steps = env.get_steps(team)
-                    agent_ids = decision_steps.agent_id
+                    agents_need_action = decision_steps.agent_id
                     agent_id = training_agents[team]["agent_id"]
 
                     # ASK: This needs to be if agent not done?
-                    if agent_id in agent_ids:
+                    if agent_id in agents_need_action:
                         agent_obs = decision_steps[agent_id].obs
                         next_state = get_grid_based_perception(agent_obs)
                     else:
@@ -475,14 +511,15 @@ def model_trainer(
                     )
 
                     action = np.argmax(move_action)
-                    state = state_batch_tensor[team_idx, :, :, :].unsqueeze(0)
+                    state = state_batch_tensor[team_idx, ...].unsqueeze(0)
+
                     optimized = agent.step(
                         state, action, reward, next_state, done, episode
                     )
-                    state = (
-                        next_state  # TODO: This is dobbel up on the for loop futher up
-                    )
-                    state_batch_tensor[team_idx, :, :, :] = state
+                    # state = (
+                    #     next_state  # TODO: This is dobbel up on the for loop futher up
+                    # )
+                    state_batch_tensor[team_idx, ...] = next_state
 
                     training_agents[team]["episode_score"] += reward
 
@@ -494,6 +531,8 @@ def model_trainer(
 
             scores_window.append(scores_all_training_agents)  # save most recent score
             scores.append(scores_all_training_agents)  # save most recent score
+
+            # CRITICAL: This line has an error if no learning has been done. Not enough samples in memory.
             losses.append(agent.cumulative_loss.item())  # save most recent loss
 
             eps = max(eps_end, eps_decay * eps)  # decrease epsilon
@@ -561,6 +600,85 @@ def model_trainer(
         print("Model is saved, parameters is saved & the Environment is closed...")
 
     return scores, episode, scores_window, losses
+
+
+def visualize_trained_model(env, agent, config, verbose):
+    num_visual_episodes = config["visualize"]["episodes"]
+
+    team_name_list = list(env.behavior_specs.keys())
+    num_teams = len(team_name_list)
+    decision_steps, _ = env.get_steps(team_name_list[-1])
+
+    num_agents_on_teams = len(decision_steps.agent_id)
+    num_total_agents = num_teams * num_agents_on_teams
+
+    state_size = agent.model_param["input_size"]
+    state_batch_tensor = torch.zeros((num_total_agents, *state_size))
+
+    try:
+        if verbose:
+            print(
+                f"[INFO] Number of parallell environments during visualization: {num_teams}"
+            )
+
+        for episode in range(1, num_visual_episodes + 1):
+            if verbose:
+                print(f"\nEpisode {episode}/{num_visual_episodes} started")
+
+            env.reset()  # TODO: Test with and without this
+
+            for _, team in enumerate(team_name_list):
+                decision_steps, _ = env.get_steps(team)
+                agents_need_action = decision_steps.agent_id
+                for agent_id in agents_need_action:
+                    agent_obs = decision_steps[agent_id].obs
+                    state = get_grid_based_perception(agent_obs)
+                    state_batch_tensor[agent_id, ...] = state
+
+            episode_done = False
+            while not episode_done:
+                act = agent.act(state_batch_tensor, num_agents=num_total_agents)
+                move_action, laser_action = act
+
+                for _, team in enumerate(team_name_list):
+                    decision_steps, _ = env.get_steps(team)
+                    agents_need_action = decision_steps.agent_id
+                    for agent_id in agents_need_action:
+                        agent_move_action = move_action[agent_id, ...]
+                        agent_laser_action = laser_action[agent_id, ...]
+                        env.set_action_for_agent(
+                            team,
+                            agent_id,
+                            ActionTuple(agent_move_action, agent_laser_action),
+                        )
+
+                env.step()
+
+                for _, team in enumerate(team_name_list):
+                    decision_steps, terminal_steps = env.get_steps(team)
+                    agents_need_action = decision_steps.agent_id
+                    for agent_id in agents_need_action:
+                        agent_obs = decision_steps[agent_id].obs
+                        next_state = get_grid_based_perception(agent_obs)
+                        state = next_state
+                        state_batch_tensor[agent_id, ...] = state
+
+                    terminated_agent_ids = terminal_steps.agent_id
+                    done = True if len(terminated_agent_ids) > 0 else False
+                    episode_done = done
+
+    except (
+        KeyboardInterrupt,
+        UnityCommunicationException,
+        UnityEnvironmentException,
+        UnityCommunicatorStoppedException,
+    ) as ex:
+        print(ex)
+        print("-" * 100)
+        print("Exception has occured !!")
+        print("Visualizing was interrupted.")
+        print("-" * 100)
+        env.close()
 
 
 if __name__ == "__main__":
