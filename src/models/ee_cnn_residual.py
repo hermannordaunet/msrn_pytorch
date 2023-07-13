@@ -353,7 +353,7 @@ def get_elements_from_indices(tensor, indices):
 
 def remove_exited_pred_from_batch(x, idx):
     mask = torch.ones_like(x, dtype=torch.bool)
-    mask[idx, :, :, :] = False
+    mask[idx, ...] = False
 
     # Apply the mask to the tensor
     x_filtered = x[mask]
