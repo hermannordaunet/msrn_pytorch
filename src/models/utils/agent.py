@@ -127,7 +127,8 @@ class Agent:
         if self.prioritized_memory:
             experiences = self.memory.sample(self.get_beta(i))
         else:
-            experiences = self.memory.sample()
+            random_sample = random.sample(range(len(self.memory)), 10)
+            experiences = self.memory.sample(indexes=random_sample)
 
         self.learn(experiences)
 
