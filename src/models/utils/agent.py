@@ -134,7 +134,7 @@ class Agent:
 
         return True
 
-    def act(self, state, eps=0.0, num_teams=1):
+    def act(self, state, eps=0.0, num_agents=1):
         """Returns actions for given state as per current policy.
 
         Params
@@ -145,11 +145,11 @@ class Agent:
         """
 
         # Same for everyone
-        laser_action_batch = np.zeros((num_teams, 1, 1))
+        laser_action_batch = np.zeros((num_agents, 1, 1))
 
-        move_actions_batch = np.zeros((num_teams, 1, self.policy_net.num_classes))
+        move_actions_batch = np.zeros((num_agents, 1, self.policy_net.num_classes))
 
-        if random.random() > eps:
+        if random.random() >= eps:
             # Returning action for network
             # action_indexes = torch.max(action_values, dim=1)[1]
             state = state.to(
@@ -162,15 +162,15 @@ class Agent:
 
             action_indexes = torch.argmax(action_values, dim=1)
             # CRITICAL: Slow for-loop?
-            for count in range(num_teams):
+            for count in range(num_agents):
                 move_actions_batch[count, :, action_indexes[count]] = 1.0
 
         else:
             # Returning a random action
             high = self.policy_net.num_classes
-            random_action_idx = np.random.randint(0, high, size=num_teams)
+            random_action_idx = np.random.randint(0, high, size=num_agents)
             # CRITICAL: Slow for-loop?
-            for count in range(num_teams):
+            for count in range(num_agents):
                 move_actions_batch[count, :, random_action_idx[count]] = 1.0
 
         return move_actions_batch, laser_action_batch  # , exits, costs, confs
