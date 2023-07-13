@@ -210,9 +210,15 @@ class Agent:
             torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
         )
 
-        # Get max predicted Q values (for next states) from target model
-        with torch.no_grad():
-            pred, _, _, _ = self.target_net(next_state_batch)
+
+        if self.target_net:
+            # Get max predicted Q values (for next states) from target model
+            with torch.no_grad():
+                pred, _, _, _ = self.target_net(next_state_batch)
+
+        else:
+            print("[ERROR] The agent has no target net. Only use for eval/visualize")
+            exit()
 
         # CRITICAL: Here we get the Q_targets from the last exit of the network
         # Here we need the network to be set up with some kind of inf threshold
