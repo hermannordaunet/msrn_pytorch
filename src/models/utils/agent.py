@@ -12,6 +12,8 @@ from utils.loss_functions import loss_v1, loss_v2, loss_v3, loss_v4
 from utils.print_utils import print_min_max_conf
 from utils.data_utils import min_max_conf_from_dataset
 
+from visualization.visualize import plot_grid_based_perception
+
 
 class Agent:
     """Interacts with and learns from the environment."""
