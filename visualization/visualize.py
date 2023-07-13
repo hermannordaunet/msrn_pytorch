@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # TODO: Add some plotting functions into this.
+# TODO: Add set figure size so that we do not need scaling in latex
 # Training loss and score
 
 
