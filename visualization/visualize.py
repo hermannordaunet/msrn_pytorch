@@ -114,24 +114,40 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
 # Eval loss and score
 
 
-def plot_grid_based_perception(image_tensor, team_id):
+def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs):
     image_tensor = image_tensor.squeeze()
-    num_cols = image_tensor.shape[0]
-    fig, ax = plt.subplots(nrows=1, ncols=num_cols)
+    if len(image_tensor.shape) == 4:
+        num_rows, num_cols, _, _ = image_tensor.shape
+    else:
+        num_rows = 1
+        num_cols, _, _ = image_tensor.shape
+
+    fig, ax = plt.subplots(nrows=num_rows, ncols=num_cols)
 
     labels = ["food", "agent", "wall", "badFood", "frozenAgent"]
 
-    for col in range(num_cols):
-        cur_ax = ax[col]
-        cur_ax.imshow(image_tensor[col, :, :])
+    for row in range(num_rows):
+        for col in range(num_cols):
+            if num_rows > 1 and num_cols > 1:
+                cur_ax = ax[row, col]
+                cur_ax.imshow(image_tensor[row, col, ...])
+            else:
+                cur_ax = ax[col]
+                cur_ax.imshow(image_tensor[col, ...])
+            
+            if row == 0:
+                cur_ax.set_title(labels[col])
 
-        cur_ax.set_title(labels[col])
-        cur_ax.axis("off")
+            cur_ax.axis("off")
 
-    fig.suptitle(f"Agent observation: {team_id}")
+    if title:
+        fig.suptitle(str(title))
+    else:
+        if team_id:
+            fig.suptitle(f"Agent observation: {team_id}")
 
     plt.tight_layout()
-    plt.show()
+    plt.show(**kwargs)
 
 
 def main():
