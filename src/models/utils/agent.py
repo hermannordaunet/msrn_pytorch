@@ -116,12 +116,12 @@ class Agent:
             return False
 
         # TODO: Add a minimal batch size?
-        if len(self.memory) <= self.minimal_memory_size:
+        if len(self.memory) < self.minimal_memory_size:
             return False
 
         # If enough samples are available in memory, get random subset and learn
         # Redundant now that we have minimal_memory_size
-        if len(self.memory) <= self.batch_size:
+        if len(self.memory) < self.batch_size:
             return False
 
         if self.prioritized_memory:
