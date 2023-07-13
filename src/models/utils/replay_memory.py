@@ -4,6 +4,8 @@ import numpy as np
 
 from collections import namedtuple
 
+# Local imports
+from visualization.visualize import plot_grid_based_perception
 
 # Memory for Experience Replay
 class ReplayMemory(object):
@@ -24,6 +26,7 @@ class ReplayMemory(object):
                 None
             )  # if we haven't reached full capacity, we append a new transition
         self.memory[self.position] = self.Transition(*args)
+        # plot_grid_based_perception(*args[0], title="state inside memory add")
         self.position = (
             self.position + 1
         ) % self.capacity  # e.g if the capacity is 100, and our position is now 101, we don't append to
