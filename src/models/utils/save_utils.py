@@ -2,6 +2,8 @@ import os
 import json
 import torch
 
+# CRITICAL: When saving best model, it has to be seralized.
+
 
 def save_model(q_net_local, folder_path, model_type="last"):
     """
