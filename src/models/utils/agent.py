@@ -210,6 +210,16 @@ class Agent:
             torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
         )
 
+        plot_grid_based_perception(
+            state_batch.cpu(),
+            title=f"Batch1: 10 states in seq",
+            block=False,
+        )
+        plot_grid_based_perception(
+            next_state_batch.cpu(),
+            title=f"Batch1: 10 next states in seq",
+            block=False,
+        )
 
         if self.target_net:
             # Get max predicted Q values (for next states) from target model
