@@ -29,10 +29,11 @@ class ReplayMemory(object):
         ) % self.capacity  # e.g if the capacity is 100, and our position is now 101, we don't append to
         # position 101 (impossible), but to position 1 (its remainder), overwriting old data
 
-    def sample(self):
-        indexes = np.random.choice(
-            range(len(self.memory)), self.batch_size, replace=False
-        )
+    def sample(self, indexes=None):
+        if indexes is None:
+            indexes = np.random.choice(
+                range(len(self.memory)), self.batch_size, replace=False
+            )
         # return np.random.choice(self.memory, size=self.batch_size)
 
         # CRITICAL: Think this is a bit to slow
