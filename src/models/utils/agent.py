@@ -133,7 +133,7 @@ class Agent:
 
         return True
 
-    def act(self, state, eps=0.0, num_agents=1):
+    def act(self, act_state, eps=0.0, num_agents=1):
         """Returns actions for given state as per current policy.
 
         Params:
@@ -150,13 +150,13 @@ class Agent:
         if random.random() >= eps:
             # Returning action for network
             # action_indexes = torch.max(action_values, dim=1)[1]
-            state = state.to(
+            act_state = act_state.to(
                 self.device
             )  # Try to get the state to the same device as model
 
             self.policy_net.eval()
             with torch.no_grad():
-                action_values, confs, exits, costs = self.policy_net(state)
+                action_values, confs, exits, costs = self.policy_net(act_state)
 
             action_indexes = torch.argmax(action_values, dim=1)
             # CRITICAL: Slow for-loop?
