@@ -49,16 +49,16 @@ from utils.stats_side_channel import StatsSideChannel
 
 
 def get_grid_based_perception_numpy(agent_obs):
-    state = agent_obs[0]
-    grid_based_perception = np.transpose(state, (2, 0, 1))
+    grid_state_numpy = agent_obs[0]
+    grid_based_perception = np.transpose(grid_state_numpy, (2, 0, 1))
 
     return np.expand_dims(grid_based_perception, axis=0)
 
 
 def get_grid_based_perception(agent_obs):
-    state = agent_obs[0]
+    grid_state = agent_obs[0]
     grid_based_perception = torch.tensor(
-        state.transpose((2, 0, 1)), dtype=torch.float32
+        grid_state.transpose((2, 0, 1)), dtype=torch.float32
     )
 
     return grid_based_perception.unsqueeze(0)
