@@ -2,8 +2,6 @@ import numpy as np
 
 from collections import namedtuple
 
-# Local imports
-from visualization.visualize import plot_grid_based_perception
 
 # Memory for Experience Replay
 class ReplayMemory(object):
