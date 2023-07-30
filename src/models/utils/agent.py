@@ -29,8 +29,7 @@ class Agent:
     ):
         """Initialize an Agent object.
 
-        Params
-        ======
+        Params:
             state_size (int): dimension of each state
             action_size (int): dimension of each action
             seed (int): random seed
@@ -137,9 +136,8 @@ class Agent:
     def act(self, state, eps=0.0, num_agents=1):
         """Returns actions for given state as per current policy.
 
-        Params
-        ======
-            state (array_like): current state
+        Params:
+            act_state (array_like): current state sent to act
             eps (float): epsilon, for epsilon-greedy action selection
             num_teams (int): how many environments in parallell
         """
@@ -278,8 +276,7 @@ class Agent:
         """Soft update model parameters.
         θ_target = τ*θ_local + (1 - τ)*θ_target
 
-        Params
-        ======
+        Params:
             policy_net (PyTorch model): weights will be copied from
             target_net (PyTorch model): weights will be copied to
             tau (float): interpolation parameter
