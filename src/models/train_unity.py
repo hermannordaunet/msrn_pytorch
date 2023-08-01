@@ -512,8 +512,10 @@ def model_trainer(
 
                     action = np.argmax(move_action)
                     # Make a clone of the state tensor. This was overwritten later
-                    # making the training loop not work. 
-                    state = state_batch_tensor[team_idx, ...].unsqueeze(0).detach().clone()
+                    # making the training loop not work.
+                    state = (
+                        state_batch_tensor[team_idx, ...].unsqueeze(0).detach().clone()
+                    )
 
                     optimized = agent.step(
                         state, action, reward, next_state, done, episode
