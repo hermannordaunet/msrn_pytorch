@@ -286,7 +286,7 @@ class EE_CNN_Residual(nn.Module):
         else:
             exit_threshold = self.exit_threshold
 
-        idx = torch.where(conf > exit_threshold, dtype=torch.int)[0]
+        idx = torch.where(conf > exit_threshold)[0]
         empty = idx.shape[0] == 0
 
         return idx, empty
