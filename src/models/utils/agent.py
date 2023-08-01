@@ -132,7 +132,7 @@ class Agent:
 
         return True
 
-    def act(self, act_state, eps=0.0, num_agents=1):
+    def act(self, act_state, epsilon=0.0, num_agents=1):
         """Returns actions for given state as per current policy.
 
         Params:
@@ -146,12 +146,10 @@ class Agent:
 
         move_actions_batch = np.zeros((num_agents, 1, self.policy_net.num_classes))
 
-        if random.random() >= eps:
+        if random.random() >= epsilon:
             # Returning action for network
             # action_indexes = torch.max(action_values, dim=1)[1]
-            act_state = act_state.to(
-                self.device
-            )  # Try to get the state to the same device as model
+            act_state = act_state.to(self.device)
 
             self.policy_net.eval()
             with torch.no_grad():
