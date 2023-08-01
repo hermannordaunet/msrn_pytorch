@@ -225,7 +225,9 @@ class Agent:
         #    Q_expected, Q_targets, conf, cost, num_ee=num_ee
         # )
 
-        cumulative_loss, pred_loss, cost_loss = loss_v4(
+        self.initalize_loss_function()
+
+        cumulative_loss, pred_loss, cost_loss = self.loss(
             Q_expected, Q_targets, num_ee=num_ee
         )
 
