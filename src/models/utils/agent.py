@@ -27,21 +27,7 @@ class Agent:
         dqn_param=None,
         # small_eps=1e-5, # For prioritized memory
     ):
-        """Initialize an Agent object.
-
-        Params:
-            state_size (int): dimension of each state
-            action_size (int): dimension of each action
-            seed (int): random seed
-            learning_rate (float): Pending
-            memory_size (int): Pending
-            prioritized_memory (bool): Pending
-            batch_size (int): Pending
-            gamma (float): Pending
-            tau (float): Pending
-            small_eps (float): Pending
-            update_every (int): Pending
-        """
+        """Initialize an Agent object."""
 
         if model_param is None:
             print("Cannot initialize agent without model_param dict")
