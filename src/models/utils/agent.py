@@ -118,7 +118,7 @@ class Agent:
 
         return True
 
-    def act(self, act_state, eps=0.0, num_agents=1):
+    def act(self, act_state, epsilon=0.0, num_agents=1):
         """Returns actions for given state as per current policy.
 
         Params:
@@ -132,12 +132,10 @@ class Agent:
 
         move_actions_batch = np.zeros((num_agents, 1, self.policy_net.num_classes))
 
-        if random.random() >= eps:
+        if random.random() >= epsilon:
             # Returning action for network
             # action_indexes = torch.max(action_values, dim=1)[1]
-            act_state = act_state.to(
-                self.device
-            )  # Try to get the state to the same device as model
+            act_state = act_state.to(self.device)
 
             self.policy_net.eval()
             with torch.no_grad():
@@ -196,7 +194,7 @@ class Agent:
         if self.target_net:
             # Get max predicted Q values (for next states) from target model
             with torch.no_grad():
-                pred, _, _, _ = self.target_net(next_state_batch)
+                next_pred, _, _, _ = self.target_net(next_state_batch)
 
         else:
             print("[ERROR] The agent has no target net. Only use for eval/visualize")
@@ -205,7 +203,7 @@ class Agent:
         # CRITICAL: Here we get the Q_targets from the last exit of the network
         # Here we need the network to be set up with some kind of inf threshold
         # to get the prediction from the last exit
-        Q_targets_next = pred.detach().max(1)[0].unsqueeze(1)
+        Q_targets_next = next_pred.clone().detach().max(1)[0].unsqueeze(1)
 
         # Compute Q targets for current states
         Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
