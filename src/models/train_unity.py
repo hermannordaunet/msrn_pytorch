@@ -23,7 +23,7 @@ from utils.save_utils import save_model, save_dict_to_json
 from ee_cnn_residual import EE_CNN_Residual
 from small_dqn import small_DQN
 from utils.data_utils import min_max_conf_from_dataset
-from utils.print_utils import print_min_max_conf, print_cost_of_exits
+from utils.print_utils import print_min_max_conf, print_cost_of_exits, get_time_hh_mm_ss
 from visualization.visualize import (
     plot_scores_from_list,
     plot_loss_from_list,
@@ -99,7 +99,8 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",
-        "num_ee": 0,
+        "loss_function" : "v1",
+        "num_ee": 2,
         "repetitions": [2, 2],
         "planes": [32, 64, 64],
         "distribution": "pareto",
@@ -112,7 +113,7 @@ def main():
 
     config = {
         "env_name": "FoodCollector",
-        "use_build": False,
+        "use_build": True,
         "no_graphics": True,
         "laser_length": 1.5,
         "agent_scale": 1,
@@ -137,7 +138,7 @@ def main():
     dqn_param = {
         "gamma": 0.99,
         "tau": 0.005,  # TODO: Try one more 0.05 (5e-2) previous
-        "update_every": 20,
+        "update_every": 10,
     }
 
     epsilon_greedy_param = {
@@ -182,6 +183,7 @@ def main():
         side_channels=SIDE_CHANNELS,
         seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
+        worker_id=1,
     )
 
     # Unity environment spesific
@@ -311,10 +313,9 @@ def main():
         )
 
         endTime = time.time()
+        total_sec = endTime - startTime
         print(
-            "[INFO] total time taken to train the model: {:.2f} sec".format(
-                endTime - startTime
-            )
+            f"[INFO] total time taken to train the model: {get_time_hh_mm_ss(total_sec)} sec"
         )
 
     if VISUALIZE_MODEL:
