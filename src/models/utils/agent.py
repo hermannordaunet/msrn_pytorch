@@ -300,3 +300,15 @@ class Agent:
             )
         else:
             raise Exception("invalid optimizer")
+
+    def initalize_loss_function(self):
+        if self.model_param["loss_function"] == "v1":
+            self.loss = loss_v1
+        elif self.model_param["loss_function"] == "v2":
+            self.loss = loss_v2
+        elif self.model_param["loss_function"] == "v3":
+            self.loss = loss_v3
+        elif self.model_param["loss_function"] == "v4":
+            self.loss = loss_v4
+        else:
+            raise Exception("invalid loss function")
