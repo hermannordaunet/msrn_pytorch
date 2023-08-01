@@ -99,8 +99,8 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",
-        "loss_function" : "v1",
-        "num_ee": 2,
+        "loss_function" : "v4",
+        "num_ee": 0,
         "repetitions": [2, 2],
         "planes": [32, 64, 64],
         "distribution": "pareto",
@@ -183,7 +183,7 @@ def main():
         side_channels=SIDE_CHANNELS,
         seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
-        worker_id=1,
+        worker_id=2,
     )
 
     # Unity environment spesific
