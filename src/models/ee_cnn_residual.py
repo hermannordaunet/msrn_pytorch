@@ -306,7 +306,7 @@ class EE_CNN_Residual(nn.Module):
             self.val_batch_cost = torch.zeros_like(conf)
 
         if self.original_idx is None:
-            self.original_idx = torch.zeros_like(conf, dtype=torch.int).squeeze()
+            self.original_idx = torch.zeros_like(conf, dtype=torch.int64).squeeze()
             self.original_idx[:] = torch.arange(conf.shape[0])
 
         idx_to_remove, remove_idx_empty = self.find_conf_above_threshold(
