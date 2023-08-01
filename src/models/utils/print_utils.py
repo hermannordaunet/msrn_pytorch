@@ -1,3 +1,4 @@
+from datetime import timedelta
 from utils.flops_counter import flops_to_string, params_to_string
 
 
@@ -24,3 +25,13 @@ def print_cost_of_exits(model):
     print(
         f"exit-full-model: flops={flops_to_string(flops)}, params={params_to_string(params)}, cost-rate={(flops / total_flops):.2f}"
     )
+
+def get_time_hh_mm_ss(sec):
+    # create timedelta and convert it into string
+    td_str = str(timedelta(seconds=sec))
+
+    # split string into individual component
+    x = td_str.split(':')
+    time_as_string = f"hh:mm:ss: {x[0]} hours, {x[1]} minutes, {x[2]} seconds"
+
+    return time_as_string
