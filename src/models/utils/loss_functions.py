@@ -121,6 +121,6 @@ def loss_v4(pred, target, num_ee=0, **kwargs):
     """
     cumulative_pred = [None] * num_ee + [pred[num_ee]]
 
-    pred_loss = F.smooth_l1_loss(cumulative_pred[-1], target)
+    pred_loss = F.mse_loss(cumulative_pred[-1], target)
 
     return pred_loss, 0, 0
