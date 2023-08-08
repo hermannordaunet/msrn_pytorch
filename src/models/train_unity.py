@@ -173,7 +173,7 @@ def main():
             )
             FILE_NAME = relative_path
         else:
-            relative_path = "builds/FoodCollector_4_no_respawn.app"
+            relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             FILE_NAME = relative_path
     else:
         FILE_NAME = None
@@ -497,7 +497,7 @@ def model_trainer(
                     # ASK: This needs to be if agent not done?
                     if agent_id in agents_need_action:
                         agent_obs = decision_steps[agent_id].obs
-                        next_state = get_grid_based_perception(agent_obs)
+                        next_state = get_grid_based_perception(agent_obs).detach().clone()
                     else:
                         next_state = None
                         print(f"Got a None next state. team: {team}, episode {episode}")
