@@ -465,7 +465,7 @@ def model_trainer(
                 }
                 agent_id = training_agents[team]["agent_id"]
                 agent_obs = decision_steps[agent_id].obs
-                state = get_grid_based_perception(agent_obs)
+                state = get_grid_based_perception(agent_obs).detach().clone()
                 state_batch_tensor[team_idx, ...] = state
 
             # min_max_conf = list()
