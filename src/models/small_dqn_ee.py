@@ -4,8 +4,8 @@ import torch.nn.functional as F
 
 # Local import
 from src.models.utils.exitblock import ExitBlock
-from src.models.utils.classifier import simple_classifier
-from src.models.utils.confidence import simple_confidence
+from src.models.utils.classifier import classifier_linear_softmax
+from src.models.utils.confidence import confidence_linear_sigmoid
 
 
 class small_DQN_EE(nn.Module):
@@ -98,8 +98,8 @@ class small_DQN_EE(nn.Module):
                 HIDDEN_LAYER_2_OUT, self._num_classes, self.input_shape, self.exit_type
             )
         )
-        self.last_confidence = simple_confidence(30976)
-        self.last_classifier = simple_classifier(num_classes, 30976)
+        self.last_confidence = confidence_linear_sigmoid(30976)
+        self.last_classifier = classifier_linear_softmax(num_classes, 30976)
         self.pool = nn.AdaptiveAvgPool2d(1)
 
     # Called with either one element to determine next action, or a batch
