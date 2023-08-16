@@ -146,6 +146,8 @@ class Agent:
             for count in range(num_agents):
                 move_actions_batch[count, :, action_indexes[count]] = 1.0
 
+            self.policy_net.train()
+
         else:
             # Returning a random action
             high = self.policy_net.num_classes
