@@ -281,12 +281,11 @@ def main():
         print("[INFO] Copying weight from target net to policy net")
         ee_target_net.load_state_dict(ee_policy_net.state_dict())
 
-        ee_policy_net.eval()
-
+        # ee_policy_net.eval()
         # TODO: Find out if this needs to be in eval or train?
         # To ensure the network always is in eval we need to
         # specify it right after init
-        ee_target_net.eval()
+        # ee_target_net.eval()
 
         print("[INFO] Initalizing a Agent object")
         agent = Agent(
