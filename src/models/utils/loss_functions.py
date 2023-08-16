@@ -106,7 +106,7 @@ def loss_v3(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
     return cumulative_loss, 0, 0
 
 
-def loss_v4(pred, target, num_ee=0, **kwargs):
+def loss_v4(pred, target, num_ee=0):
     """loss version 3
 
     Arguments are
