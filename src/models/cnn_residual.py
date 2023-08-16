@@ -21,6 +21,7 @@ class CNN_Residual(nn.Module):
         num_classes=10,
         block=BasicBlock,
         repetitions=list(),
+        init_planes=int(),
         planes=list(),
     ):
         super(CNN_Residual, self).__init__()
@@ -28,6 +29,7 @@ class CNN_Residual(nn.Module):
         self.channel = self.input_shape[0]
         self.num_classes = num_classes
         self.block = block
+        self.init_planes = init_planes
         self.planes = planes
 
         # self.num_ee = num_ee
@@ -38,29 +40,30 @@ class CNN_Residual(nn.Module):
         self.stage = None
 
         self.stage_id = 0
-        self.inplanes = self.planes[0]
 
         # Inital layer
         self.layers.append(
             nn.Sequential(
                 nn.Conv2d(
                     self.channel,
-                    self.inplanes,
+                    self.init_planes,
                     kernel_size=7,
                     stride=2,
                     padding=3,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.inplanes),
+                nn.BatchNorm2d(self.init_planes),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             )
         )
 
-        planes = self.inplanes
+        self.inplanes = self.init_planes
         stride = 1
 
         for idx, repetition in enumerate(repetitions):
+            planes = self.planes[idx]
+
             downsample = None
             if stride != 1 or self.inplanes != planes * block.expansion:
                 downsample = nn.Sequential(
@@ -74,10 +77,9 @@ class CNN_Residual(nn.Module):
             for _ in range(1, repetition):
                 self.layers.append(block(self.inplanes, planes))
 
-            planes = self.planes[idx + 1]
             stride = 2
 
-        planes = self.planes[-1]
+        # planes = self.planes[-1]
 
         self.stage = nn.Sequential(*self.layers)
 
