@@ -550,11 +550,20 @@ def model_trainer(
             # CRITICAL: This line has an error if no learning has been done. Not enough samples in memory.
             losses.append(agent.cumulative_loss.item())  # save most recent loss
 
+            avg_score = np.mean(scores_window)
+
+            if wandb:
+                wandb.log(
+                    {
+                        "loss": losses[-1],
+                        "average_score": avg_score,
+                        "epsilon": eps,
+                    }
+                )
+
             eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
-                avg_score = np.mean(scores_window)
-
                 print(f"Episode stats: ")
                 print(
                     f"Average Score last {len(scores_window)} episodes: {avg_score:.2f}"
