@@ -193,7 +193,7 @@ class Agent:
         if self.target_net:
             # Get max predicted Q values (for next states) from target model
             with torch.no_grad():
-                next_pred, _, _, _ = self.target_net(next_state_batch)
+                next_pred, _, _ = self.target_net(next_state_batch)
 
         else:
             print("[ERROR] The agent has no target net. Only use for eval/visualize")
@@ -202,7 +202,7 @@ class Agent:
         # CRITICAL: Here we get the Q_targets from the last exit of the network
         # Here we need the network to be set up with some kind of inf threshold
         # to get the prediction from the last exit
-        Q_targets_next = next_pred.clone().detach().max(1)[0].unsqueeze(1)
+        Q_targets_next = next_pred[-1].detach().clone().max(1)[0].unsqueeze(1)
 
         # Compute Q targets for current states
         Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
