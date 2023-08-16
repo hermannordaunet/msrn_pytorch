@@ -584,13 +584,13 @@ def model_trainer(
             if wandb:
                 wandb.log({"loss" : losses[-1], "average_score": avg_score})
                 
+            if early_stop:
+                if avg_score >= early_stop and episode > 10:
+                    print(
+                        f"\nEnvironment solved in {episode} episodes!\tAverage Score: {avg_score:.2f}"
+                    )
 
-            if avg_score >= early_stop and episode > 10:
-                print(
-                    f"\nEnvironment solved in {episode} episodes!\tAverage Score: {avg_score:.2f}"
-                )
-
-                break
+                    break
 
     except (
         KeyboardInterrupt,
