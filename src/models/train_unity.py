@@ -130,7 +130,7 @@ def main():
     }
 
     dqn_param = {
-        "gamma": 0.99,
+        "gamma": 0.999,  # Original: 0.99,
         "tau": 0.005,  # TODO: Try one more 0.05 (5e-2) previous
         "update_every": 10,
     }
