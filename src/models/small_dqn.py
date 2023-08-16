@@ -15,11 +15,11 @@ class small_DQN(nn.Module):
     ):
         super(small_DQN, self).__init__()
         # ---- CONVOLUTIONAL NEURAL NETWORK ----
-        HIDDEN_LAYER_1_OUT = 16
-        HIDDEN_LAYER_2_OUT = 32
+        HIDDEN_LAYER_1_OUT = 64
+        HIDDEN_LAYER_2_OUT = 64
         HIDDEN_LAYER_3_OUT = 32
-        KERNEL_SIZE = 3  # original = 5
-        STRIDE = 1  # original = 2
+        KERNEL_SIZE = 5  # original = 5
+        STRIDE = 2  # original = 2
 
         self._in_channels = input_shape[0]
         self._img_height = input_shape[1]
@@ -74,6 +74,7 @@ class small_DQN(nn.Module):
         convh = conv2d_size_out(conv2d_size_out(conv2d_size_out(self._img_height)))
         linear_input_size = convw * convh * HIDDEN_LAYER_3_OUT
 
+        self.head = nn.Linear(linear_input_size, self.num_classes)
         # bottleneck Linear layer
         self.fc1 = nn.Linear(linear_input_size, 500)
 
@@ -101,7 +102,8 @@ class small_DQN(nn.Module):
 
         # x = self.logSoftmax(x)
 
-        pred = self.classifier(x)
+        # pred = self.classifier(x)
+        pred = self.head(x)
         conf = self.confidence(x)
 
         if self.training:
