@@ -92,10 +92,11 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",
-        "loss_function" : "v4",
+        "loss_function": "v4",
         "num_ee": 0,
         "repetitions": [2, 2],
-        "planes": [32, 64, 64],
+        "init_planes": 64,
+        "planes": [64, 32],
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
