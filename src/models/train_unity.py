@@ -506,7 +506,9 @@ def model_trainer(
                     # ASK: This needs to be if agent not done?
                     if agent_id in agents_need_action:
                         agent_obs = decision_steps[agent_id].obs
-                        next_state = get_grid_based_perception(agent_obs).detach().clone()
+                        next_state = (
+                            get_grid_based_perception(agent_obs).detach().clone()
+                        )
                     else:
                         next_state = None
                         print(f"Got a None next state. team: {team}, episode {episode}")
