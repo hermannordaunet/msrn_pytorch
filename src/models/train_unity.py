@@ -219,6 +219,14 @@ def main():
 
     model_type = globals()[model_param["model_class_name"]]
 
+    if DEVICE is not "mps":
+        run_wandb = wandb.init(
+            project="Master-thesis",
+            config={**model_param, **config, **dqn_param, **epsilon_greedy_param},
+        )
+    else:
+        run_wandb = None
+
     if TRAIN_MODEL:
         timestamp = int(time.time())
 
@@ -297,6 +305,9 @@ def main():
             epsilon_greedy_param, f"./{parameter_directory}/epsilon_greedy_param.json"
         )
 
+        if run_wandb:
+            run_wandb.watch(ee_policy_net, log_freq=int(5))
+
         scores, episode, scores_window, losses = model_trainer(
             env,
             agent,
@@ -304,6 +315,7 @@ def main():
             epsilon_greedy_param=epsilon_greedy_param,
             results_directory=results_directory,
             verbose=VERBOSE,
+            wandb=run_wandb,
         )
 
         endTime = time.time()
@@ -404,6 +416,7 @@ def model_trainer(
     config=None,
     epsilon_greedy_param=None,
     results_directory="./",
+    wandb=None,
     verbose=False,
 ):
     """Deep Q-Learning trainer.
@@ -574,6 +587,9 @@ def model_trainer(
 
                 break
 
+            if wandb:
+                wandb.log({"average_score": avg_score})
+
     except (
         KeyboardInterrupt,
         UnityCommunicationException,
@@ -586,6 +602,9 @@ def model_trainer(
         print("-" * 100)
         # TODO: Add save model weights, logs, checkoint etc
     finally:
+        if wandb:
+            wandb.finish()
+
         env.close()
         # CRITICAL: Save model here and the nessasary values
         save_model(agent.policy_net, agent.model_param["models_dir"])
