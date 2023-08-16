@@ -3,9 +3,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # Local import
-from src.models.utils.exitblock import ExitBlock
-from src.models.utils.classifier import simple_classifier
-from src.models.utils.confidence import simple_confidence
+# from src.models.utils.exitblock import ExitBlock
+# from src.models.utils.classifier import classifier_linear_softmax
+# from src.models.utils.confidence import confidence_linear_sigmoid
 from src.models.utils.basicblock import BasicBlock
 
 
