@@ -172,9 +172,6 @@ class Agent:
 
         num_ee = len(self.policy_net.exits)
 
-        # TODO: Check if this is the correct place to start the training
-        self.policy_net.train()
-
         # TODO: Find out if this needs to be in eval or train?
         # self.target_net.train()
 
