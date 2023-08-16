@@ -2,8 +2,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # Local import
-from src.models.utils.classifier import simple_classifier
-from src.models.utils.confidence import simple_confidence
+from src.models.utils.classifier import classifier_linear_softmax
+from src.models.utils.confidence import confidence_linear_sigmoid
 
 
 class small_DQN(nn.Module):
@@ -81,8 +81,8 @@ class small_DQN(nn.Module):
         # Last linear for class probability distribution
         self.fc2 = nn.Linear(500, self.num_classes)
 
-        self.classifier = simple_classifier(self.num_classes, linear_input_size)
-        self.confidence = simple_confidence(linear_input_size)
+        self.classifier = classifier_linear_softmax(self.num_classes, linear_input_size)
+        self.confidence = confidence_linear_sigmoid(linear_input_size)
 
         self.logSoftmax = nn.LogSoftmax(dim=1)
 

@@ -1,7 +1,7 @@
 import torch.nn as nn
 
-from src.models.utils.classifier import simple_classifier
-from src.models.utils.confidence import simple_confidence
+from src.models.utils.classifier import classifier_linear_softmax, classifier_linear
+from src.models.utils.confidence import confidence_linear_sigmoid
 
 
 class ExitBlock(nn.Module):
@@ -22,8 +22,8 @@ class ExitBlock(nn.Module):
             self.layers.append(nn.AdaptiveAvgPool2d(1))
 
         in_size = inplanes * self.expansion
-        self.confidence = simple_confidence(in_size)
-        self.classifier = simple_classifier(num_classes, in_size)
+        self.confidence = confidence_linear_sigmoid(in_size)
+        self.classifier = classifier_linear(num_classes, in_size)
 
     def forward(self, x):
         for layer in self.layers:

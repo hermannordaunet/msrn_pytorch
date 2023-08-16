@@ -1,21 +1,14 @@
 import os
 import time
 import json
+import wandb
 import torch
 
 import numpy as np
 
 from sys import platform
 from pathlib import Path
-
-# import the necessary torch packages
 from collections import deque
-
-# import the necessary sklearn packages
-# from sklearn.metrics import classification_report
-
-# import the necassary scipy packages
-# from scipy import stats
 
 # Local import
 from utils.agent import Agent
@@ -99,10 +92,11 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",
-        "loss_function" : "v4",
+        "loss_function": "v4",
         "num_ee": 0,
         "repetitions": [2, 2],
-        "planes": [32, 64, 64],
+        "init_planes": 64,
+        "planes": [64, 32],
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
@@ -136,7 +130,7 @@ def main():
     }
 
     dqn_param = {
-        "gamma": 0.99,
+        "gamma": 0.999,  # Original: 0.99,
         "tau": 0.005,  # TODO: Try one more 0.05 (5e-2) previous
         "update_every": 10,
     }
@@ -173,7 +167,7 @@ def main():
             )
             FILE_NAME = relative_path
         else:
-            relative_path = "builds/FoodCollector_4_no_respawn.app"
+            relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             FILE_NAME = relative_path
     else:
         FILE_NAME = None
@@ -225,6 +219,14 @@ def main():
 
     model_type = globals()[model_param["model_class_name"]]
 
+    if DEVICE is not "mps":
+        run_wandb = wandb.init(
+            project="Master-thesis",
+            config={**model_param, **config, **dqn_param, **epsilon_greedy_param},
+        )
+    else:
+        run_wandb = None
+
     if TRAIN_MODEL:
         timestamp = int(time.time())
 
@@ -254,6 +256,7 @@ def main():
         ee_policy_net = model_type(
             # frames_history=2,
             num_ee=model_param["num_ee"],
+            init_planes=model_param["init_planes"],
             planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
@@ -265,6 +268,7 @@ def main():
         ee_target_net = model_type(
             # frames_history=2,
             num_ee=model_param["num_ee"],
+            init_planes=model_param["init_planes"],
             planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
@@ -303,6 +307,9 @@ def main():
             epsilon_greedy_param, f"./{parameter_directory}/epsilon_greedy_param.json"
         )
 
+        if run_wandb:
+            run_wandb.watch(ee_policy_net, log_freq=int(5))
+
         scores, episode, scores_window, losses = model_trainer(
             env,
             agent,
@@ -310,6 +317,7 @@ def main():
             epsilon_greedy_param=epsilon_greedy_param,
             results_directory=results_directory,
             verbose=VERBOSE,
+            wandb=run_wandb,
         )
 
         endTime = time.time()
@@ -410,6 +418,7 @@ def model_trainer(
     config=None,
     epsilon_greedy_param=None,
     results_directory="./",
+    wandb=None,
     verbose=False,
 ):
     """Deep Q-Learning trainer.
@@ -465,7 +474,7 @@ def model_trainer(
                 }
                 agent_id = training_agents[team]["agent_id"]
                 agent_obs = decision_steps[agent_id].obs
-                state = get_grid_based_perception(agent_obs)
+                state = get_grid_based_perception(agent_obs).detach().clone()
                 state_batch_tensor[team_idx, ...] = state
 
             # min_max_conf = list()
@@ -497,7 +506,9 @@ def model_trainer(
                     # ASK: This needs to be if agent not done?
                     if agent_id in agents_need_action:
                         agent_obs = decision_steps[agent_id].obs
-                        next_state = get_grid_based_perception(agent_obs)
+                        next_state = (
+                            get_grid_based_perception(agent_obs).detach().clone()
+                        )
                     else:
                         next_state = None
                         print(f"Got a None next state. team: {team}, episode {episode}")
@@ -543,9 +554,11 @@ def model_trainer(
             eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
+                avg_score = np.mean(scores_window)
+
                 print(f"Episode stats: ")
                 print(
-                    f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
+                    f"Average Score last {len(scores_window)} episodes: {avg_score:.2f}"
                 )
                 print(f"Last loss: {agent.cumulative_loss}")
                 print(f"Number of transistions in memory: {len(agent.memory)}")
@@ -572,13 +585,15 @@ def model_trainer(
             if early_stop is None:
                 continue
 
-            avg_score = np.mean(scores_window)
             if avg_score >= early_stop and episode > 10:
                 print(
                     f"\nEnvironment solved in {episode} episodes!\tAverage Score: {avg_score:.2f}"
                 )
 
                 break
+
+            if wandb:
+                wandb.log({"average_score": avg_score})
 
     except (
         KeyboardInterrupt,
@@ -592,6 +607,9 @@ def model_trainer(
         print("-" * 100)
         # TODO: Add save model weights, logs, checkoint etc
     finally:
+        if wandb:
+            wandb.finish()
+
         env.close()
         # CRITICAL: Save model here and the nessasary values
         save_model(agent.policy_net, agent.model_param["models_dir"])

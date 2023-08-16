@@ -6,8 +6,8 @@ import torch.nn.functional as F
 from src.models.cnn_residual import CNN_Residual
 from src.models.utils.exitblock import ExitBlock
 from src.models.utils.basicblock import BasicBlock
-from src.models.utils.classifier import simple_classifier
-from src.models.utils.confidence import simple_confidence
+from src.models.utils.classifier import classifier_linear_softmax, classifier_linear
+from src.models.utils.confidence import confidence_linear_sigmoid
 
 from src.models.utils.flops_counter import get_model_complexity_info
 
@@ -28,6 +28,7 @@ class EE_CNN_Residual(nn.Module):
         exit_type="bnpool",
         exit_threshold=0.9,
         repetitions=list(),
+        init_planes=int(),
         planes=list(),
         distribution=None,
         initalize_parameters=True,
@@ -44,9 +45,11 @@ class EE_CNN_Residual(nn.Module):
             num_classes=num_classes,
             block=block,
             repetitions=repetitions,
+            init_planes=init_planes,
             planes=planes,
         )
 
+        self.init_planes = init_planes
         self.planes = (
             planes  # TODO: How to choose the right list for planes on the decloration.
         )
@@ -70,10 +73,11 @@ class EE_CNN_Residual(nn.Module):
         self.complexity = list()
 
         self.stage_id = 0
-        self.inplanes = self.planes[0]
 
         # Complexity of the entire model and threshold for the early exit
         total_flops, total_params = self.get_complexity(counterpart_model)
+        self.complexity.append((total_flops, total_params))
+
         self.set_thresholds(distribution, total_flops)
 
         # Inital layer
@@ -81,22 +85,24 @@ class EE_CNN_Residual(nn.Module):
             nn.Sequential(
                 nn.Conv2d(
                     self.channel,
-                    self.inplanes,
+                    self.init_planes,
                     kernel_size=7,
                     stride=2,
                     padding=3,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.inplanes),
+                nn.BatchNorm2d(self.init_planes),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             )
         )
 
-        planes = self.inplanes
+        self.inplanes = self.init_planes
         stride = 1
 
         for idx, repetition in enumerate(repetitions):
+            planes = self.planes[idx]
+
             downsample = None
             if stride != 1 or self.inplanes != planes * block.expansion:
                 downsample = nn.Sequential(
@@ -116,10 +122,10 @@ class EE_CNN_Residual(nn.Module):
                     self.add_exit_block(exit_type, total_flops)
                     print(f"Added exit at repetition: {idx+1}, after second block")
 
-            planes = self.planes[idx + 1]
+            # planes = self.planes[idx + 1]
             stride = 2
 
-        planes = self.planes[-1]
+        # planes = self.planes[-1] # TODO: Needed?
         self.layers.append(nn.AdaptiveAvgPool2d(1))
 
         # Dropout layer for generalization and overfitting
@@ -127,12 +133,10 @@ class EE_CNN_Residual(nn.Module):
         # self.dropout = nn.Dropout(dropout_prob)
 
         in_size = planes * block.expansion
-        self.classifier = simple_classifier(self.num_classes, in_size)
-        self.confidence = simple_confidence(in_size)
+        self.classifier = classifier_linear(self.num_classes, in_size)
+        self.confidence = confidence_linear_sigmoid(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
-
-        self.complexity.append((total_flops, total_params))
 
         if initalize_parameters:
             self.parameter_initializer()
