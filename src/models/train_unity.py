@@ -585,7 +585,6 @@ def model_trainer(
             if early_stop is None:
                 continue
 
-            avg_score = np.mean(scores_window)
             if avg_score >= early_stop and episode > 10:
                 print(
                     f"\nEnvironment solved in {episode} episodes!\tAverage Score: {avg_score:.2f}"
