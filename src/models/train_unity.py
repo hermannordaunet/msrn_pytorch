@@ -256,6 +256,7 @@ def main():
         ee_policy_net = model_type(
             # frames_history=2,
             num_ee=model_param["num_ee"],
+            init_planes=model_param["init_planes"],
             planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
@@ -267,6 +268,7 @@ def main():
         ee_target_net = model_type(
             # frames_history=2,
             num_ee=model_param["num_ee"],
+            init_planes=model_param["init_planes"],
             planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
