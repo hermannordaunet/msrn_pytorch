@@ -219,7 +219,7 @@ def main():
 
     model_type = globals()[model_param["model_class_name"]]
 
-    if DEVICE is not "mps":
+    if DEVICE != "mps":
         run_wandb = wandb.init(
             project="Master-thesis",
             config={**model_param, **config, **dqn_param, **epsilon_greedy_param},
@@ -582,8 +582,9 @@ def model_trainer(
                     result_dir=results_directory,
                 )
 
-            if early_stop is None:
-                continue
+            if wandb:
+                wandb.log({"loss" : losses[-1], "average_score": avg_score})
+                
 
             if avg_score >= early_stop and episode > 10:
                 print(
@@ -591,9 +592,6 @@ def model_trainer(
                 )
 
                 break
-
-            if wandb:
-                wandb.log({"average_score": avg_score})
 
     except (
         KeyboardInterrupt,
