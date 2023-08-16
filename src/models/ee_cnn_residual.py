@@ -6,8 +6,8 @@ import torch.nn.functional as F
 from src.models.cnn_residual import CNN_Residual
 from src.models.utils.exitblock import ExitBlock
 from src.models.utils.basicblock import BasicBlock
-from src.models.utils.classifier import simple_classifier
-from src.models.utils.confidence import simple_confidence
+from src.models.utils.classifier import classifier_linear_softmax, classifier_linear
+from src.models.utils.confidence import confidence_linear_sigmoid
 
 from src.models.utils.flops_counter import get_model_complexity_info
 
@@ -132,12 +132,10 @@ class EE_CNN_Residual(nn.Module):
         # self.dropout = nn.Dropout(dropout_prob)
 
         in_size = planes * block.expansion
-        self.classifier = simple_classifier(self.num_classes, in_size)
-        self.confidence = simple_confidence(in_size)
+        self.classifier = classifier_linear(self.num_classes, in_size)
+        self.confidence = confidence_linear_sigmoid(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
-
-        self.complexity.append((total_flops, total_params))
 
         if initalize_parameters:
             self.parameter_initializer()
