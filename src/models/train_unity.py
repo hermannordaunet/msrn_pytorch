@@ -554,9 +554,11 @@ def model_trainer(
             eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
+                avg_score = np.mean(scores_window)
+
                 print(f"Episode stats: ")
                 print(
-                    f"Average Score last {len(scores_window)} episodes: {np.mean(scores_window):.2f}"
+                    f"Average Score last {len(scores_window)} episodes: {avg_score:.2f}"
                 )
                 print(f"Last loss: {agent.cumulative_loss}")
                 print(f"Number of transistions in memory: {len(agent.memory)}")
