@@ -28,6 +28,7 @@ class EE_CNN_Residual(nn.Module):
         exit_type="bnpool",
         exit_threshold=0.9,
         repetitions=list(),
+        init_planes=int(),
         planes=list(),
         distribution=None,
         initalize_parameters=True,
@@ -44,9 +45,11 @@ class EE_CNN_Residual(nn.Module):
             num_classes=num_classes,
             block=block,
             repetitions=repetitions,
+            init_planes=init_planes,
             planes=planes,
         )
 
+        self.init_planes = init_planes
         self.planes = (
             planes  # TODO: How to choose the right list for planes on the decloration.
         )
@@ -81,22 +84,24 @@ class EE_CNN_Residual(nn.Module):
             nn.Sequential(
                 nn.Conv2d(
                     self.channel,
-                    self.inplanes,
+                    self.init_planes,
                     kernel_size=7,
                     stride=2,
                     padding=3,
                     bias=False,
                 ),
-                nn.BatchNorm2d(self.inplanes),
+                nn.BatchNorm2d(self.init_planes),
                 nn.ReLU(inplace=True),
                 nn.MaxPool2d(kernel_size=3, stride=2, padding=1),
             )
         )
 
-        planes = self.inplanes
+        self.inplanes = self.init_planes
         stride = 1
 
         for idx, repetition in enumerate(repetitions):
+            planes = self.planes[idx]
+
             downsample = None
             if stride != 1 or self.inplanes != planes * block.expansion:
                 downsample = nn.Sequential(
@@ -116,10 +121,10 @@ class EE_CNN_Residual(nn.Module):
                     self.add_exit_block(exit_type, total_flops)
                     print(f"Added exit at repetition: {idx+1}, after second block")
 
-            planes = self.planes[idx + 1]
+            # planes = self.planes[idx + 1]
             stride = 2
 
-        planes = self.planes[-1]
+        # planes = self.planes[-1] # TODO: Needed?
         self.layers.append(nn.AdaptiveAvgPool2d(1))
 
         # Dropout layer for generalization and overfitting
