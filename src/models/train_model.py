@@ -151,10 +151,11 @@ def main():
     model = EE_CNN_Residual(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
-        num_ee=0,
+        num_ee=2,
         exit_threshold=0.99,
         repetitions=[2, 2],
-        planes=[32, 64, 64],
+        init_planes=32,
+        planes=[64, 64],
         distribution="pareto",
     ).to(device)
 

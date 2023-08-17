@@ -559,6 +559,8 @@ def model_trainer(
                     {
                         "loss": losses[-1],
                         "average_score": avg_score,
+                        "min_last_score": min(scores_all_training_agents),
+                        "max_last_score" : max(scores_all_training_agents),
                         "epsilon": eps,
                     }
                 )
@@ -592,12 +594,13 @@ def model_trainer(
                     result_dir=results_directory,
                 )
 
-            if avg_score >= early_stop and episode > 10:
-                print(
-                    f"\nEnvironment solved in {episode} episodes!\tAverage Score: {avg_score:.2f}"
-                )
+            if early_stop:
+                if avg_score >= early_stop and episode > 10:
+                    print(
+                        f"\nEnvironment solved in {episode} episodes!\tAverage Score: {avg_score:.2f}"
+                    )
 
-                break
+                    break
 
     except (
         KeyboardInterrupt,

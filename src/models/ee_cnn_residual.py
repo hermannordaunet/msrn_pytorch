@@ -76,7 +76,6 @@ class EE_CNN_Residual(nn.Module):
 
         # Complexity of the entire model and threshold for the early exit
         total_flops, total_params = self.get_complexity(counterpart_model)
-        self.complexity.append((total_flops, total_params))
 
         self.set_thresholds(distribution, total_flops)
 
@@ -133,10 +132,13 @@ class EE_CNN_Residual(nn.Module):
         # self.dropout = nn.Dropout(dropout_prob)
 
         in_size = planes * block.expansion
-        self.classifier = classifier_linear(self.num_classes, in_size)
+        self.classifier = classifier_linear_softmax(self.num_classes, in_size)
         self.confidence = confidence_linear_sigmoid(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
+
+        # Needs to be here to get the correct cost
+        self.complexity.append((total_flops, total_params))
 
         if initalize_parameters:
             self.parameter_initializer()
