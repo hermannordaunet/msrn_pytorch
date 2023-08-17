@@ -590,9 +590,6 @@ def model_trainer(
                     result_dir=results_directory,
                 )
 
-            if wandb:
-                wandb.log({"loss" : losses[-1], "average_score": avg_score})
-                
             if early_stop:
                 if avg_score >= early_stop and episode > 10:
                     print(
