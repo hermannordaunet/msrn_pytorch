@@ -79,14 +79,16 @@ def load_json_as_dict(file_path):
         json_data = json.load(json_file)
     return json_data
 
+def get_avalible_device():
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"
 
 def main():
-    if torch.cuda.is_available():
-        DEVICE = "cuda"
-    elif torch.backends.mps.is_available():
-        DEVICE = "mps"
-    else:
-        DEVICE = "cpu"
+    DEVICE = get_avalible_device()
 
     print(f"[INFO] Device is: {DEVICE}")
 
