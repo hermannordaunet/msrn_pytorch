@@ -557,6 +557,8 @@ def model_trainer(
                     {
                         "loss": losses[-1],
                         "average_score": avg_score,
+                        "min_last_score": min(scores_all_training_agents),
+                        "max_last_score" : max(scores_all_training_agents),
                         "epsilon": eps,
                     }
                 )
