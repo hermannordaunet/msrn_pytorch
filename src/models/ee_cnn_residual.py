@@ -222,6 +222,7 @@ class EE_CNN_Residual(nn.Module):
 
     def forward(self, x):
         not_batch_eval = x.shape[0] == 1
+        
         if self.training:
             preds, confs, cost = list(), list(), list()
 
