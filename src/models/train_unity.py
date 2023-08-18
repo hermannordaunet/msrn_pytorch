@@ -79,6 +79,7 @@ def load_json_as_dict(file_path):
         json_data = json.load(json_file)
     return json_data
 
+
 def get_avalible_device():
     if torch.cuda.is_available():
         return "cuda"
@@ -86,6 +87,7 @@ def get_avalible_device():
         return "mps"
     else:
         return "cpu"
+
 
 def main():
     DEVICE = get_avalible_device()
@@ -102,7 +104,7 @@ def main():
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": True, "val": False, "visualize": False},
+        "mode_setups": {"train": False, "val": False, "visualize": True},
         "manual_seed": 1804,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -147,7 +149,7 @@ def main():
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     VAL_MODEL = model_param["mode_setups"]["val"]
 
-    TIMESTAMP = None
+    TIMESTAMP = 1692201543
 
     VERBOSE = True
 
@@ -331,6 +333,8 @@ def main():
         # Close old env and start fresh
         env.close()
 
+        engine_config_channel.set_configuration_parameters(time_scale=1)
+
         env = UnityEnvironment(
             file_name=FILE_NAME,
             side_channels=SIDE_CHANNELS,
@@ -375,9 +379,13 @@ def main():
         # ).to(DEVICE)
 
         ee_policy_net = model_type(
+            num_ee=model_param["num_ee"],
+            planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
-        )  # .to(DEVICE)
+            repetitions=model_param["repetitions"],
+            distribution=model_param["distribution"]
+        )
 
         models_directory = model_param["models_dir"]
         model_file = f"{models_directory}last_model.pt"
@@ -560,7 +568,7 @@ def model_trainer(
                         "loss": losses[-1],
                         "average_score": avg_score,
                         "min_last_score": min(scores_all_training_agents),
-                        "max_last_score" : max(scores_all_training_agents),
+                        "max_last_score": max(scores_all_training_agents),
                         "epsilon": eps,
                     }
                 )
