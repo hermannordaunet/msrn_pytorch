@@ -39,6 +39,9 @@ class EE_CNN_Residual(nn.Module):
         if frames_history:
             input_shape[0] = input_shape[0] * frames_history
 
+        if len(repetitions) != len(planes):
+            print(f"[INFO] The network does not match the ResNet arch. Repetitions and planes mismatch during init.")
+
         counterpart_model = CNN_Residual(
             input_shape=tuple(input_shape),
             num_classes=num_classes,
