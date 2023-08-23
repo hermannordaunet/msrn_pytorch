@@ -108,6 +108,7 @@ def main():
         "manual_seed": 1804,  # TODO: Seed everything
         "device": DEVICE,
     }
+
     model_type = globals()[model_param["model_class_name"]]
 
     config = {
@@ -144,12 +145,8 @@ def main():
         "eps_start": 0.99,
         "eps_end": 0.05,
         "eps_decay": 0.95,
+        "warm_start": 3,
     }
-
-    if isinstance(model_type, EE_CNN_Residual):
-        epsilon_greedy_param["warm_start"] = 3
-    else:
-        epsilon_greedy_param["warm_start"] = None
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
@@ -480,13 +477,13 @@ def model_trainer(
             # min_max_conf = list()
             episode_done = False
             while not episode_done:
-                if warm_start and episode > warm_start:
+                if warm_start is not None and episode <= warm_start:
                     move_action, laser_action = agent.act(
-                        state_batch_tensor, epsilon=eps, num_agents=num_teams
+                        state_batch_tensor, epsilon=1, num_agents=num_teams
                     )
                 else:
                     move_action, laser_action = agent.act(
-                        state_batch_tensor, epsilon=1, num_agents=num_teams
+                        state_batch_tensor, epsilon=eps, num_agents=num_teams
                     )
 
                 # move_action, laser_action = act  # , idx, cost, conf = act
@@ -561,13 +558,13 @@ def model_trainer(
                         "average_score": avg_score,
                         "min_last_score": min(scores_all_training_agents),
                         "max_last_score": max(scores_all_training_agents),
-                        "epsilon": eps if warm_start and episode > warm_start else 1,
+                        "epsilon": eps if warm_start is not None and episode > warm_start else 1,
                         "Mean Q targets": torch.mean(torch.abs(agent.last_Q_targets)),
                         "Mean Q expected": torch.mean(torch.abs(agent.last_Q_expected)),
                     }
                 )
 
-            if warm_start and episode > warm_start:
+            if warm_start is not None and episode > warm_start:
                 eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
@@ -597,7 +594,7 @@ def model_trainer(
                     result_dir=results_directory,
                 )
 
-            if verbose and wandb is None:
+            if verbose:
                 print(
                     f"Last Q target values: {torch.mean(torch.abs(agent.last_Q_targets))}"
                 )
