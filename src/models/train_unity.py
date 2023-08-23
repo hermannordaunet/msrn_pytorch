@@ -108,6 +108,7 @@ def main():
         "manual_seed": 1804,  # TODO: Seed everything
         "device": DEVICE,
     }
+    model_type = globals()[model_param["model_class_name"]]
 
     config = {
         "env_name": "FoodCollector",
@@ -140,10 +141,15 @@ def main():
     }
 
     epsilon_greedy_param = {
-        "eps_start": 0.9,
+        "eps_start": 0.99,
         "eps_end": 0.05,
         "eps_decay": 0.95,
     }
+
+    if isinstance(model_type, EE_CNN_Residual):
+        epsilon_greedy_param["warm_start"] = 3
+    else:
+        epsilon_greedy_param["warm_start"] = None
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
@@ -221,8 +227,6 @@ def main():
     #     print("The agents has differing observation specs. Needs to be implemented")
     #     exit()
 
-    model_type = globals()[model_param["model_class_name"]]
-
     if DEVICE != "mps":
         run_wandb = wandb.init(
             project="Master-thesis",
@@ -299,7 +303,9 @@ def main():
             epsilon_greedy_param, f"./{parameter_directory}/epsilon_greedy_param.json"
         )
 
-        save_model(agent.policy_net, agent.model_param["models_dir"], model_type="untrained")
+        save_model(
+            agent.policy_net, agent.model_param["models_dir"], model_type="untrained"
+        )
 
         if run_wandb:
             run_wandb.watch(ee_policy_net, log_freq=int(5))
@@ -359,15 +365,6 @@ def main():
         dqn_param = load_json_as_dict(f"{parameter_directory}/dqn_param.json")
 
         print("[INFO] Loading the trained policy net")
-        # ee_policy_net = EE_CNN_Residual(
-        #     # frames_history=2,
-        #     num_ee=model_param["num_ee"],
-        #     planes=model_param["planes"],
-        #     input_shape=model_param["input_size"],
-        #     num_classes=model_param["num_classes"],
-        #     repetitions=model_param["repetitions"],
-        #     distribution=model_param["distribution"],
-        # ).to(DEVICE)
 
         ee_policy_net = model_type(
             num_ee=model_param["num_ee"],
@@ -380,7 +377,8 @@ def main():
         )
 
         models_directory = model_param["models_dir"]
-        model_file = f"{models_directory}last_model.pt"
+        model_file = f"{models_directory}/last_model.pt"
+        model_file = f"{models_directory}/untrained_model.pt"
         print(f"[INFO] Loading weights from {model_file}")
 
         # Override trained device:
@@ -437,6 +435,7 @@ def model_trainer(
     eps_end = epsilon_greedy_param["eps_end"]
     eps_decay = epsilon_greedy_param["eps_decay"]
     eps = eps_start
+    warm_start = epsilon_greedy_param["warm_start"]
 
     print_range = config["print_range"]
     early_stop = config["benchmarks_mean_reward"]
@@ -481,9 +480,14 @@ def model_trainer(
             # min_max_conf = list()
             episode_done = False
             while not episode_done:
-                move_action, laser_action = agent.act(
-                    state_batch_tensor, epsilon=eps, num_agents=num_teams
-                )
+                if warm_start and episode > warm_start:
+                    move_action, laser_action = agent.act(
+                        state_batch_tensor, epsilon=eps, num_agents=num_teams
+                    )
+                else:
+                    move_action, laser_action = agent.act(
+                        state_batch_tensor, epsilon=1, num_agents=num_teams
+                    )
 
                 # move_action, laser_action = act  # , idx, cost, conf = act
 
@@ -557,13 +561,14 @@ def model_trainer(
                         "average_score": avg_score,
                         "min_last_score": min(scores_all_training_agents),
                         "max_last_score": max(scores_all_training_agents),
-                        "epsilon": eps,
+                        "epsilon": eps if warm_start and episode > warm_start else 1,
                         "Mean Q targets": torch.mean(torch.abs(agent.last_Q_targets)),
                         "Mean Q expected": torch.mean(torch.abs(agent.last_Q_expected)),
                     }
                 )
 
-            eps = max(eps_end, eps_decay * eps)  # decrease epsilon
+            if warm_start and episode > warm_start:
+                eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
                 print(f"Episode stats: ")
