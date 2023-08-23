@@ -100,7 +100,6 @@ class Agent:
         if self.t_step != 0:
             return False
 
-        # TODO: Add a minimal batch size?
         if len(self.memory) < self.minimal_memory_size:
             return False
 
@@ -171,9 +170,6 @@ class Agent:
         # local and tarfet network.
 
         num_ee = len(self.policy_net.exits)
-
-        # TODO: Find out if this needs to be in eval or train?
-        # self.target_net.train()
 
         batch = self.memory.Transition(*zip(*experiences))
 

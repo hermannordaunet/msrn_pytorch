@@ -8,7 +8,6 @@ class BasicBlock(nn.Module):
     TODO: Read and add this paper into my master
     """
 
-    # TODO: Needed?
     expansion = 1
 
     def __init__(self, inplanes, planes, stride=1, downsample=None):

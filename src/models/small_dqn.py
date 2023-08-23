@@ -11,7 +11,7 @@ class small_DQN(nn.Module):
         self,
         input_shape=[3, 280, 280],
         num_classes=10,
-        dropout_prob=0.5,
+        **kwargs,
     ):
         super(small_DQN, self).__init__()
         # ---- CONVOLUTIONAL NEURAL NETWORK ----
@@ -52,9 +52,6 @@ class small_DQN(nn.Module):
             stride=STRIDE,
         )
         self.bn3 = nn.BatchNorm2d(HIDDEN_LAYER_3_OUT)
-
-        # Dropout layer for generalization and overfitting
-        self.dropout = nn.Dropout(dropout_prob)
 
         # DELETE: Softmax for making a conf score. Delete when EE is implemented
         self.softmax = nn.Sequential(

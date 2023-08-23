@@ -9,6 +9,44 @@ import pandas as pd
 # Training loss and score
 
 
+def set_size(width, fraction=1, subplots=(1, 1)):
+    """Set figure dimensions to avoid scaling in LaTeX.
+
+    Parameters
+    ----------
+    width: float or string
+            Document width in points, or string of predined document type
+    fraction: float, optional
+            Fraction of the width which you wish the figure to occupy
+    subplots: array-like, optional
+            The number of rows and columns of subplots.
+    Returns
+    -------
+    fig_dim: tuple
+            Dimensions of figure in inches
+    """
+    if width == "thesis":
+        width_pt = 418.25368
+    else:
+        width_pt = width
+
+    # Width of figure (in pts)
+    fig_width_pt = width_pt * fraction
+    # Convert from pt to inches
+    inches_per_pt = 1 / 72.27
+
+    # Golden ratio to set aesthetic figure height
+    # https://disq.us/p/2940ij3
+    golden_ratio = (5**0.5 - 1) / 2
+
+    # Figure width in inches
+    fig_width_in = fig_width_pt * inches_per_pt
+    # Figure height in inches
+    fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
+
+    return (fig_width_in, fig_height_in)
+
+
 # save scores plot
 def plot_scores_from_list(scores: list(), labels=None, env_name="", result_dir="./"):
     scores = np.array(scores).squeeze()
@@ -26,7 +64,7 @@ def plot_scores_from_list(scores: list(), labels=None, env_name="", result_dir="
 
     df = pd.DataFrame(scores.transpose(), columns=labels, index=x_values)
 
-    plt.figure()
+    plt.figure(figsize=set_size("thesis"))
     sns.set_theme(style="darkgrid")
     sns.lineplot(data=df)
     sns.despine()
@@ -63,7 +101,7 @@ def plot_scores_from_nested_list(
     sns.set(style="darkgrid")
 
     # Create the line plot with error bars
-    plt.figure()
+    plt.figure(figsize=set_size("thesis"))
     sns.lineplot(x=x, y=mean_values, label=labels)
     plt.fill_between(x, min_values, max_values, alpha=0.25)
     sns.despine()
@@ -96,7 +134,7 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
 
     df = pd.DataFrame(losses.transpose(), columns=labels, index=x_values)
 
-    plt.figure()
+    plt.figure(figsize=set_size("thesis"))
     sns.set_theme(style="darkgrid")
     sns.lineplot(data=df)
     sns.despine()
@@ -123,7 +161,11 @@ def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs)
         num_rows = 1
         num_cols, _, _ = image_tensor.shape
 
-    fig, ax = plt.subplots(nrows=num_rows, ncols=num_cols)
+    fig, ax = plt.subplots(
+        nrows=num_rows,
+        ncols=num_cols,
+        figsize=set_size("thesis", subplots=(num_rows, num_cols)),
+    )
 
     labels = ["food", "agent", "wall", "badFood", "frozenAgent"]
 
@@ -135,7 +177,7 @@ def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs)
             else:
                 cur_ax = ax[col]
                 cur_ax.imshow(image_tensor[col, ...])
-            
+
             if row == 0:
                 cur_ax.set_title(labels[col])
 
@@ -147,7 +189,7 @@ def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs)
         if team_id:
             fig.suptitle(f"Agent observation: {team_id}")
 
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.show(**kwargs)
 
 
