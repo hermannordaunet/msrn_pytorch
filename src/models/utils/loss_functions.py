@@ -107,18 +107,8 @@ def loss_v3(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
 
 
 def loss_v4(pred, target, num_ee=0):
-    """loss version 3
+    """loss version 4"""
 
-    Arguments are
-    * pred:     prediction result of each exit point.
-    * target:   target prediction values.
-    * num_ee:   number of early exit blocks
-
-    This loss function is the cumulative loss of loss_v1 by recursively.
-    It aims to provide a more fair training.
-
-    First loss written for DQN training loop
-    """
     cumulative_pred = [None] * num_ee + [pred[num_ee]]
 
     pred_loss = F.mse_loss(cumulative_pred[-1], target)
@@ -126,17 +116,8 @@ def loss_v4(pred, target, num_ee=0):
     return pred_loss, 0, 0
 
 def loss_v5(pred, target, num_ee=0):
-    """loss version 3
-
-    Arguments are
-    * pred:     prediction result of each exit point.
-    * target:   target prediction values.
-    * num_ee:   number of early exit blocks
-
-    This loss function is the cumulative loss of loss_v1 by recursively.
-    It aims to provide a more fair training.
-
-    """
+    """loss version 5"""
+    
     cumulative_pred = [None] * num_ee + [pred[num_ee]]
 
     pred_loss = F.smooth_l1_loss(cumulative_pred[-1], target)
