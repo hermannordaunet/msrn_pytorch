@@ -612,6 +612,10 @@ def model_trainer(
                     env_name=config["env_name"],
                     result_dir=results_directory,
                 )
+            
+            if verbose:
+                print(f"Last Q target values: {torch.mean(torch.abs(agent.last_Q_targets))}")
+                print(f"Last Q expected values: {torch.mean(torch.abs(agent.last_Q_expected))}")
 
             if early_stop:
                 if avg_score >= early_stop and episode > 10:
