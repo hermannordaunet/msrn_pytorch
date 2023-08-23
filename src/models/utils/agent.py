@@ -233,6 +233,8 @@ class Agent:
         self.pred_loss = pred_loss
         self.cost_loss = cost_loss
         self.train_conf = conf
+        self.last_Q_expected = Q_expected[-1]
+        self.last_Q_targets = Q_targets
 
         # Minimize the loss
         self.optimizer.zero_grad()
