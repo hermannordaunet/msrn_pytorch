@@ -5,7 +5,7 @@ import torch
 # CRITICAL: When saving best model, it has to be seralized.
 
 
-def save_model(q_net_local, folder_path, model_type="last"):
+def save_model(q_policy_net, folder_path, model_type="last"):
     """
     Save PyTorch models to the given folder path.
     """
@@ -15,7 +15,7 @@ def save_model(q_net_local, folder_path, model_type="last"):
 
     # Save models
     model_path = os.path.join(folder_path, f"{model_type}_model.pt")
-    torch.save(q_net_local.state_dict(), model_path)
+    torch.save(q_policy_net.state_dict(), model_path)
 
 
 def save_dict_to_json(dict_obj, file_path):
