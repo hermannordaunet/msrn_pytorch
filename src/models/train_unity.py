@@ -556,9 +556,8 @@ def model_trainer(
                         "min_last_score": min(scores_all_training_agents),
                         "max_last_score": max(scores_all_training_agents),
                         "epsilon": eps,
-                        "Mean Q targets" : torch.mean(torch.abs(agent.last_Q_targets)),
-                        "Mean Q expected" : torch.mean(torch.abs(agent.last_Q_expected)),
-
+                        "Mean Q targets": torch.mean(torch.abs(agent.last_Q_targets)),
+                        "Mean Q expected": torch.mean(torch.abs(agent.last_Q_expected)),
                     }
                 )
 
