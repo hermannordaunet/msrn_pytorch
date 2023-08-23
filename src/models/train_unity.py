@@ -136,7 +136,7 @@ def main():
 
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
-        "tau": 0.005,  # TODO: Try one more 0.05 (5e-2) previous
+        "tau": 0.005,  # TODO: Try one more 0. 0.05 (5e-2) previous
         "update_every": 10,
     }
 
@@ -378,7 +378,7 @@ def main():
 
         models_directory = model_param["models_dir"]
         model_file = f"{models_directory}/last_model.pt"
-        model_file = f"{models_directory}/untrained_model.pt"
+        # model_file = f"{models_directory}/untrained_model.pt"
         print(f"[INFO] Loading weights from {model_file}")
 
         # Override trained device:
