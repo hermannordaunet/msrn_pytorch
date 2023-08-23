@@ -124,3 +124,23 @@ def loss_v4(pred, target, num_ee=0):
     pred_loss = F.mse_loss(cumulative_pred[-1], target)
 
     return pred_loss, 0, 0
+
+def loss_v5(pred, target, num_ee=0):
+    """loss version 3
+
+    Arguments are
+    * pred:     prediction result of each exit point.
+    * target:   target prediction values.
+    * num_ee:   number of early exit blocks
+
+    This loss function is the cumulative loss of loss_v1 by recursively.
+    It aims to provide a more fair training.
+
+    """
+    cumulative_pred = [None] * num_ee + [pred[num_ee]]
+
+    pred_loss = F.smooth_l1_loss(cumulative_pred[-1], target)
+
+    return pred_loss, 0, 0
+
+

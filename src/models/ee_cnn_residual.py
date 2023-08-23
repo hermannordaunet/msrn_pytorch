@@ -39,9 +39,8 @@ class EE_CNN_Residual(nn.Module):
         if frames_history:
             input_shape[0] = input_shape[0] * frames_history
 
-        # Get the model just without the ee blocks
         counterpart_model = CNN_Residual(
-            input_shape=input_shape,
+            input_shape=tuple(input_shape),
             num_classes=num_classes,
             block=block,
             repetitions=repetitions,
@@ -53,7 +52,7 @@ class EE_CNN_Residual(nn.Module):
         self.planes = (
             planes  # TODO: How to choose the right list for planes on the decloration.
         )
-        self.input_shape = input_shape
+        self.input_shape = tuple(input_shape)
         self.channel = self.input_shape[0]
         self.num_classes = num_classes
         self.block = block
@@ -73,6 +72,16 @@ class EE_CNN_Residual(nn.Module):
         self.complexity = list()
 
         self.stage_id = 0
+
+        # # Get the model just without the ee blocks
+        # counterpart_model = CNN_Residual(
+        #     input_shape=self.input_shape,
+        #     num_classes=self.num_classes,
+        #     block=self.block,
+        #     repetitions=repetitions,
+        #     init_planes=self.init_planes,
+        #     planes=self.planes,
+        # )
 
         # Complexity of the entire model and threshold for the early exit
         total_flops, total_params = self.get_complexity(counterpart_model)
@@ -222,7 +231,7 @@ class EE_CNN_Residual(nn.Module):
 
     def forward(self, x):
         not_batch_eval = x.shape[0] == 1
-        
+
         if self.training:
             preds, confs, cost = list(), list(), list()
 

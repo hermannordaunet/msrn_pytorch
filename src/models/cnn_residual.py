@@ -25,7 +25,8 @@ class CNN_Residual(nn.Module):
         planes=list(),
     ):
         super(CNN_Residual, self).__init__()
-        self.input_shape = input_shape
+
+        self.input_shape = tuple(input_shape)
         self.channel = self.input_shape[0]
         self.num_classes = num_classes
         self.block = block

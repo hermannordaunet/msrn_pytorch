@@ -95,16 +95,16 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "EE_CNN_Residual",
+        "model_class_name": "small_DQN",
         "loss_function": "v4",
         "num_ee": 0,
         "repetitions": [2, 2],
         "init_planes": 64,
-        "planes": [64, 32],
+        "planes": [64, 64, 128, 128, 256, 256, 512, 512],
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": False, "val": False, "visualize": True},
+        "mode_setups": {"train": True, "val": False, "visualize": False},
         "manual_seed": 1804,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -149,7 +149,7 @@ def main():
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     VAL_MODEL = model_param["mode_setups"]["val"]
 
-    TIMESTAMP = 1692201543
+    TIMESTAMP = None
 
     VERBOSE = True
 
@@ -181,7 +181,7 @@ def main():
         side_channels=SIDE_CHANNELS,
         seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
-        worker_id=2,
+        worker_id=0,
     )
 
     # Unity environment spesific
@@ -257,28 +257,38 @@ def main():
         # save_dict_to_json(agent.dqn_param, f"{results_directory}_dqn_param.json")
 
         print(f"[INFO] Initalizing Q network policy of type {model_type}")
+        # ee_policy_net = model_type(
+        #     # frames_history=2,
+        #     num_ee=model_param["num_ee"],
+        #     init_planes=model_param["init_planes"],
+        #     planes=model_param["planes"],
+        #     input_shape=model_param["input_size"],
+        #     num_classes=model_param["num_classes"],
+        #     repetitions=model_param["repetitions"],
+        #     distribution=model_param["distribution"],
+        # ).to(DEVICE)
+
         ee_policy_net = model_type(
-            # frames_history=2,
-            num_ee=model_param["num_ee"],
-            init_planes=model_param["init_planes"],
-            planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
-            repetitions=model_param["repetitions"],
-            distribution=model_param["distribution"],
         ).to(DEVICE)
 
         print(f"[INFO] Initalizing Q network target of type {model_type}")
+        # ee_target_net = model_type(
+        #     # frames_history=2,
+        #     num_ee=model_param["num_ee"],
+        #     init_planes=model_param["init_planes"],
+        #     planes=model_param["planes"],
+        #     input_shape=model_param["input_size"],
+        #     num_classes=model_param["num_classes"],
+        #     repetitions=model_param["repetitions"],
+        #     distribution=model_param["distribution"],
+        #     initalize_parameters=False,
+        # ).to(DEVICE)
+
         ee_target_net = model_type(
-            # frames_history=2,
-            num_ee=model_param["num_ee"],
-            init_planes=model_param["init_planes"],
-            planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
-            repetitions=model_param["repetitions"],
-            distribution=model_param["distribution"],
-            initalize_parameters=False,
         ).to(DEVICE)
 
         # TODO: This is important to get the networks initalized with the same weigths
@@ -380,11 +390,12 @@ def main():
 
         ee_policy_net = model_type(
             num_ee=model_param["num_ee"],
+            init_planes=model_param["init_planes"],
             planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
             repetitions=model_param["repetitions"],
-            distribution=model_param["distribution"]
+            distribution=model_param["distribution"],
         )
 
         models_directory = model_param["models_dir"]

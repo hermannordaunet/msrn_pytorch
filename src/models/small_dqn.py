@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # Local import
-from src.models.utils.classifier import classifier_linear_softmax
+from src.models.utils.classifier import classifier_linear_softmax, classifier_linear
 from src.models.utils.confidence import confidence_linear_sigmoid
 
 
@@ -60,9 +60,7 @@ class small_DQN(nn.Module):
         self.softmax = nn.Sequential(
             nn.Softmax(dim=1),
         )
-
         self.exits = nn.ModuleList()
-        
 
         # Number of Linear input connections depends on output of conv2d layers
         # and therefore the input image size. This function computes it
@@ -81,7 +79,7 @@ class small_DQN(nn.Module):
         # Last linear for class probability distribution
         self.fc2 = nn.Linear(500, self.num_classes)
 
-        self.classifier = classifier_linear_softmax(self.num_classes, linear_input_size)
+        self.classifier = classifier_linear(self.num_classes, linear_input_size)
         self.confidence = confidence_linear_sigmoid(linear_input_size)
 
         self.logSoftmax = nn.LogSoftmax(dim=1)
