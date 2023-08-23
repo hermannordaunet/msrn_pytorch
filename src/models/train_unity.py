@@ -98,7 +98,7 @@ def main():
         "model_class_name": "small_DQN",
         "loss_function": "v4",
         "num_ee": 0,
-        "repetitions": [2, 2],
+        "repetitions": [2, 2, 2, 2, 2, 2, 2, 2],
         "init_planes": 64,
         "planes": [64, 64, 128, 128, 256, 256, 512, 512],
         "distribution": "pareto",
@@ -251,55 +251,34 @@ def main():
 
             model_param["parameter_dir"] = f"./{parameter_directory}"
 
-        # TODO: Save here? Or later?
-        # save_dict_to_json(agent.model_param, f"{results_directory}_model_param.json")
-        # save_dict_to_json(agent.config, f"{results_directory}_config.json")
-        # save_dict_to_json(agent.dqn_param, f"{results_directory}_dqn_param.json")
-
         print(f"[INFO] Initalizing Q network policy of type {model_type}")
-        # ee_policy_net = model_type(
-        #     # frames_history=2,
-        #     num_ee=model_param["num_ee"],
-        #     init_planes=model_param["init_planes"],
-        #     planes=model_param["planes"],
-        #     input_shape=model_param["input_size"],
-        #     num_classes=model_param["num_classes"],
-        #     repetitions=model_param["repetitions"],
-        #     distribution=model_param["distribution"],
-        # ).to(DEVICE)
-
         ee_policy_net = model_type(
+            # frames_history=2,
+            num_ee=model_param["num_ee"],
+            init_planes=model_param["init_planes"],
+            planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
+            repetitions=model_param["repetitions"],
+            distribution=model_param["distribution"],
         ).to(DEVICE)
 
         print(f"[INFO] Initalizing Q network target of type {model_type}")
-        # ee_target_net = model_type(
-        #     # frames_history=2,
-        #     num_ee=model_param["num_ee"],
-        #     init_planes=model_param["init_planes"],
-        #     planes=model_param["planes"],
-        #     input_shape=model_param["input_size"],
-        #     num_classes=model_param["num_classes"],
-        #     repetitions=model_param["repetitions"],
-        #     distribution=model_param["distribution"],
-        #     initalize_parameters=False,
-        # ).to(DEVICE)
-
         ee_target_net = model_type(
+            # frames_history=2,
+            num_ee=model_param["num_ee"],
+            init_planes=model_param["init_planes"],
+            planes=model_param["planes"],
             input_shape=model_param["input_size"],
             num_classes=model_param["num_classes"],
+            repetitions=model_param["repetitions"],
+            distribution=model_param["distribution"],
+            initalize_parameters=False,
         ).to(DEVICE)
 
-        # TODO: This is important to get the networks initalized with the same weigths
+        # ASK: This is important to get the networks initalized with the same weigths
         print("[INFO] Copying weight from target net to policy net")
         ee_target_net.load_state_dict(ee_policy_net.state_dict())
-
-        # ee_policy_net.eval()
-        # TODO: Find out if this needs to be in eval or train?
-        # To ensure the network always is in eval we need to
-        # specify it right after init
-        # ee_target_net.eval()
 
         print("[INFO] Initalizing a Agent object")
         agent = Agent(
@@ -482,7 +461,7 @@ def model_trainer(
             if verbose:
                 print(f"\nEpisode {episode}/{num_episodes} started")
 
-            env.reset()  # TODO: Test with and without this
+            env.reset()
 
             for team_idx, team in enumerate(team_name_list):
                 decision_steps, _ = env.get_steps(team)
@@ -523,7 +502,6 @@ def model_trainer(
                     agents_need_action = decision_steps.agent_id
                     agent_id = training_agents[team]["agent_id"]
 
-                    # ASK: This needs to be if agent not done?
                     if agent_id in agents_need_action:
                         agent_obs = decision_steps[agent_id].obs
                         next_state = (
@@ -552,9 +530,6 @@ def model_trainer(
                     optimized = agent.step(
                         state, action, reward, next_state, done, episode
                     )
-                    # state = (
-                    #     next_state  # TODO: This is dobbel up on the for loop futher up
-                    # )
                     state_batch_tensor[team_idx, ...] = next_state
 
                     training_agents[team]["episode_score"] += reward
@@ -581,6 +556,9 @@ def model_trainer(
                         "min_last_score": min(scores_all_training_agents),
                         "max_last_score": max(scores_all_training_agents),
                         "epsilon": eps,
+                        "Mean Q targets" : torch.mean(torch.abs(agent.last_Q_targets)),
+                        "Mean Q expected" : torch.mean(torch.abs(agent.last_Q_expected)),
+
                     }
                 )
 
@@ -612,10 +590,14 @@ def model_trainer(
                     env_name=config["env_name"],
                     result_dir=results_directory,
                 )
-            
-            if verbose:
-                print(f"Last Q target values: {torch.mean(torch.abs(agent.last_Q_targets))}")
-                print(f"Last Q expected values: {torch.mean(torch.abs(agent.last_Q_expected))}")
+
+            if verbose and wandb is None:
+                print(
+                    f"Last Q target values: {torch.mean(torch.abs(agent.last_Q_targets))}"
+                )
+                print(
+                    f"Last Q expected values: {torch.mean(torch.abs(agent.last_Q_expected))}"
+                )
 
             if early_stop:
                 if avg_score >= early_stop and episode > 10:
@@ -678,7 +660,7 @@ def visualize_trained_model(env, agent, config, verbose):
             if verbose:
                 print(f"\nEpisode {episode}/{num_visual_episodes} started")
 
-            env.reset()  # TODO: Test with and without this
+            env.reset()
 
             for _, team in enumerate(team_name_list):
                 decision_steps, _ = env.get_steps(team)

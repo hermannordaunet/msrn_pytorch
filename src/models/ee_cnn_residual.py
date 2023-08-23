@@ -49,9 +49,7 @@ class EE_CNN_Residual(nn.Module):
         )
 
         self.init_planes = init_planes
-        self.planes = (
-            planes  # TODO: How to choose the right list for planes on the decloration.
-        )
+        self.planes = planes
         self.input_shape = tuple(input_shape)
         self.channel = self.input_shape[0]
         self.num_classes = num_classes
@@ -133,7 +131,6 @@ class EE_CNN_Residual(nn.Module):
             # planes = self.planes[idx + 1]
             stride = 2
 
-        # planes = self.planes[-1] # TODO: Needed?
         self.layers.append(nn.AdaptiveAvgPool2d(1))
 
         # Dropout layer for generalization and overfitting
