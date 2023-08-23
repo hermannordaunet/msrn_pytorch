@@ -299,6 +299,8 @@ def main():
             epsilon_greedy_param, f"./{parameter_directory}/epsilon_greedy_param.json"
         )
 
+        save_model(agent.policy_net, agent.model_param["models_dir"], model_type="untrained")
+
         if run_wandb:
             run_wandb.watch(ee_policy_net, log_freq=int(5))
 
