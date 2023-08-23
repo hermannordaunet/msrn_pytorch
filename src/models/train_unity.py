@@ -95,7 +95,7 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "small_DQN",
+        "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN
         "loss_function": "v4",
         "num_ee": 0,
         "repetitions": [2, 2, 2, 2, 2, 2, 2, 2],
