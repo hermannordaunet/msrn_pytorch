@@ -40,7 +40,9 @@ class EE_CNN_Residual(nn.Module):
             input_shape[0] = input_shape[0] * frames_history
 
         if len(repetitions) != len(planes):
-            print(f"[INFO] The network does not match the ResNet arch. Repetitions and planes mismatch during init.")
+            print(
+                f"[INFO] The network does not match the ResNet arch. Repetitions and planes mismatch during init."
+            )
 
         counterpart_model = CNN_Residual(
             input_shape=tuple(input_shape),
@@ -174,11 +176,15 @@ class EE_CNN_Residual(nn.Module):
             else:
                 self.threshold.append(total_flops * (gold_rate ** (i - self.num_ee)))
 
-    def get_complexity(self, model):
+    def get_complexity(self, model, print_per_layer=False):
         """get model complexity in terms of FLOPs and the number of parameters"""
         flops, params = get_model_complexity_info(
-            model, self.input_shape, print_per_layer_stat=False, as_strings=False
+            model,
+            self.input_shape,
+            print_per_layer_stat=print_per_layer,
+            as_strings=False,
         )
+
         return flops, params
 
     def parameter_initializer(self, zero_init_residual=False):
