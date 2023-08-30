@@ -1,6 +1,7 @@
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
+import matplotlib
 
 import pandas as pd
 
@@ -9,7 +10,7 @@ import pandas as pd
 # Training loss and score
 
 
-def set_size(width, fraction=1, subplots=(1, 1)):
+def set_size(width="thesis", fraction=1, subplots=(1, 1), golden_ratio=None):
     """Set figure dimensions to avoid scaling in LaTeX.
 
     Parameters
@@ -37,7 +38,8 @@ def set_size(width, fraction=1, subplots=(1, 1)):
 
     # Golden ratio to set aesthetic figure height
     # https://disq.us/p/2940ij3
-    golden_ratio = (5**0.5 - 1) / 2
+    if not golden_ratio:
+        golden_ratio = (5**0.5 - 1) / 2
 
     # Figure width in inches
     fig_width_in = fig_width_pt * inches_per_pt
@@ -64,19 +66,21 @@ def plot_scores_from_list(scores: list(), labels=None, env_name="", result_dir="
 
     df = pd.DataFrame(scores.transpose(), columns=labels, index=x_values)
 
-    plt.figure(figsize=set_size("thesis"))
+    plt.figure(figsize=set_size())
     sns.set_theme(style="darkgrid")
     sns.lineplot(data=df)
     sns.despine()
     plt.title(f"{env_name} agent reward")
     plt.ylabel("Reward")
-    plt.xlabel("Episode #")
+    plt.xlabel("Episode")
 
     if labels:
         plt.legend()
 
     plt.tight_layout()
-    plt.savefig(f"{result_dir}/{env_name}_scores.pdf")
+    plt.savefig(
+        f"{result_dir}/{env_name}_scores.pdf", format="pdf", bbox_inches="tight"
+    )
     plt.close()
 
 
@@ -101,19 +105,23 @@ def plot_scores_from_nested_list(
     sns.set(style="darkgrid")
 
     # Create the line plot with error bars
-    plt.figure(figsize=set_size("thesis"))
+    plt.figure(figsize=set_size())
     sns.lineplot(x=x, y=mean_values, label=labels)
     plt.fill_between(x, min_values, max_values, alpha=0.25)
     sns.despine()
     plt.title(f"{env_name} reward")
     plt.ylabel("Reward")
-    plt.xlabel("Episode #")
+    plt.xlabel("Episode")
 
     if labels:
         plt.legend()
 
-    plt.tight_layout()
-    plt.savefig(f"{result_dir}/{env_name}_scores_parallell_agents.pdf")
+    # plt.tight_layout()
+    plt.savefig(
+        f"{result_dir}/{env_name}_scores_parallell_agents.pdf",
+        format="pdf",
+        bbox_inches="tight",
+    )
     plt.close()
 
 
@@ -134,19 +142,40 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
 
     df = pd.DataFrame(losses.transpose(), columns=labels, index=x_values)
 
-    plt.figure(figsize=set_size("thesis"))
+    plt.figure(figsize=set_size())
+
+    tex_fonts = {
+        # Use LaTeX to write all text
+        "text.usetex": True,
+        "mathtext.fontset": "stix",
+        "mathtext.rm": "serif",
+        "font.family": "serif",
+        "font.serif": "Times New Roman",  # or "Times"
+        # Use 10pt font in plots, to match 10pt font in document
+        "axes.labelsize": 11,
+        "font.size": 11,
+        # Make the legend/label fonts a little smaller
+        "legend.fontsize": 10,
+        "xtick.labelsize": 10,
+        "ytick.labelsize": 10,
+    }
+
+    matplotlib.rcParams.update(tex_fonts)
+
     sns.set_theme(style="darkgrid")
     sns.lineplot(data=df)
     sns.despine()
     plt.title(f"{env_name} loss")
     plt.ylabel("Loss")
-    plt.xlabel("Episode #")
+    plt.xlabel("Episode")
 
     if labels:
         plt.legend()
 
     plt.tight_layout()
-    plt.savefig(f"{result_dir}/{env_name}_losses.pdf")
+    plt.savefig(
+        f"{result_dir}/{env_name}_losses.pdf", format="pdf", bbox_inches="tight"
+    )
     plt.close()
 
 
@@ -164,7 +193,7 @@ def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs)
     fig, ax = plt.subplots(
         nrows=num_rows,
         ncols=num_cols,
-        figsize=set_size("thesis", subplots=(num_rows, num_cols)),
+        figsize=set_size(subplots=(num_rows, num_cols)),
     )
 
     labels = ["food", "agent", "wall", "badFood", "frozenAgent"]
