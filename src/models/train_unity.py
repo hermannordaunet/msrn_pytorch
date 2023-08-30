@@ -12,7 +12,8 @@ from collections import deque
 
 # Local import
 from utils.agent import Agent
-from utils.save_utils import save_model, save_dict_to_json
+from utils.ppo_agent import PPO_Agent
+from utils.save_utils import save_model, save_dict_to_json, save_list_to_json
 from ee_cnn_residual import EE_CNN_Residual
 from small_dqn import small_DQN
 from utils.data_utils import (
@@ -86,16 +87,16 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "small_DQN",  # EE_CNN_Residual or small_DQN
+        "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN
         "loss_function": "v4",
         "num_ee": 0,
-        "repetitions": [2, 2, 2, 2, 2, 2, 2, 2],
+        "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
-        "planes": [64, 64, 128, 128, 256, 256, 512, 512],
+        "planes": [64, 128, 256, 512],
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": False, "val": False, "visualize": True},
+        "mode_setups": {"train": True, "eval": False, "visualize": False},
         "manual_seed": 1804,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -104,18 +105,22 @@ def main():
 
     config = {
         "env_name": "FoodCollector",
+        "ppo": False,
         "use_build": True,
         "no_graphics": True,
         "laser_length": 1.5,
         "agent_scale": 1,
         "prioritized_memory": False,
-        "memory_size": 25_000,  # 10_000
-        "minimal_memory_size": 999,  # Either batch_size or minimal_memory_size before training
-        "batch_size": 512,  # Training batch size
+        "memory_size": int(1e5),  # 25_000,  # 10_000
+        "minimal_memory_size": 256,  # Either batch_size or minimal_memory_size before training
+        "batch_size": 256,  # Training batch size
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
-        "learning_rate": {"lr": 0.0001},  # learning rate to the optimizer
+        "learning_rate": {
+            "lr": 0.0005,  # TUNE: 0.0001 original
+            "lr_critic": 0.0001,
+        },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": False,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
@@ -132,22 +137,22 @@ def main():
 
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
-        "tau": 0.005,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 500,
+        "tau": 1e-3,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
+        "update_every": 16,
     }
 
     epsilon_greedy_param = {
-        "eps_start": 0.99,
-        "eps_end": 0.05,
-        "eps_decay": 0.95,
+        "eps_start": 1.0,
+        "eps_end": 0.01,
+        "eps_decay": 0.985,
         "warm_start": 3,
     }
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
-    VAL_MODEL = model_param["mode_setups"]["val"]
+    EVAL_MODEL = model_param["mode_setups"]["eval"]
 
-    TIMESTAMP = int(1692948290)
+    TIMESTAMP = None
 
     VERBOSE = True
 
@@ -165,13 +170,15 @@ def main():
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
             relative_path = (
-                "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
+                "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             )
             FILE_NAME = relative_path
+
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             relative_path = "builds/FoodCollector_4_no_respawn.app"
             FILE_NAME = relative_path
+
     else:
         FILE_NAME = None
 
@@ -180,7 +187,7 @@ def main():
         side_channels=SIDE_CHANNELS,
         seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
-        worker_id=0,
+        worker_id=10,
     )
 
     # Unity environment spesific
@@ -248,61 +255,116 @@ def main():
 
             model_param["parameter_dir"] = f"./{parameter_directory}"
 
-        print(f"[INFO] Initalizing Q network policy of type {model_type}")
-        ee_policy_net = model_type(
-            # frames_history=2,
-            num_ee=model_param["num_ee"],
-            init_planes=model_param["init_planes"],
-            planes=model_param["planes"],
-            input_shape=model_param["input_size"],
-            num_classes=model_param["num_classes"],
-            repetitions=model_param["repetitions"],
-            distribution=model_param["distribution"],
-        ).to(DEVICE)
+        use_ppo = config["ppo"]
 
-        print(f"[INFO] Initalizing Q network target of type {model_type}")
-        ee_target_net = model_type(
-            # frames_history=2,
-            num_ee=model_param["num_ee"],
-            init_planes=model_param["init_planes"],
-            planes=model_param["planes"],
-            input_shape=model_param["input_size"],
-            num_classes=model_param["num_classes"],
-            repetitions=model_param["repetitions"],
-            distribution=model_param["distribution"],
-            initalize_parameters=False,
-        ).to(DEVICE)
+        if use_ppo:
+            print(f"[INFO] Initalizing PPO policy network of type {model_type}")
+            ppo_ee_policy_net = model_type(
+                # frames_history=2,
+                num_ee=model_param["num_ee"],
+                init_planes=model_param["init_planes"],
+                planes=model_param["planes"],
+                input_shape=model_param["input_size"],
+                num_classes=model_param["num_classes"],
+                repetitions=model_param["repetitions"],
+                distribution=model_param["distribution"],
+            ).to(DEVICE)
 
-        if VERBOSE:
-            print("[INFO] Cost of the initalized model")
-            print_cost_of_exits(ee_policy_net)
+            old_ppo_ee_policy_net = model_type(
+                # frames_history=2,
+                num_ee=model_param["num_ee"],
+                init_planes=model_param["init_planes"],
+                planes=model_param["planes"],
+                input_shape=model_param["input_size"],
+                num_classes=model_param["num_classes"],
+                repetitions=model_param["repetitions"],
+                distribution=model_param["distribution"],
+            ).to(DEVICE)
 
-        # ASK: This is important to get the networks initalized with the same weigths
-        print("[INFO] Copying weight from target net to policy net")
-        ee_target_net.load_state_dict(ee_policy_net.state_dict())
+            if VERBOSE:
+                print("[INFO] Cost of the initalized model")
+                print_cost_of_exits(ppo_ee_policy_net)
 
-        print("[INFO] Initalizing a Agent object")
-        agent = Agent(
-            ee_policy_net,
-            ee_target_net,
-            model_param=model_param,
-            config=config,
-            dqn_param=dqn_param,
-        )
+            # ASK: This is important to get the networks initalized with the same weigths
+            print("[INFO] Copying weight to get same weights in both policy nets")
+            old_ppo_ee_policy_net.load_state_dict(ppo_ee_policy_net.state_dict())
 
-        startTime = time.time()
-        print(f"[INFO] started training @ {time.ctime(startTime)}")
+            print("[INFO] Initalizing critic network")
+            critic_net = torch.nn.Sequential(
+                torch.nn.Linear(model_param["input_size"], 64),
+                torch.nn.Tanh(),
+                torch.nn.Linear(64, 64),
+                torch.nn.Tanh(),
+                torch.nn.Linear(64, 1),
+            ).to(DEVICE)
 
-        save_dict_to_json(model_param, f"./{parameter_directory}/model_param.json")
-        save_dict_to_json(config, f"./{parameter_directory}/config.json")
-        save_dict_to_json(dqn_param, f"./{parameter_directory}/dqn_param.json")
-        save_dict_to_json(
-            epsilon_greedy_param, f"./{parameter_directory}/epsilon_greedy_param.json"
-        )
+            agent = PPO_Agent(
+                ppo_ee_policy_net,
+                old_ppo_ee_policy_net,
+                critic_net,
+                model_param=model_param,
+                config=config,
+            )
 
-        save_model(
-            agent.policy_net, agent.model_param["models_dir"], model_type="untrained"
-        )
+        else:
+            print(f"[INFO] Initalizing Q network policy of type {model_type}")
+            ee_policy_net = model_type(
+                # frames_history=2,
+                num_ee=model_param["num_ee"],
+                init_planes=model_param["init_planes"],
+                planes=model_param["planes"],
+                input_shape=model_param["input_size"],
+                num_classes=model_param["num_classes"],
+                repetitions=model_param["repetitions"],
+                distribution=model_param["distribution"],
+            ).to(DEVICE)
+
+            print(f"[INFO] Initalizing Q network target of type {model_type}")
+            ee_target_net = model_type(
+                # frames_history=2,
+                num_ee=model_param["num_ee"],
+                init_planes=model_param["init_planes"],
+                planes=model_param["planes"],
+                input_shape=model_param["input_size"],
+                num_classes=model_param["num_classes"],
+                repetitions=model_param["repetitions"],
+                distribution=model_param["distribution"],
+                initalize_parameters=False,
+            ).to(DEVICE)
+
+            if VERBOSE:
+                print("[INFO] Cost of the initalized model")
+                print_cost_of_exits(ee_policy_net)
+
+            # ASK: This is important to get the networks initalized with the same weigths
+            print("[INFO] Copying weight from target net to policy net")
+            ee_target_net.load_state_dict(ee_policy_net.state_dict())
+
+            print("[INFO] Initalizing a Agent object")
+            agent = Agent(
+                ee_policy_net,
+                ee_target_net,
+                model_param=model_param,
+                config=config,
+                dqn_param=dqn_param,
+            )
+
+            startTime = time.time()
+            print(f"[INFO] started training @ {time.ctime(startTime)}")
+
+            save_dict_to_json(model_param, f"./{parameter_directory}/model_param.json")
+            save_dict_to_json(config, f"./{parameter_directory}/config.json")
+            save_dict_to_json(dqn_param, f"./{parameter_directory}/dqn_param.json")
+            save_dict_to_json(
+                epsilon_greedy_param,
+                f"./{parameter_directory}/epsilon_greedy_param.json",
+            )
+
+            save_model(
+                agent.policy_net,
+                agent.model_param["models_dir"],
+                model_type="untrained",
+            )
 
         if run_wandb:
             run_wandb.watch(ee_policy_net, log_freq=int(5))
@@ -470,7 +532,6 @@ def model_trainer(
                     env, agent, config, verbose=verbose
                 )
 
-
             training_agents = dict()
 
             if verbose:
@@ -546,10 +607,14 @@ def model_trainer(
                     state = (
                         state_batch_tensor[team_idx, ...].unsqueeze(0).detach().clone()
                     )
+                    if isinstance(agent, PPO_Agent):
+                        log_prob = 0
+                        agent.step(state, action, log_prob, reward, done)
+                    else:
+                        optimized = agent.step(
+                            state, action, reward, next_state, done, episode
+                        )
 
-                    optimized = agent.step(
-                        state, action, reward, next_state, done, episode
-                    )
                     state_batch_tensor[team_idx, ...] = next_state
 
                     training_agents[team]["episode_score"] += reward
@@ -647,12 +712,9 @@ def model_trainer(
         env.close()
         # CRITICAL: Save model here and the nessasary values
         save_model(agent.policy_net, agent.model_param["models_dir"])
-        # save_dict_to_json(agent.model_param, f"{parameter_directory}/model_param.json")
-        # save_dict_to_json(agent.config, f"{parameter_directory}/config.json")
-        # save_dict_to_json(agent.dqn_param, f"{parameter_directory}/dqn_param.json")
-        # save_dict_to_json(
-        #     epsilon_greedy_param, f"{parameter_directory}/epsilon_greedy_param.json"
-        # )
+
+        save_list_to_json(scores, f"./{results_directory}/scores.json")
+        save_list_to_json(losses, f"./{results_directory}/losses.json")
 
         print("Model is saved, parameters is saved & the Environment is closed...")
 

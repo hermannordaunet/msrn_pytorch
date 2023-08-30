@@ -5,7 +5,7 @@ import torch
 import torch.optim as optim
 
 # Local imports
-from utils.replay_memory import ReplayMemory
+from utils.replay_memory import ReplayMemoryPPO
 from utils.prioritized_memory import PrioritizedMemory
 from utils.loss_functions import loss_v1, loss_v2, loss_v3, loss_v4, loss_v5
 
@@ -15,38 +15,28 @@ from utils.data_utils import min_max_conf_from_dataset
 from visualization.visualize import plot_grid_based_perception
 
 
-class Agent:
+class PPO_Agent:
     """Interacts with and learns from the environment."""
 
     def __init__(
         self,
         policy_net,
-        target_net,
+        old_policy_net,
+        critic_net,
         model_param=None,
         config=None,
         dqn_param=None,
         # small_eps=1e-5, # For prioritized memory
     ):
-        """Initialize an Agent object."""
-
-        if model_param is None:
-            print("Cannot initialize agent without model_param dict")
-            exit()
-
-        if config is None:
-            print("Cannot initialize agent without config dict")
-            exit()
-
-        if dqn_param is None:
-            print("Cannot initialize agent without dqn_param dict")
-            exit()
+        """Initialize an Agent object with PPO training."""
 
         self.model_param = model_param
         self.config = config
         self.dqn_param = dqn_param
 
         self.policy_net = policy_net
-        self.target_net = target_net
+        self.old_policy_net = old_policy_net
+        self.critic_net = critic_net
 
         self.seed = self.model_param["manual_seed"]
         self.learning_rate = self.config["learning_rate"]["lr"]
@@ -60,7 +50,6 @@ class Agent:
         self.update_every = self.dqn_param["update_every"]
 
         self.device = self.model_param["device"]
-        # self.small_eps = small_eps # For prioritized memory
 
         self.cumulative_loss = None
         self.pred_loss = None
@@ -68,12 +57,17 @@ class Agent:
         self.train_conf = None
 
         if self.prioritized_memory:
-            self.memory = PrioritizedMemory(self.memory_size, self.batch_size)
-        else:
-            self.memory = ReplayMemory(self.memory_size, self.batch_size)
+            print(
+                "[ERROR]: Prioritized memory not implemented for PPO agent. Using regular replay memory"
+            )
 
-        # self.optimizer = None
+        self.memory = ReplayMemoryPPO(self.memory_size, self.batch_size)
+
+        # Optimizer initalize
         self.initalize_optimizer()
+
+        # Loss initalize
+        self.initalize_loss_function()
 
         if config["use_lr_scheduler"]:
             if (config["scheduler_milestones"] is not None) and (
@@ -87,12 +81,11 @@ class Agent:
         else:
             self.scheduler = None
 
-        # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
 
-    def step(self, state, action, reward, next_state, done, i):
+    def step(self, state, action, log_prob, reward, done):
         # Save experience in replay memory
-        self.memory.add(state, action, reward, next_state, done)
+        self.memory.add(state, action, log_prob, reward, done)
 
         # Learn every UPDATE_EVERY time steps.
         self.t_step = (self.t_step + 1) % self.update_every
@@ -108,10 +101,7 @@ class Agent:
         if len(self.memory) < self.batch_size:
             return False
 
-        if self.prioritized_memory:
-            experiences = self.memory.sample(self.get_beta(i))
-        else:
-            experiences = self.memory.sample()
+        experiences = self.memory.sample()
 
         self.learn(experiences)
 
@@ -147,7 +137,7 @@ class Agent:
             for count in range(num_agents):
                 move_actions_batch[count, :, action_indexes[count]] = 1.0
 
-            if was_in_training: 
+            if was_in_training:
                 self.policy_net.train()
 
         else:
@@ -159,7 +149,6 @@ class Agent:
                 move_actions_batch[count, :, random_action_idx[count]] = 1.0
 
         return move_actions_batch, laser_action_batch  # , exits, costs, confs
-    
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
@@ -168,10 +157,6 @@ class Agent:
         ======
             experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples
         """
-
-        # CRITICAL: Understand all this code. Written for the IN5490 project.
-        # I have forgotten all the details of the DQN training loop with the
-        # local and tarfet network.
 
         num_ee = len(self.policy_net.exits)
 
@@ -190,118 +175,37 @@ class Agent:
             torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
         )
 
-        if self.target_net:
-            # Get max predicted Q values (for next states) from target model
-            with torch.no_grad():
-                next_pred, _, _ = self.target_net(next_state_batch)
-
-        else:
-            print("[ERROR] The agent has no target net. Only use for eval/visualize")
-            exit()
-
-        # CRITICAL: Here we get the Q_targets from the last exit of the network
-        # Here we need the network to be set up with some kind of inf threshold
-        # to get the prediction from the last exit
-        Q_targets_next = next_pred[-1].detach().clone().max(1)[0].unsqueeze(1)
-
-        # Compute Q targets for current states
-        Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
-
-        # ASK: The Q_targets have no "info" of which action it took to get the score
-
-        # Get expected Q values from policy model
-        pred, conf, cost = self.policy_net(state_batch)
-        cost.append(torch.tensor(1.0).to(self.device))
-
-        Q_expected = list()
-        for p in pred:
-            expected_value = p.gather(1, action_batch)
-            Q_expected.append(expected_value)
-
-        # cumulative_loss, pred_loss, cost_loss = loss_v2(
-        #    Q_expected, Q_targets, conf, cost, num_ee=num_ee
-        # )
-
-        self.initalize_loss_function()
-
-        cumulative_loss, pred_loss, cost_loss = self.loss(
-            Q_expected, Q_targets, num_ee=num_ee
-        )
-
-        # Append conf to a list for debugging later
-        self.cumulative_loss = cumulative_loss
-        self.pred_loss = pred_loss
-        self.cost_loss = cost_loss
-        self.train_conf = conf
-        self.last_Q_expected = Q_expected[-1]
-        self.last_Q_targets = Q_targets
-
-        # Minimize the loss
-        self.optimizer.zero_grad()
-        cumulative_loss.backward()
-        self.optimizer.step()
-
-        if self.scheduler is not None:
-            self.scheduler.step()
-
-        # Update target network
-        self.soft_update(self.policy_net, self.target_net, self.tau)
-
-    def soft_update(self, policy_net, target_net, tau):
-        """Soft update model parameters.
-        θ_target = τ*θ_local + (1 - τ)*θ_target
-
-        Params:
-            policy_net (PyTorch model): weights will be copied from
-            target_net (PyTorch model): weights will be copied to
-            tau (float): interpolation parameter
-        """
-        # for target_param, local_param in zip(
-        #     target_model.parameters(), local_model.parameters()
-        # ):
-        #     target_param.data.copy_(
-        #         tau * local_param.data + (1.0 - tau) * target_param.data
-        #     )
-
-        for target_net_param, policy_net_param in zip(target_net.parameters(), policy_net.parameters()):
-            target_net_param.data.copy_(tau*policy_net_param.data + (1.0-tau)*target_net_param.data)
-
-        # target_model_state_dict = target_net.state_dict()
-        # policy_model_state_dict = policy_net.state_dict()
-        # for key in policy_model_state_dict:
-        #     target_model_state_dict[key] = policy_model_state_dict[
-        #         key
-        #     ] * tau + target_model_state_dict[key] * (1 - tau)
-
     def initalize_optimizer(self):
         # Getting the network parameters
         policy_net_parameters = self.policy_net.parameters()
+        critic_net_parameters = self.critic_net.parameters()
+
+        lr_actor = self.config["learning_rate"]["lr"]
+        lr_critic = self.config["learning_rate"]["lr_critic"]
+
+        weight_decay = self.config["weight_decay"]
+
+        optimizer_input_both_networks = [
+            {
+                "params": policy_net_parameters,
+                "lr": lr_actor,
+                "weight_decay": weight_decay,
+            },
+            {
+                "params": critic_net_parameters,
+                "lr": lr_critic,
+                "weight_decay": weight_decay,
+            },
+        ]
 
         if self.config["optimizer"] == "adam":
-            self.optimizer = optim.Adam(
-                policy_net_parameters,
-                lr=self.config["learning_rate"]["lr"],
-                weight_decay=self.config["weight_decay"],
-            )
-
+            self.optimizer = optim.Adam(optimizer_input_both_networks)
         elif self.config["optimizer"] == "adamW":
-            self.optimizer = optim.AdamW(
-                policy_net_parameters,
-                lr=self.config["learning_rate"]["lr"],
-                weight_decay=self.config["weight_decay"],
-            )
+            self.optimizer = optim.AdamW(optimizer_input_both_networks)
         elif self.config["optimizer"] == "SGD":
-            self.optimizer = optim.SGD(
-                policy_net_parameters,
-                lr=self.config["learning_rate"]["lr"],
-                weight_decay=self.config["weight_decay"],
-            )
+            self.optimizer = optim.SGD(optimizer_input_both_networks)
         elif self.config["optimizer"] == "RMSprop":
-            self.optimizer = optim.RMSprop(
-                policy_net_parameters,
-                lr=self.config["learning_rate"]["lr"],
-                weight_decay=self.config["weight_decay"],
-            )
+            self.optimizer = optim.RMSprop(optimizer_input_both_networks)
         else:
             raise Exception("invalid optimizer")
 
