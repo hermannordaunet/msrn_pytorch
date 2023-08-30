@@ -143,7 +143,7 @@ class EE_CNN_Residual(nn.Module):
         # self.dropout = nn.Dropout(dropout_prob)
 
         in_size = planes * block.expansion
-        self.classifier = classifier_linear(self.num_classes, in_size)
+        self.classifier = classifier_linear(in_size, self.num_classes)
         self.confidence = confidence_linear_sigmoid(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
