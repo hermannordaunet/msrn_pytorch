@@ -76,7 +76,7 @@ class small_DQN(nn.Module):
         # Last linear for class probability distribution
         self.fc2 = nn.Linear(500, self.num_classes)
 
-        self.classifier = classifier_linear(self.num_classes, linear_input_size)
+        self.classifier = classifier_linear(linear_input_size, self.num_classes)
         self.confidence = confidence_linear_sigmoid(linear_input_size)
 
         self.logSoftmax = nn.LogSoftmax(dim=1)

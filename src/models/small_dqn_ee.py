@@ -99,7 +99,7 @@ class small_DQN_EE(nn.Module):
             )
         )
         self.last_confidence = confidence_linear_sigmoid(30976)
-        self.last_classifier = classifier_linear_softmax(num_classes, 30976)
+        self.last_classifier = classifier_linear_softmax(30976, num_classes)
         self.pool = nn.AdaptiveAvgPool2d(1)
 
     # Called with either one element to determine next action, or a batch
