@@ -174,10 +174,10 @@ class EE_CNN_Residual(nn.Module):
             else:
                 self.threshold.append(total_flops * (gold_rate ** (i - self.num_ee)))
 
-    def get_complexity(self, model):
+    def get_complexity(self, model, print_per_layer=False):
         """get model complexity in terms of FLOPs and the number of parameters"""
         flops, params = get_model_complexity_info(
-            model, self.input_shape, print_per_layer_stat=False, as_strings=False
+            model, self.input_shape, print_per_layer_stat=print_per_layer, as_strings=False
         )
         return flops, params
 
