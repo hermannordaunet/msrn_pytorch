@@ -40,7 +40,9 @@ class EE_CNN_Residual(nn.Module):
             input_shape[0] = input_shape[0] * frames_history
 
         if len(repetitions) != len(planes):
-            print(f"[INFO] The network does not match the ResNet arch. Repetitions and planes mismatch during init.")
+            print(
+                f"[INFO] The network does not match the ResNet arch. Repetitions and planes mismatch during init."
+            )
 
         counterpart_model = CNN_Residual(
             input_shape=tuple(input_shape),
@@ -141,7 +143,7 @@ class EE_CNN_Residual(nn.Module):
         # self.dropout = nn.Dropout(dropout_prob)
 
         in_size = planes * block.expansion
-        self.classifier = classifier_linear(self.num_classes, in_size)
+        self.classifier = classifier_linear(in_size, self.num_classes)
         self.confidence = confidence_linear_sigmoid(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
@@ -177,8 +179,12 @@ class EE_CNN_Residual(nn.Module):
     def get_complexity(self, model, print_per_layer=False):
         """get model complexity in terms of FLOPs and the number of parameters"""
         flops, params = get_model_complexity_info(
-            model, self.input_shape, print_per_layer_stat=print_per_layer, as_strings=False
+            model,
+            self.input_shape,
+            print_per_layer_stat=print_per_layer,
+            as_strings=False,
         )
+
         return flops, params
 
     def parameter_initializer(self, zero_init_residual=False):

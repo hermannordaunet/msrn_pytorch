@@ -136,6 +136,8 @@ class Agent:
             # action_indexes = torch.max(action_values, dim=1)[1]
             act_state = act_state.to(self.device)
 
+            was_in_training = self.policy_net.training
+
             self.policy_net.eval()
             with torch.no_grad():
                 action_values, confs, exits, costs = self.policy_net(act_state)
@@ -145,7 +147,8 @@ class Agent:
             for count in range(num_agents):
                 move_actions_batch[count, :, action_indexes[count]] = 1.0
 
-            self.policy_net.train()
+            if was_in_training: 
+                self.policy_net.train()
 
         else:
             # Returning a random action
@@ -156,6 +159,7 @@ class Agent:
                 move_actions_batch[count, :, random_action_idx[count]] = 1.0
 
         return move_actions_batch, laser_action_batch  # , exits, costs, confs
+    
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
@@ -271,30 +275,30 @@ class Agent:
 
     def initalize_optimizer(self):
         # Getting the network parameters
-        parameters = self.policy_net.parameters()
+        policy_net_parameters = self.policy_net.parameters()
 
         if self.config["optimizer"] == "adam":
             self.optimizer = optim.Adam(
-                parameters,
+                policy_net_parameters,
                 lr=self.config["learning_rate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
 
         elif self.config["optimizer"] == "adamW":
             self.optimizer = optim.AdamW(
-                parameters,
+                policy_net_parameters,
                 lr=self.config["learning_rate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "SGD":
             self.optimizer = optim.SGD(
-                parameters,
+                policy_net_parameters,
                 lr=self.config["learning_rate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "RMSprop":
             self.optimizer = optim.RMSprop(
-                parameters,
+                policy_net_parameters,
                 lr=self.config["learning_rate"]["lr"],
                 weight_decay=self.config["weight_decay"],
             )

@@ -23,7 +23,7 @@ class ExitBlock(nn.Module):
 
         in_size = inplanes * self.expansion
         self.confidence = confidence_linear_sigmoid(in_size)
-        self.classifier = classifier_linear(num_classes, in_size)
+        self.classifier = classifier_linear(in_size, num_classes)
 
     def forward(self, x):
         for layer in self.layers:
