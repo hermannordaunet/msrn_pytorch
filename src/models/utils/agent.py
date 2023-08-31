@@ -147,7 +147,7 @@ class Agent:
             for count in range(num_agents):
                 move_actions_batch[count, :, action_indexes[count]] = 1.0
 
-            if was_in_training: 
+            if was_in_training:
                 self.policy_net.train()
 
         else:
@@ -159,7 +159,6 @@ class Agent:
                 move_actions_batch[count, :, random_action_idx[count]] = 1.0
 
         return move_actions_batch, laser_action_batch  # , exits, costs, confs
-    
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
