@@ -14,8 +14,11 @@ from collections import deque
 from utils.agent import Agent
 from utils.ppo_agent import PPO_Agent
 from utils.save_utils import save_model, save_dict_to_json, save_list_to_json
-from ee_cnn_residual import EE_CNN_Residual
+
 from small_dqn import small_DQN
+from ee_cnn_residual import EE_CNN_Residual
+from resnet_dqn import ResNet_DQN
+
 from utils.data_utils import (
     min_max_conf_from_dataset,
     get_grid_based_perception,
@@ -87,7 +90,7 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN
+        "model_class_name": "ResNet_DQN",  # EE_CNN_Residual or small_DQN or ResNet_DQN
         "loss_function": "v4",
         "num_ee": 0,
         "repetitions": [2, 2, 2, 2],
@@ -97,7 +100,7 @@ def main():
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
         "mode_setups": {"train": True, "eval": False, "visualize": False},
-        "manual_seed": 1804,  # TODO: Seed everything
+        "manual_seed": 1412,  # TODO: Seed everything
         "device": DEVICE,
     }
 
@@ -113,12 +116,12 @@ def main():
         "prioritized_memory": False,
         "memory_size": int(1e5),  # 25_000,  # 10_000
         "minimal_memory_size": 256,  # Either batch_size or minimal_memory_size before training
-        "batch_size": 256,  # Training batch size
+        "batch_size": 128,  # Training batch size
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {
-            "lr": 0.0005,  # TUNE: 0.0001 original
+            "lr": 5e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
@@ -138,7 +141,7 @@ def main():
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 1e-3,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 16,
+        "update_every": 100,
     }
 
     epsilon_greedy_param = {
@@ -557,11 +560,11 @@ def model_trainer(
             while not episode_done:
                 if warm_start is not None and episode <= warm_start:
                     move_action, laser_action = agent.act(
-                        state_batch_tensor, epsilon=1, num_agents=num_teams
+                        state_batch_tensor.detach().clone(), epsilon=1, num_agents=num_teams
                     )
                 else:
                     move_action, laser_action = agent.act(
-                        state_batch_tensor, epsilon=eps, num_agents=num_teams
+                        state_batch_tensor.detach().clone(), epsilon=eps, num_agents=num_teams
                     )
 
                 # move_action, laser_action = act  # , idx, cost, conf = act

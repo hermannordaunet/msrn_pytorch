@@ -53,12 +53,12 @@ class EE_CNN_Residual(nn.Module):
             planes=planes,
         )
 
-        self.init_planes = init_planes
-        self.planes = planes
         self.input_shape = tuple(input_shape)
         self.channel = self.input_shape[0]
         self.num_classes = num_classes
         self.block = block
+        self.init_planes = init_planes
+        self.planes = planes
 
         # Create the early exit variables
         self.num_ee = num_ee
@@ -75,16 +75,6 @@ class EE_CNN_Residual(nn.Module):
         self.complexity = list()
 
         self.stage_id = 0
-
-        # # Get the model just without the ee blocks
-        # counterpart_model = CNN_Residual(
-        #     input_shape=self.input_shape,
-        #     num_classes=self.num_classes,
-        #     block=self.block,
-        #     repetitions=repetitions,
-        #     init_planes=self.init_planes,
-        #     planes=self.planes,
-        # )
 
         # Complexity of the entire model and threshold for the early exit
         total_flops, total_params = self.get_complexity(counterpart_model)
@@ -123,18 +113,23 @@ class EE_CNN_Residual(nn.Module):
 
             self.layers.append(block(self.inplanes, planes, stride, downsample))
             self.inplanes = planes * block.expansion
+
             if self.is_suitable_for_exit():
                 self.add_exit_block(exit_type, total_flops)
                 print(f"Added exit at repetition: {idx+1}, after first block")
 
             for _ in range(1, repetition):
                 self.layers.append(block(self.inplanes, planes))
+
                 if self.is_suitable_for_exit():
                     self.add_exit_block(exit_type, total_flops)
                     print(f"Added exit at repetition: {idx+1}, after second block")
 
-            # planes = self.planes[idx + 1]
             stride = 2
+
+        assert (
+            len(self.exits) == num_ee
+        ), "The desired number of exit blocks is too much for the model capacity."
 
         self.layers.append(nn.AdaptiveAvgPool2d(1))
 
@@ -239,7 +234,7 @@ class EE_CNN_Residual(nn.Module):
         not_batch_eval = x.shape[0] == 1
 
         if self.training:
-            preds, confs, cost = list(), list(), list()
+            preds, confs, costs = list(), list(), list()
 
         if not self.training:
             self.original_idx = None
@@ -275,7 +270,7 @@ class EE_CNN_Residual(nn.Module):
             else:
                 preds.append(pred)
                 confs.append(conf)
-                cost.append(self.cost[idx])
+                costs.append(self.cost[idx])
 
         x = self.stages[-1](x)
         x = x.view(x.size(0), -1)
@@ -300,7 +295,7 @@ class EE_CNN_Residual(nn.Module):
         preds.append(pred)
         confs.append(conf)
 
-        return preds, confs, cost
+        return preds, confs, costs
 
     def find_conf_above_threshold(self, conf, threshold=None):
         if threshold:
