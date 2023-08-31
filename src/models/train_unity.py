@@ -14,8 +14,11 @@ from collections import deque
 from utils.agent import Agent
 from utils.ppo_agent import PPO_Agent
 from utils.save_utils import save_model, save_dict_to_json, save_list_to_json
-from ee_cnn_residual import EE_CNN_Residual
+
 from small_dqn import small_DQN
+from ee_cnn_residual import EE_CNN_Residual
+from resnet_dqn import ResNet_DQN
+
 from utils.data_utils import (
     min_max_conf_from_dataset,
     get_grid_based_perception,
