@@ -76,16 +76,6 @@ class EE_CNN_Residual(nn.Module):
 
         self.stage_id = 0
 
-        # # Get the model just without the ee blocks
-        # counterpart_model = CNN_Residual(
-        #     input_shape=self.input_shape,
-        #     num_classes=self.num_classes,
-        #     block=self.block,
-        #     repetitions=repetitions,
-        #     init_planes=self.init_planes,
-        #     planes=self.planes,
-        # )
-
         # Complexity of the entire model and threshold for the early exit
         total_flops, total_params = self.get_complexity(counterpart_model)
 
@@ -133,7 +123,6 @@ class EE_CNN_Residual(nn.Module):
                     self.add_exit_block(exit_type, total_flops)
                     print(f"Added exit at repetition: {idx+1}, after second block")
 
-            # planes = self.planes[idx + 1]
             stride = 2
 
         assert (
