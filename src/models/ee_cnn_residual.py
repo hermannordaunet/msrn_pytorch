@@ -239,7 +239,7 @@ class EE_CNN_Residual(nn.Module):
         not_batch_eval = x.shape[0] == 1
 
         if self.training:
-            preds, confs, cost = list(), list(), list()
+            preds, confs, costs = list(), list(), list()
 
         if not self.training:
             self.original_idx = None
@@ -275,7 +275,7 @@ class EE_CNN_Residual(nn.Module):
             else:
                 preds.append(pred)
                 confs.append(conf)
-                cost.append(self.cost[idx])
+                costs.append(self.cost[idx])
 
         x = self.stages[-1](x)
         x = x.view(x.size(0), -1)
@@ -300,7 +300,7 @@ class EE_CNN_Residual(nn.Module):
         preds.append(pred)
         confs.append(conf)
 
-        return preds, confs, cost
+        return preds, confs, costs
 
     def find_conf_above_threshold(self, conf, threshold=None):
         if threshold:
