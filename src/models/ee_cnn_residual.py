@@ -136,6 +136,10 @@ class EE_CNN_Residual(nn.Module):
             # planes = self.planes[idx + 1]
             stride = 2
 
+        assert (
+            len(self.exits) == num_ee
+        ), "The desired number of exit blocks is too much for the model capacity."
+
         self.layers.append(nn.AdaptiveAvgPool2d(1))
 
         # Dropout layer for generalization and overfitting
