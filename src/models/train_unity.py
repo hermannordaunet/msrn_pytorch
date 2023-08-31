@@ -90,7 +90,7 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN
+        "model_class_name": "ResNet_DQN",  # EE_CNN_Residual or small_DQN or ResNet_DQN
         "loss_function": "v4",
         "num_ee": 0,
         "repetitions": [2, 2, 2, 2],
@@ -100,7 +100,7 @@ def main():
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
         "mode_setups": {"train": True, "eval": False, "visualize": False},
-        "manual_seed": 1804,  # TODO: Seed everything
+        "manual_seed": 1412,  # TODO: Seed everything
         "device": DEVICE,
     }
 
@@ -116,12 +116,12 @@ def main():
         "prioritized_memory": False,
         "memory_size": int(1e5),  # 25_000,  # 10_000
         "minimal_memory_size": 256,  # Either batch_size or minimal_memory_size before training
-        "batch_size": 256,  # Training batch size
+        "batch_size": 128,  # Training batch size
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {
-            "lr": 0.0005,  # TUNE: 0.0001 original
+            "lr": 5e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
@@ -141,7 +141,7 @@ def main():
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 1e-3,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 16,
+        "update_every": 100,
     }
 
     epsilon_greedy_param = {
