@@ -263,8 +263,12 @@ class Agent:
         #         tau * local_param.data + (1.0 - tau) * target_param.data
         #     )
 
-        for target_net_param, policy_net_param in zip(target_net.parameters(), policy_net.parameters()):
-            target_net_param.data.copy_(tau*policy_net_param.data + (1.0-tau)*target_net_param.data)
+        for target_net_param, policy_net_param in zip(
+            target_net.parameters(), policy_net.parameters()
+        ):
+            target_net_param.data.copy_(
+                tau * policy_net_param.data + (1.0 - tau) * target_net_param.data
+            )
 
         # target_model_state_dict = target_net.state_dict()
         # policy_model_state_dict = policy_net.state_dict()
@@ -281,40 +285,40 @@ class Agent:
             self.optimizer = optim.Adam(
                 policy_net_parameters,
                 lr=self.config["learning_rate"]["lr"],
-                weight_decay=self.config["weight_decay"],
+                # weight_decay=self.config["weight_decay"],
             )
 
         elif self.config["optimizer"] == "adamW":
             self.optimizer = optim.AdamW(
                 policy_net_parameters,
                 lr=self.config["learning_rate"]["lr"],
-                weight_decay=self.config["weight_decay"],
+                # weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "SGD":
             self.optimizer = optim.SGD(
                 policy_net_parameters,
                 lr=self.config["learning_rate"]["lr"],
-                weight_decay=self.config["weight_decay"],
+                # weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "RMSprop":
             self.optimizer = optim.RMSprop(
                 policy_net_parameters,
                 lr=self.config["learning_rate"]["lr"],
-                weight_decay=self.config["weight_decay"],
+                # weight_decay=self.config["weight_decay"],
             )
         else:
             raise Exception("invalid optimizer")
 
     def initalize_loss_function(self):
         if self.model_param["loss_function"] == "v1":
-            self.loss = loss_v1
+            return loss_v1
         elif self.model_param["loss_function"] == "v2":
-            self.loss = loss_v2
+            return loss_v2
         elif self.model_param["loss_function"] == "v3":
-            self.loss = loss_v3
+            return loss_v3
         elif self.model_param["loss_function"] == "v4":
-            self.loss = loss_v4
+            return loss_v4
         elif self.model_param["loss_function"] == "v5":
-            self.loss = loss_v5
+            return loss_v5
         else:
             raise Exception("invalid loss function")
