@@ -560,11 +560,11 @@ def model_trainer(
             while not episode_done:
                 if warm_start is not None and episode <= warm_start:
                     move_action, laser_action = agent.act(
-                        state_batch_tensor, epsilon=1, num_agents=num_teams
+                        state_batch_tensor.detach().clone(), epsilon=1, num_agents=num_teams
                     )
                 else:
                     move_action, laser_action = agent.act(
-                        state_batch_tensor, epsilon=eps, num_agents=num_teams
+                        state_batch_tensor.detach().clone(), epsilon=eps, num_agents=num_teams
                     )
 
                 # move_action, laser_action = act  # , idx, cost, conf = act
