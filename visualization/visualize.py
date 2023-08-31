@@ -1,7 +1,6 @@
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib
 
 import pandas as pd
 
@@ -143,25 +142,6 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
     df = pd.DataFrame(losses.transpose(), columns=labels, index=x_values)
 
     plt.figure(figsize=set_size())
-
-    tex_fonts = {
-        # Use LaTeX to write all text
-        "text.usetex": True,
-        "mathtext.fontset": "stix",
-        "mathtext.rm": "serif",
-        "font.family": "serif",
-        "font.serif": "Times New Roman",  # or "Times"
-        # Use 10pt font in plots, to match 10pt font in document
-        "axes.labelsize": 11,
-        "font.size": 11,
-        # Make the legend/label fonts a little smaller
-        "legend.fontsize": 10,
-        "xtick.labelsize": 10,
-        "ytick.labelsize": 10,
-    }
-
-    matplotlib.rcParams.update(tex_fonts)
-
     sns.set_theme(style="darkgrid")
     sns.lineplot(data=df)
     sns.despine()
