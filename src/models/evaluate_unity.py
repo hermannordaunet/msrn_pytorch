@@ -110,6 +110,7 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
             
             eval_scores_all_agents = get_scores_of_all_agents(eval_agents, flatten=True)
             mean_score = np.mean(eval_scores_all_agents)
+            
             print(f"[INFO] Mean performance on policy net after {current_episode} episodes: {mean_score}")
         
     except (
