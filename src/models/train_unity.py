@@ -117,10 +117,10 @@ def main():
         "ppo": False,
         "use_build": True,
         "no_graphics": True,
-        "laser_length": 1.5,
+        "laser_length": 1,
         "agent_scale": 1,
         "prioritized_memory": False,
-        "memory_size": int(1e5),  # 25_000,  # 10_000
+        "memory_size": 25_000,  # 25_000,  # 10_000
         "minimal_memory_size": 256,  # Either batch_size or minimal_memory_size before training
         "batch_size": 128,  # Training batch size
         "num_episodes": 500,
@@ -147,15 +147,17 @@ def main():
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 1e-3,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 100,
+        "update_every": 4,
     }
 
     epsilon_greedy_param = {
         "eps_start": 1.0,
         "eps_end": 0.01,
-        "eps_decay": 0.985,
-        "warm_start": 3,
+        "eps_decay": 0.995,
+        "warm_start": 0,
     }
+
+    set_seed(model_param["manual_seed"])
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
