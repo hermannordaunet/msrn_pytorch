@@ -51,6 +51,11 @@ from mlagents_envs.exception import (
 )
 from utils.stats_side_channel import StatsSideChannel
 
+def set_seed(seed: int = 42) -> None:
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
 
 def get_latest_folder(runs_directory: Path):
     # Get all subdirectories in the runs_directory
