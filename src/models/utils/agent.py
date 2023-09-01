@@ -25,7 +25,6 @@ class Agent:
         model_param=None,
         config=None,
         dqn_param=None,
-        # small_eps=1e-5, # For prioritized memory
     ):
         """Initialize an Agent object."""
 
