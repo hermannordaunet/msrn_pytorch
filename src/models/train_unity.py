@@ -520,7 +520,6 @@ def model_trainer(
     # Evaluate variables
     evaluate_model = agent.model_param["mode_setups"]["eval"]
     evaluate_every_n_th_episode = config["eval"]["every-n-th-episode"]
-    number_of_eval_episodes = config["eval"]["episodes"]
 
     try:
         team_name_list = list(env.behavior_specs.keys())
