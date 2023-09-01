@@ -48,6 +48,8 @@ class Agent:
         self.target_net = target_net
 
         self.seed = self.model_param["manual_seed"]
+        random.seed(self.seed)
+
         self.learning_rate = self.config["learning_rate"]["lr"]
         self.memory_size = self.config["memory_size"]
         self.minimal_memory_size = self.config["minimal_memory_size"]
