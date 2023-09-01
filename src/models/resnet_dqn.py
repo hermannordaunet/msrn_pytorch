@@ -25,7 +25,7 @@ class ResNet_DQN(nn.Module):
 
         self.complexity = list()
 
-        pretrained_resnet = True
+        pretrained_resnet = False
         pretrained_net = models.resnet18(pretrained=pretrained_resnet)
 
         print(f"[INFO] Pretrained ResNet18 loaded: {pretrained_resnet}")
