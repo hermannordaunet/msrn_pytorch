@@ -183,7 +183,7 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
 
 
 def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs):
-    image_tensor = image_tensor.squeeze()
+    image_tensor = image_tensor.squeeze().cpu()
     if len(image_tensor.shape) == 4:
         num_rows, num_cols, _, _ = image_tensor.shape
     else:
