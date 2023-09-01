@@ -91,13 +91,7 @@ class small_DQN(nn.Module):
         x = F.leaky_relu(self.bn2(self.conv2(x)))
         x = F.leaky_relu(self.bn3(self.conv3(x)))
         x = x.view(x.size(0), -1)
-        # x = F.leaky_relu(self.fc1(x))
-        # x = self.dropout(x)
-        # x = self.fc2(x)
 
-        # x = self.logSoftmax(x)
-
-        # pred = self.classifier(x)
         pred = self.head(x)
         conf = self.confidence(x)
 
