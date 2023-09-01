@@ -348,8 +348,8 @@ def main():
                 print_cost_of_exits(ee_policy_net)
 
             # ASK: This is important to get the networks initalized with the same weigths
-            print("[INFO] Copying weight from target net to policy net")
-            ee_target_net.load_state_dict(ee_policy_net.state_dict())
+            # print("[INFO] Copying weight from target net to policy net")
+            # ee_target_net.load_state_dict(ee_policy_net.state_dict())
 
             print("[INFO] Initalizing a Agent object")
             agent = Agent(
