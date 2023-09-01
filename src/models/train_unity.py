@@ -534,13 +534,23 @@ def model_trainer(
         state_batch_tensor = torch.zeros((num_teams, *state_size))
 
         for episode in range(1, num_episodes + 1):
-            if not episode % evaluate_every_n_th_episode:
+            evaluate_this_episode = not episode % evaluate_every_n_th_episode
+
+            if evaluate_model and evaluate_this_episode:
                 if verbose:
                     print(f"\nEvaluation started")
 
-                scores_all_evaluated_agents = evaluate_trained_model(
-                    env, agent, config, verbose=verbose
+                if agent.policy_net.training:
+                    was_in_training = True
+                    agent.policy_net.eval()
+
+
+                evaluate_trained_model(
+                    env, agent, config, episode, verbose=verbose
                 )
+
+                if was_in_training:
+                    agent.policy_net.train()
 
             training_agents = dict()
 
