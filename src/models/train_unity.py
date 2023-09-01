@@ -136,6 +136,7 @@ def main():
         "use_lr_scheduler": False,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
+        "max_grad_norm": 1,
         "print_range": 10,
         "visualize": {
             "episodes": 10,
