@@ -107,7 +107,7 @@ def main():
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": False, "visualize": False},
+        "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 1412,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -156,8 +156,8 @@ def main():
     epsilon_greedy_param = {
         "eps_start": 1.0,
         "eps_end": 0.01,
-        "eps_decay": 0.995,
-        "warm_start": 0,
+        "eps_decay": 0.99,
+        "warm_start": 4,
     }
 
     set_seed(model_param["manual_seed"])
@@ -184,7 +184,7 @@ def main():
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
             relative_path = (
-                "builds/Linus_FoodCollector_1_envs_no_respawn_headless.x86_64"
+                "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
             )
             FILE_NAME = relative_path
 
@@ -201,7 +201,7 @@ def main():
         side_channels=SIDE_CHANNELS,
         seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
-        worker_id=10,
+        worker_id=1200,
     )
 
     # Unity environment spesific
@@ -251,6 +251,7 @@ def main():
 
     if TRAIN_MODEL:
         timestamp = int(time.time())
+        print(f"[INFO] Results added to folder: {timestamp}")
 
         results_directory = Path(f"./results/{timestamp}/")
         parameter_directory = results_directory / "parameters"
