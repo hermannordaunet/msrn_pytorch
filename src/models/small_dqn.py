@@ -81,6 +81,8 @@ class small_DQN(nn.Module):
 
         self.logSoftmax = nn.LogSoftmax(dim=1)
 
+        self.complexity = [(1, 1)]
+
     # Called with either one element to determine next action, or a batch
     # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
