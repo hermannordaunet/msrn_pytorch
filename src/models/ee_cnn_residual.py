@@ -223,8 +223,10 @@ class EE_CNN_Residual(nn.Module):
         self.exits.append(
             ExitBlock(self.inplanes, self.num_classes, self.input_shape, exit_type)
         )
+
         intermediate_model = nn.Sequential(*(list(self.stages) + list(self.exits)[-1:]))
         flops, params = self.get_complexity(intermediate_model)
+
         self.cost.append(flops / total_flops)
         self.complexity.append((flops, params))
         self.layers = nn.ModuleList()
@@ -274,6 +276,7 @@ class EE_CNN_Residual(nn.Module):
 
         x = self.stages[-1](x)
         x = x.view(x.size(0), -1)
+
         pred = self.classifier(x)
         conf = self.confidence(x)
 
