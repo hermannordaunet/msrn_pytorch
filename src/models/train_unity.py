@@ -361,7 +361,7 @@ def main():
             )
 
             startTime = time.time()
-            print(f"[INFO] started training @ {time.ctime(startTime)}")
+            print(f"[INFO] Started training @ {time.ctime(startTime)}")
 
             save_dict_to_json(model_param, f"./{parameter_directory}/model_param.json")
             save_dict_to_json(config, f"./{parameter_directory}/config.json")
