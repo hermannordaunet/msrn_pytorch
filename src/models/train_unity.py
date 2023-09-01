@@ -52,11 +52,13 @@ from mlagents_envs.exception import (
 )
 from utils.stats_side_channel import StatsSideChannel
 
+
 def set_seed(seed: int = 42) -> None:
     np.random.seed(seed)
     random.seed(seed)
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
+
 
 def get_latest_folder(runs_directory: Path):
     # Get all subdirectories in the runs_directory
@@ -146,8 +148,8 @@ def main():
 
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
-        "tau": 1e-3,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 4,
+        "tau": 0.005,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
+        "update_every": 20,
     }
 
     epsilon_greedy_param = {
@@ -544,10 +546,7 @@ def model_trainer(
                     was_in_training = True
                     agent.policy_net.eval()
 
-
-                evaluate_trained_model(
-                    env, agent, config, episode, verbose=verbose
-                )
+                evaluate_trained_model(env, agent, config, episode, verbose=verbose)
 
                 if was_in_training:
                     agent.policy_net.train()
@@ -577,11 +576,15 @@ def model_trainer(
             while not episode_done:
                 if warm_start is not None and episode <= warm_start:
                     move_action, laser_action = agent.act(
-                        state_batch_tensor.detach().clone(), epsilon=1, num_agents=num_teams
+                        state_batch_tensor.detach().clone(),
+                        epsilon=1,
+                        num_agents=num_teams,
                     )
                 else:
                     move_action, laser_action = agent.act(
-                        state_batch_tensor.detach().clone(), epsilon=eps, num_agents=num_teams
+                        state_batch_tensor.detach().clone(),
+                        epsilon=eps,
+                        num_agents=num_teams,
                     )
 
                 # move_action, laser_action = act  # , idx, cost, conf = act
