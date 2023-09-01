@@ -78,7 +78,7 @@ class Agent:
         else:
             self.memory = ReplayMemory(self.memory_size, self.batch_size)
 
-        # self.optimizer = None
+        self.optimizer = None
         self.initalize_optimizer()
 
         if config["use_lr_scheduler"]:
