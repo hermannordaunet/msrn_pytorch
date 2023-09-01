@@ -190,6 +190,14 @@ class Agent:
             torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
         )
 
+        # plot_grid_based_perception(state_batch[0:9, ...], title="10 first states", block=False)
+        # plot_grid_based_perception(next_state_batch[0:9, ...], title="10 first next states", block=False)
+
+        # print(action_batch[0:9, ...])
+        # print(dones_batch[0:9, ...])
+        # print(reward_batch[0:9, ...])
+
+
         if self.target_net:
             # Get max predicted Q values (for next states) from target model
             with torch.no_grad():
