@@ -64,7 +64,7 @@ class Agent:
             self.max_grad_norm = config["max_grad_norm"]
         else:
             self.max_grad_norm = 1
-            
+
         self.device = self.model_param["device"]
         # self.small_eps = small_eps # For prioritized memory
 
@@ -254,7 +254,7 @@ class Agent:
         self.optimizer.step()
 
         max_grad_norm = 1.0  # You can adjust this value as needed
-        torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
+        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), max_grad_norm)
 
         if self.scheduler is not None:
             self.scheduler.step()
