@@ -21,8 +21,6 @@ from ee_cnn_residual import EE_CNN_Residual
 from resnet_dqn import ResNet_DQN
 from resnet_original import ResNet
 
-from utils.basicblock_original import BasicBlock
-
 from utils.data_utils import (
     min_max_conf_from_dataset,
     get_grid_based_perception,
