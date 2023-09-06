@@ -6,6 +6,8 @@ from torch import Tensor
 
 from src.models.utils.basicblock_original import BasicBlock
 
+from src.models.utils.flops_counter import get_model_complexity_info
+
 
 def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
     """1x1 convolution"""
@@ -15,20 +17,28 @@ def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
 class ResNet(nn.Module):
     def __init__(
         self,
-        block: Type[BasicBlock],
-        layers: List[int],
+        block: BasicBlock = BasicBlock,
+        repetitions: List[int] = [2, 2, 2, 2],
         num_classes: int = 3,
-        in_size=(5, 40, 40),
+        input_shape=(5, 40, 40),
         zero_init_residual: bool = False,
         groups: int = 1,
         width_per_group: int = 64,
         replace_stride_with_dilation: Optional[List[bool]] = None,
         norm_layer: Optional[Callable[..., nn.Module]] = None,
+        **kwargs,
     ) -> None:
         super().__init__()
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
+
+        # added by me
+        self.complexity = list()
+        self.exits = nn.ModuleList()
+        self.num_classes = num_classes
+        layers = repetitions
+
 
         self.inplanes = 64
         self.dilation = 1
@@ -44,7 +54,7 @@ class ResNet(nn.Module):
         self.groups = groups
         self.base_width = width_per_group
         self.conv1 = nn.Conv2d(
-            in_size[0], self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
+            input_shape[0], self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
         )
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
@@ -141,7 +151,10 @@ class ResNet(nn.Module):
         x = torch.flatten(x, 1)
         x = self.fc(x)
 
-        return x
+        if not self.training:
+            return x, 0, 1, 1
+        else:
+            return [x], [0], [1]
 
     def forward(self, x: Tensor) -> Tensor:
         return self._forward_impl(x)
