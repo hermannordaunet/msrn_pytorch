@@ -131,7 +131,7 @@ class EE_CNN_Residual(nn.Module):
             len(self.exits) == num_ee
         ), "The desired number of exit blocks is too much for the model capacity."
 
-        self.layers.append(nn.AdaptiveAvgPool2d((1,1)))
+        self.layers.append(nn.AdaptiveAvgPool2d((1, 1)))
 
         # Dropout layer for generalization and overfitting
         # TODO: Find out if this is nice to have in the CNN
@@ -139,7 +139,7 @@ class EE_CNN_Residual(nn.Module):
 
         in_size = planes * block.expansion
         self.classifier = classifier_linear(in_size, self.num_classes)
-        # self.confidence = confidence_linear_sigmoid(in_size)
+        self.confidence = confidence_linear_sigmoid(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
 
@@ -275,7 +275,7 @@ class EE_CNN_Residual(nn.Module):
                 costs.append(self.cost[idx])
 
         x = self.stages[-1](x)
-        x = x.view(x.size(0), -1)
+        x = torch.flatten(x, 1)
 
         pred = self.classifier(x)
         conf = self.confidence(x)

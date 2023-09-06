@@ -338,9 +338,6 @@ def main():
                 distribution=model_param["distribution"],
             ).to(DEVICE)
 
-
-            print(ee_policy_net)
-
             print(f"[INFO] Initalizing Q network target of type {model_type}")
             ee_target_net = model_type(
                 # frames_history=2,
