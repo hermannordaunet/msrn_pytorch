@@ -14,21 +14,34 @@ from mlagents_envs.exception import (
 # Local imports
 from src.models.utils.data_utils import get_grid_based_perception
 
-def get_scores_of_all_agents(eval_agents: dict(), flatten=False):
+def extract_scores_for_all_agents(eval_agents, flatten=False):
+    # Extract the team keys from the eval_agents
+    team_keys = list(eval_agents.keys())
+
+    # Extract all episode keys from all teams' dictionaries
+    agent_keys = list()
+    for team_key in team_keys:
+        agent_keys.append(tuple(eval_agents[team_key].keys()))
+
     if flatten:
         # Flatten the scores into a 1D list
-        scores = [eval_agents[team][j]['episode_score'] for team in ['team0', 'team1', 'team2'] for j in range(4)]
+        scores = []
+        for team_id, team_key in enumerate(team_keys):
+            for agent_key in agent_keys[team_id]:
+                scores.append(eval_agents[team_key][agent_key]["episode_score"])
     else:
-        # Initialize a 3x4 list with zeros
-        scores = [[0] * 4 for _ in range(3)]
+        # Initialize a 2D list with zeros based on the number of teams and episodes
+        num_teams = len(team_keys)
+        scores = [None] * num_teams
 
-        # Iterate through teams and episodes to fill the score_matrix
-        for i, team in enumerate(['team0', 'team1', 'team2']):
-            for j in range(4):
-                scores[i][j] = eval_agents[team][j]['episode_score']
+        # Iterate through teams and episodes to fill the scores
+        for i, team_key in enumerate(team_keys):
+            scores[i] = [0]*len(agent_keys[i])
+            for j, episode_key in enumerate(agent_keys[i]):
+                if episode_key in eval_agents[team_key]:
+                    scores[i][j] = eval_agents[team_key][episode_key]["episode_score"]
 
     return scores
-
 
 
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
@@ -108,7 +121,7 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     done = True if len(terminated_agent_ids) > 0 else False
                     episode_done = done
             
-            eval_scores_all_agents = get_scores_of_all_agents(eval_agents, flatten=True)
+            eval_scores_all_agents = extract_scores_for_all_agents(eval_agents, flatten=True)
             mean_score = np.mean(eval_scores_all_agents)
             
             print(f"[INFO] Mean performance on policy net after {current_episode} episodes: {mean_score}")
