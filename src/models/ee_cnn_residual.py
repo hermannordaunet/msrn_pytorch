@@ -44,7 +44,7 @@ class EE_CNN_Residual(nn.Module):
                 f"[INFO] The network does not match the ResNet arch. Repetitions and planes mismatch during init."
             )
 
-        counterpart_model = CNN_Residual(
+        self.counterpart_model = CNN_Residual(
             input_shape=tuple(input_shape),
             num_classes=num_classes,
             block=block,
@@ -77,7 +77,7 @@ class EE_CNN_Residual(nn.Module):
         self.stage_id = 0
 
         # Complexity of the entire model and threshold for the early exit
-        total_flops, total_params = self.get_complexity(counterpart_model)
+        total_flops, total_params = self.get_complexity(self.counterpart_model)
 
         self.set_thresholds(distribution, total_flops)
 
@@ -131,7 +131,7 @@ class EE_CNN_Residual(nn.Module):
             len(self.exits) == num_ee
         ), "The desired number of exit blocks is too much for the model capacity."
 
-        self.layers.append(nn.AdaptiveAvgPool2d(1))
+        self.layers.append(nn.AdaptiveAvgPool2d((1,1)))
 
         # Dropout layer for generalization and overfitting
         # TODO: Find out if this is nice to have in the CNN
@@ -139,7 +139,7 @@ class EE_CNN_Residual(nn.Module):
 
         in_size = planes * block.expansion
         self.classifier = classifier_linear(in_size, self.num_classes)
-        self.confidence = confidence_linear_sigmoid(in_size)
+        # self.confidence = confidence_linear_sigmoid(in_size)
 
         self.stages.append(nn.Sequential(*self.layers))
 
