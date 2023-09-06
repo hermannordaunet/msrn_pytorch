@@ -275,7 +275,7 @@ class EE_CNN_Residual(nn.Module):
                 costs.append(self.cost[idx])
 
         x = self.stages[-1](x)
-        x = x.view(x.size(0), -1)
+        x = torch.flatten(x, 1)
 
         pred = self.classifier(x)
         conf = self.confidence(x)
