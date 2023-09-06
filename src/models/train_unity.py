@@ -98,7 +98,7 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "ResNet_DQN",  # EE_CNN_Residual or small_DQN or ResNet_DQN
+        "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN
         "loss_function": "v4",
         "num_ee": 0,
         "repetitions": [2, 2, 2, 2],
@@ -129,7 +129,7 @@ def main():
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {
-            "lr": 5e-4,  # TUNE: 0.0001 original
+            "lr": 1e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
@@ -150,7 +150,7 @@ def main():
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 0.005,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 20,
+        "update_every": 4,
     }
 
     epsilon_greedy_param = {
@@ -196,12 +196,15 @@ def main():
     else:
         FILE_NAME = None
 
+    random_worker_id = random.randint(0, 1250)
+    print(f"[INFO] Random worker id: {random_worker_id}")
+
     env = UnityEnvironment(
         file_name=FILE_NAME,
         side_channels=SIDE_CHANNELS,
         seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
-        worker_id=1200,
+        worker_id=random_worker_id,
     )
 
     # Unity environment spesific
@@ -333,6 +336,9 @@ def main():
                 repetitions=model_param["repetitions"],
                 distribution=model_param["distribution"],
             ).to(DEVICE)
+
+
+            print(ee_policy_net)
 
             print(f"[INFO] Initalizing Q network target of type {model_type}")
             ee_target_net = model_type(
