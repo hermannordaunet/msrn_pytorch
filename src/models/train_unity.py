@@ -107,7 +107,7 @@ def main():
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": True, "visualize": False},
+        "mode_setups": {"train": False, "eval": False, "visualize": True},
         "manual_seed": 1412,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -155,8 +155,8 @@ def main():
 
     epsilon_greedy_param = {
         "eps_start": 1.0,
-        "eps_end": 0.01,
-        "eps_decay": 0.99,
+        "eps_end": 0.05,
+        "eps_decay": 0.98,
         "warm_start": 4,
     }
 
@@ -166,7 +166,7 @@ def main():
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     EVAL_MODEL = model_param["mode_setups"]["eval"]
 
-    TIMESTAMP = None
+    TIMESTAMP = int(1694004681)
 
     VERBOSE = True
 
