@@ -108,7 +108,7 @@ def main():
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": True, "visualize": False},
+        "mode_setups": {"train": False, "eval": False, "visualize": True},
         "manual_seed": 1412,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -143,8 +143,9 @@ def main():
             "episodes": 10,
         },
         "eval": {
-            "episodes": 10,
-            "every-n-th-episode": 50,
+            "episodes": 1,
+            "every-n-th-episode": 1,
+            "all_agents_active": False,
         },
     }
 
@@ -156,7 +157,7 @@ def main():
 
     epsilon_greedy_param = {
         "eps_start": 1.0,
-        "eps_end": 0.01,
+        "eps_end": 0.05,
         "eps_decay": 0.98,
         "warm_start": 4,
     }
@@ -167,7 +168,7 @@ def main():
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     EVAL_MODEL = model_param["mode_setups"]["eval"]
 
-    TIMESTAMP = None
+    TIMESTAMP = int(1694004681)
 
     VERBOSE = True
 
@@ -192,6 +193,7 @@ def main():
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             relative_path = "builds/FoodCollector_4_no_respawn.app"
+            # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
             FILE_NAME = relative_path
 
     else:
