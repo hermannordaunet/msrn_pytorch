@@ -37,6 +37,8 @@ from visualization.visualize import (
 from visualization.visualize_unity import visualize_trained_model
 from evaluate_unity import evaluate_trained_model
 
+from src.models.utils.flops_counter import get_model_complexity_info
+
 # unity imports
 from mlagents_envs.base_env import ActionTuple
 from mlagents_envs.environment import UnityEnvironment
@@ -100,7 +102,7 @@ def main():
 
     model_param = {
         "model_class_name": "ResNet",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
-        "loss_function": "v5",
+        "loss_function": "v4",
         "num_ee": 0,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
@@ -108,8 +110,8 @@ def main():
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": True, "visualize": False},
-        "manual_seed": 1412,  # TODO: Seed everything
+        "mode_setups": {"train": True, "eval": False, "visualize": False},
+        "manual_seed": 350,  # TODO: Seed everything
         "device": DEVICE,
     }
 
@@ -137,6 +139,7 @@ def main():
         "use_lr_scheduler": True,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
+        "clip_gradients" : False,
         "max_grad_norm": 1,
         "multiple_epochs": False,
         "num_epochs": 1,
@@ -153,8 +156,8 @@ def main():
 
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
-        "tau": 0.005,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 16,
+        "tau": 0.001,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
+        "update_every": 4,
     }
 
     epsilon_greedy_param = {
@@ -166,32 +169,37 @@ def main():
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
-    EVAL_MODEL = model_param["mode_setups"]["eval"]
+    # EVAL_MODEL = model_param["mode_setups"]["eval"]
 
     TIMESTAMP = None  # int(1694004681)
 
     VERBOSE = True
 
     # Unity environment spesific
-    float_parameter_channel = EnvironmentParametersChannel()
+    # float_parameter_channel = EnvironmentParametersChannel()
     stats_side_channel = StatsSideChannel()
 
     engine_config_channel = EngineConfigurationChannel()
     engine_config_channel.set_configuration_parameters(time_scale=10)
 
-    SIDE_CHANNELS = [engine_config_channel, float_parameter_channel, stats_side_channel]
+    SIDE_CHANNELS = [
+        engine_config_channel,
+        stats_side_channel,
+    ]  # , float_parameter_channel
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
-            # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
             relative_path = (
-                "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+                "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
             )
+            # relative_path = (
+            #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+            # )
             FILE_NAME = relative_path
 
         else:
-            # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
-            relative_path = "builds/FoodCollector_4_no_respawn.app"
+            relative_path = "builds/FoodCollector_1_env_no_respawn.app"
+            # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
             FILE_NAME = relative_path
 
@@ -201,19 +209,19 @@ def main():
     random_worker_id = random.randint(0, 1250)
     print(f"[INFO] Random worker id: {random_worker_id}")
 
-    set_seed(model_param["manual_seed"])
+    # set_seed(model_param["manual_seed"])
 
     env = UnityEnvironment(
         file_name=FILE_NAME,
         side_channels=SIDE_CHANNELS,
-        seed=model_param["manual_seed"],
+        # seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
         worker_id=random_worker_id,
     )
 
     # Unity environment spesific
-    float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
-    float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
+    # float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
+    # float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
 
     env.reset()
 
@@ -357,6 +365,11 @@ def main():
             if VERBOSE and ee_policy_net.complexity:
                 print("[INFO] Cost of the initalized model")
                 print_cost_of_exits(ee_policy_net)
+
+            if isinstance(ee_policy_net, ResNet):
+                flops, params = get_model_complexity_info(ee_policy_net, tuple(model_param["input_size"]), print_per_layer_stats=False)
+
+                print(f"Flops: {flops}, Params: {params}")
 
             # ASK: This is important to get the networks initalized with the same weigths
             # print("[INFO] Copying weight from target net to policy net")
@@ -514,11 +527,11 @@ def model_trainer(
     """
 
     # initialize epsilon greedy param
-    eps_start = epsilon_greedy_param["eps_start"]
     eps_end = epsilon_greedy_param["eps_end"]
+    eps_start = epsilon_greedy_param["eps_start"]
     eps_decay = epsilon_greedy_param["eps_decay"]
-    eps = eps_start
     warm_start = epsilon_greedy_param["warm_start"]
+    eps = eps_start
 
     print_range = config["print_range"]
     early_stop = config["benchmarks_mean_reward"]
@@ -630,17 +643,19 @@ def model_trainer(
                     # Make a clone of the state tensor. This was overwritten later
                     # making the training loop not work.
                     state = (
-                        state_batch_tensor[team_idx, ...].unsqueeze(0).detach().clone()
+                        (state_batch_tensor[team_idx, ...])
+                        .unsqueeze(0)
+                        .detach()
+                        .clone()
                     )
+
                     if isinstance(agent, PPO_Agent):
                         log_prob = 0
                         agent.step(state, action, log_prob, reward, done)
                     else:
-                        optimized = agent.step(
-                            state, action, reward, next_state, done, episode
-                        )
+                        optimized = agent.step(state, action, reward, next_state, done)
 
-                    state_batch_tensor[team_idx, ...] = next_state
+                    state_batch_tensor[team_idx, ...] = next_state.detach().clone()
 
                     training_agents[team]["episode_score"] += reward
 
@@ -656,6 +671,12 @@ def model_trainer(
             # CRITICAL: This line has an error if no learning has been done. Not enough samples in memory.
             losses.append(agent.cumulative_loss.item())  # save most recent loss
 
+            if warm_start is not None and episode > warm_start:
+                eps = max(eps_end, eps_decay * eps)  # decrease epsilon
+
+            if warm_start is None:
+                eps = max(eps_end, eps_decay * eps)  # decrease epsilon
+
             avg_score = np.mean(scores_window)
 
             if wandb:
@@ -670,12 +691,6 @@ def model_trainer(
                         "Mean Q expected": torch.mean(torch.abs(agent.last_Q_expected)),
                     }
                 )
-
-            if warm_start is not None and episode > warm_start:
-                eps = max(eps_end, eps_decay * eps)  # decrease epsilon
-
-            if warm_start is None:
-                eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
             if verbose:
                 print(f"Episode stats: ")
