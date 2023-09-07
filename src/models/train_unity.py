@@ -674,6 +674,9 @@ def model_trainer(
             if warm_start is not None and episode > warm_start:
                 eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
+            if warm_start is None:
+                eps = max(eps_end, eps_decay * eps)  # decrease epsilon
+
             if verbose:
                 print(f"Episode stats: ")
                 print(
