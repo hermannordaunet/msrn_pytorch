@@ -14,14 +14,23 @@ from mlagents_envs.exception import (
 # Local imports
 from src.models.utils.data_utils import get_grid_based_perception
 
-def extract_scores_for_all_agents(eval_agents, flatten=False):
+
+def extract_scores_for_all_agents(
+    eval_agents: dict, all_agents_active=True, flatten=False
+):
     # Extract the team keys from the eval_agents
     team_keys = list(eval_agents.keys())
 
     # Extract all episode keys from all teams' dictionaries
     agent_keys = list()
     for team_key in team_keys:
-        agent_keys.append(tuple(eval_agents[team_key].keys()))
+        agents_in_team = list(eval_agents[team_key].keys())
+
+        if all_agents_active:
+            agent_keys.append(tuple(agents_in_team))
+
+        else:
+            agent_keys.append([agents_in_team[-1]])
 
     if flatten:
         # Flatten the scores into a 1D list
@@ -36,12 +45,22 @@ def extract_scores_for_all_agents(eval_agents, flatten=False):
 
         # Iterate through teams and episodes to fill the scores
         for i, team_key in enumerate(team_keys):
-            scores[i] = [0]*len(agent_keys[i])
+            scores[i] = [0] * len(agent_keys[i])
             for j, episode_key in enumerate(agent_keys[i]):
                 if episode_key in eval_agents[team_key]:
                     scores[i][j] = eval_agents[team_key][episode_key]["episode_score"]
 
     return scores
+
+
+def extract_one_agent_each_team(eval_agents: dict):
+    team_keys = list(eval_agents.keys())
+    one_agent_keys = list()
+    for team_key in team_keys:
+        agents_in_team = list(eval_agents[team_key].keys())
+        one_agent_keys.append(agents_in_team[-1])
+
+    return one_agent_keys
 
 
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
@@ -84,52 +103,78 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
 
                     eval_agents[team][agent_id] = {
                         "episode_score": 0,
-                    } 
+                    }
 
             episode_done = False
 
             if not all_agents_active:
-                active_agent_id = []
+                active_agent_id = extract_one_agent_each_team(eval_agents)
 
             while not episode_done:
                 act = agent.act(state_batch_tensor, num_agents=num_total_agents)
                 move_action, laser_action = act
 
-                for _, team in enumerate(team_name_list):
+                for team_idx, team in enumerate(team_name_list):
                     decision_steps, _ = env.get_steps(team)
                     agents_need_action = decision_steps.agent_id
-                    for agent_id in agents_need_action:
-                        agent_move_action = move_action[agent_id, ...]
-                        agent_laser_action = laser_action[agent_id, ...]
-                        env.set_action_for_agent(
-                            team,
-                            agent_id,
-                            ActionTuple(agent_move_action, agent_laser_action),
-                        )
+                    if all_agents_active:
+                        for agent_id in agents_need_action:
+                            agent_move_action = move_action[agent_id, ...]
+                            agent_laser_action = laser_action[agent_id, ...]
+                            env.set_action_for_agent(
+                                team,
+                                agent_id,
+                                ActionTuple(agent_move_action, agent_laser_action),
+                            )
+                    else:
+                        agent_id = active_agent_id[team_idx]
+                        if agent_id in agents_need_action:
+                            agent_move_action = move_action[agent_id, ...]
+                            agent_laser_action = laser_action[agent_id, ...]
+                            env.set_action_for_agent(
+                                team,
+                                agent_id,
+                                ActionTuple(agent_move_action, agent_laser_action),
+                            )
 
                 env.step()
 
                 for _, team in enumerate(team_name_list):
                     decision_steps, terminal_steps = env.get_steps(team)
                     agents_need_action = decision_steps.agent_id
-                    for agent_id in agents_need_action:
-                        agent_obs = decision_steps[agent_id].obs
-                        next_state = get_grid_based_perception(agent_obs)
-                        state = next_state
-                        state_batch_tensor[agent_id, ...] = state
+                    if all_agents_active:
+                        for agent_id in agents_need_action:
+                            agent_obs = decision_steps[agent_id].obs
+                            next_state = get_grid_based_perception(agent_obs)
+                            state = next_state
+                            state_batch_tensor[agent_id, ...] = state
 
-                        agent_reward = decision_steps[agent_id].reward
-                        eval_agents[team][agent_id]["episode_score"] += agent_reward
+                            agent_reward = decision_steps[agent_id].reward
+                            eval_agents[team][agent_id]["episode_score"] += agent_reward
+                    else:
+                        agent_id = active_agent_id[team_idx]
+                        if agent_id in agents_need_action:
+                            agent_obs = decision_steps[agent_id].obs
+                            next_state = get_grid_based_perception(agent_obs)
+                            state = next_state
+                            state_batch_tensor[agent_id, ...] = state
+
+                            agent_reward = decision_steps[agent_id].reward
+                            eval_agents[team][agent_id]["episode_score"] += agent_reward
 
                     terminated_agent_ids = terminal_steps.agent_id
                     done = True if len(terminated_agent_ids) > 0 else False
                     episode_done = done
-            
-            eval_scores_all_agents = extract_scores_for_all_agents(eval_agents, flatten=True)
+
+            eval_scores_all_agents = extract_scores_for_all_agents(
+                eval_agents, all_agents_active=all_agents_active, flatten=True
+            )
             mean_score = np.mean(eval_scores_all_agents)
-            
-            print(f"[INFO] Mean performance on policy net after {current_episode} episodes: {mean_score}")
-        
+
+            print(
+                f"[INFO] Mean performance on policy net after {current_episode} episodes: {mean_score}"
+            )
+
     except (
         KeyboardInterrupt,
         UnityCommunicationException,
@@ -143,11 +188,11 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
         print("-" * 100)
         env.close()
     # finally:
-        # if eval_agents:
-        #     eval_scores_all_agents = [
-        #         team_info["episode_score"] for team_info in eval_agents.values()
-        #     ]
-        # else:
-        #     eval_scores_all_agents = None
+    # if eval_agents:
+    #     eval_scores_all_agents = [
+    #         team_info["episode_score"] for team_info in eval_agents.values()
+    #     ]
+    # else:
+    #     eval_scores_all_agents = None
 
-        # return eval_scores_all_agents
+    # return eval_scores_all_agents
