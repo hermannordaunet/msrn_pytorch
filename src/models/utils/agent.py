@@ -144,7 +144,8 @@ class Agent:
 
         move_actions_batch = np.zeros((num_agents, 1, self.policy_net.num_classes))
 
-        if random.random() >= epsilon:
+        random_number = random.random()
+        if epsilon <= random_number:
             # Returning action for network
             # action_indexes = torch.max(action_values, dim=1)[1]
             act_state = act_state.to(self.device)
