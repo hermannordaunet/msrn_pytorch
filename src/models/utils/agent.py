@@ -62,6 +62,7 @@ class Agent:
         self.tau = self.dqn_param["tau"]
         self.update_every = self.dqn_param["update_every"]
 
+        self.clip_gradients = config["clip_gradients"]
         if config["max_grad_norm"]:
             self.max_grad_norm = config["max_grad_norm"]
         else:
@@ -98,7 +99,7 @@ class Agent:
         # Initialize time step (for updating every UPDATE_EVERY steps)
         self.t_step = 0
 
-    def step(self, state, action, reward, next_state, done, i):
+    def step(self, state, action, reward, next_state, done):
         # Save experience in replay memory
         self.memory.add(state, action, reward, next_state, done)
 
@@ -261,7 +262,8 @@ class Agent:
         cumulative_loss.backward()
         self.optimizer.step()
 
-        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), self.max_grad_norm)
+        if self.clip_gradients:
+            torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), self.max_grad_norm)
 
         if self.scheduler is not None:
             self.scheduler.step()
