@@ -6,8 +6,6 @@ from torch import Tensor
 
 from src.models.utils.basicblock_original import BasicBlock
 
-from src.models.utils.flops_counter import get_model_complexity_info
-
 
 def conv1x1(in_planes: int, out_planes: int, stride: int = 1) -> nn.Conv2d:
     """1x1 convolution"""
