@@ -99,8 +99,8 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN
-        "loss_function": "v4",
+        "model_class_name": "ResNet",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
+        "loss_function": "v5",
         "num_ee": 0,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
@@ -108,7 +108,7 @@ def main():
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": False, "eval": False, "visualize": True},
+        "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 1412,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -134,17 +134,19 @@ def main():
             "lr_critic": 0.0001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
-        "use_lr_scheduler": False,
+        "use_lr_scheduler": True,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
         "max_grad_norm": 1,
+        "multiple_epochs" : False,
+        "num_epochs" : 1,
         "print_range": 10,
         "visualize": {
             "episodes": 10,
         },
         "eval": {
-            "episodes": 1,
-            "every-n-th-episode": 1,
+            "episodes": 5,
+            "every-n-th-episode": 50,
             "all_agents_active": False,
         },
     }
@@ -152,27 +154,23 @@ def main():
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 0.005,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 4,
+        "update_every": 10,
     }
 
     epsilon_greedy_param = {
         "eps_start": 1.0,
         "eps_end": 0.05,
-        "eps_decay": 0.98,
-        "warm_start": 4,
+        "eps_decay": 0.99,
+        "warm_start": 16,
     }
-
-    set_seed(model_param["manual_seed"])
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     EVAL_MODEL = model_param["mode_setups"]["eval"]
 
-    TIMESTAMP = int(1694004681)
+    TIMESTAMP = None #int(1694004681)
 
     VERBOSE = True
-
-    FRAME_HISTORY_LEN = 4  # TODO: Should I add this?
 
     # Unity environment spesific
     float_parameter_channel = EnvironmentParametersChannel()
@@ -185,9 +183,8 @@ def main():
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
-            relative_path = (
-                "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
-            )
+            # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
+            relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             FILE_NAME = relative_path
 
         else:
@@ -201,6 +198,8 @@ def main():
 
     random_worker_id = random.randint(0, 1250)
     print(f"[INFO] Random worker id: {random_worker_id}")
+
+    set_seed(model_param["manual_seed"])
 
     env = UnityEnvironment(
         file_name=FILE_NAME,
