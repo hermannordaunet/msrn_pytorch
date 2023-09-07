@@ -55,6 +55,8 @@ class Agent:
         self.minimal_memory_size = self.config["minimal_memory_size"]
         self.prioritized_memory = self.config["prioritized_memory"]
         self.batch_size = self.config["batch_size"]
+        self.multiple_epochs = self.config["multiple_epochs"]
+        self.num_epochs = self.config["num_epochs"]
 
         self.gamma = self.dqn_param["gamma"]
         self.tau = self.dqn_param["tau"]
@@ -114,12 +116,17 @@ class Agent:
         if len(self.memory) < self.batch_size:
             return False
 
-        if self.prioritized_memory:
-            experiences = self.memory.sample(self.get_beta(i))
+        # if self.prioritized_memory:
+        #     experiences = self.memory.sample(self.get_beta(i))
+        # else:
+        #     experiences = self.memory.sample()
+
+        if self.multiple_epochs:
+            for epoch in range(self.num_epochs):
+                self.learn(experiences)
         else:
             experiences = self.memory.sample()
-
-        self.learn(experiences)
+            self.learn(experiences)
 
         return True
 
@@ -253,8 +260,7 @@ class Agent:
         cumulative_loss.backward()
         self.optimizer.step()
 
-        max_grad_norm = 1.0  # You can adjust this value as needed
-        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), max_grad_norm)
+        torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), self.max_grad_norm)
 
         if self.scheduler is not None:
             self.scheduler.step()
