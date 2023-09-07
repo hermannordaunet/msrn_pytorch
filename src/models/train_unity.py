@@ -362,6 +362,8 @@ def main():
                 initalize_parameters=False,
             ).to(DEVICE)
 
+            ee_policy_net.train()
+
             if VERBOSE and ee_policy_net.complexity:
                 print("[INFO] Cost of the initalized model")
                 print_cost_of_exits(ee_policy_net)
