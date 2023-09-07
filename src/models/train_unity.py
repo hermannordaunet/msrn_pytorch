@@ -143,8 +143,9 @@ def main():
             "episodes": 10,
         },
         "eval": {
-            "episodes": 10,
-            "every-n-th-episode": 50,
+            "episodes": 1,
+            "every-n-th-episode": 1,
+            "all_agents_active": False,
         },
     }
 
@@ -192,6 +193,7 @@ def main():
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             relative_path = "builds/FoodCollector_4_no_respawn.app"
+            # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
             FILE_NAME = relative_path
 
     else:
