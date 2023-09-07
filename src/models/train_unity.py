@@ -157,7 +157,7 @@ def main():
     epsilon_greedy_param = {
         "eps_start": 1.0,
         "eps_end": 0.01,
-        "eps_decay": 0.99,
+        "eps_decay": 0.98,
         "warm_start": 4,
     }
 
