@@ -46,6 +46,7 @@ def extract_scores_for_all_agents(eval_agents, flatten=False):
 
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
     num_eval_episodes = config["eval"]["episodes"]
+    all_agents_active = config["eval"]["all_agents_active"]
 
     team_name_list = list(env.behavior_specs.keys())
     num_teams = len(team_name_list)
@@ -86,6 +87,9 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     } 
 
             episode_done = False
+
+            if not all_agents_active:
+                active_agent_id = []
 
             while not episode_done:
                 act = agent.act(state_batch_tensor, num_agents=num_total_agents)
