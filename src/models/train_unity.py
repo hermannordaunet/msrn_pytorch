@@ -138,8 +138,8 @@ def main():
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
         "max_grad_norm": 1,
-        "multiple_epochs" : False,
-        "num_epochs" : 1,
+        "multiple_epochs": False,
+        "num_epochs": 1,
         "print_range": 10,
         "visualize": {
             "episodes": 10,
@@ -154,21 +154,21 @@ def main():
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 0.005,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 10,
+        "update_every": 16,
     }
 
     epsilon_greedy_param = {
         "eps_start": 1.0,
         "eps_end": 0.05,
         "eps_decay": 0.99,
-        "warm_start": 16,
+        "warm_start": 4,
     }
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     EVAL_MODEL = model_param["mode_setups"]["eval"]
 
-    TIMESTAMP = None #int(1694004681)
+    TIMESTAMP = None  # int(1694004681)
 
     VERBOSE = True
 
@@ -184,7 +184,9 @@ def main():
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
             # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
-            relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+            relative_path = (
+                "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+            )
             FILE_NAME = relative_path
 
         else:
@@ -581,18 +583,11 @@ def model_trainer(
             # min_max_conf = list()
             episode_done = False
             while not episode_done:
-                if warm_start is not None and episode <= warm_start:
-                    move_action, laser_action = agent.act(
-                        state_batch_tensor.detach().clone(),
-                        epsilon=1,
-                        num_agents=num_teams,
-                    )
-                else:
-                    move_action, laser_action = agent.act(
-                        state_batch_tensor.detach().clone(),
-                        epsilon=eps,
-                        num_agents=num_teams,
-                    )
+                move_action, laser_action = agent.act(
+                    state_batch_tensor.detach().clone(),
+                    epsilon=eps,
+                    num_agents=num_teams,
+                )
 
                 # move_action, laser_action = act  # , idx, cost, conf = act
 
@@ -670,9 +665,7 @@ def model_trainer(
                         "average_score": avg_score,
                         "min_last_score": min(scores_all_training_agents),
                         "max_last_score": max(scores_all_training_agents),
-                        "epsilon": eps
-                        if warm_start is not None and episode > warm_start
-                        else 1,
+                        "epsilon": eps,
                         "Mean Q targets": torch.mean(torch.abs(agent.last_Q_targets)),
                         "Mean Q expected": torch.mean(torch.abs(agent.last_Q_expected)),
                     }
