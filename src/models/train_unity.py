@@ -136,7 +136,7 @@ def main():
             "lr_critic": 0.0001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
-        "use_lr_scheduler": True,
+        "use_lr_scheduler": False,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
         "clip_gradients": False,
