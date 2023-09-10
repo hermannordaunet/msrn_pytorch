@@ -153,9 +153,9 @@ def main():
         num_classes=NUM_CLASSES,
         num_ee=2,
         exit_threshold=0.99,
-        repetitions=[2, 2],
-        init_planes=32,
-        planes=[64, 64],
+        repetitions=[2, 2, 2, 2],
+        init_planes=64,
+        planes=[64, 128, 256, 512],
         distribution="pareto",
     ).to(device)
 
