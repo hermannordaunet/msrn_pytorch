@@ -23,7 +23,7 @@ def print_cost_of_exits(model):
             f"ee-block-{i}: flops={flops_to_string(flops)}, params={params_to_string(params)}, cost-rate={(flops / total_flops):.2f}"
         )
     print(
-        f"exit-full-model: flops={flops_to_string(total_flops)}, params={params_to_string(total_params)}, cost-rate={(flops / total_flops):.2f}"
+        f"exit-full-model: flops={flops_to_string(total_flops)}, params={params_to_string(total_params)}, cost-rate={(1.000):.2f}"
     )
 
 
