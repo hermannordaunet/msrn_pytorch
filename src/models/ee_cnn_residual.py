@@ -90,8 +90,6 @@ class EE_CNN_Residual(nn.Module):
 
         # Complexity of the entire model and threshold for the early exit
         total_flops, total_params = self.get_complexity(counterpart_model)
-        # Needs to be here to get the correct cost
-        self.complexity.append((total_flops, total_params))
         self.set_thresholds(distribution, total_flops)
 
         # Inital layer
@@ -160,6 +158,9 @@ class EE_CNN_Residual(nn.Module):
         self.stages.append(nn.Sequential(*self.layers))
         if initalize_parameters:
             self.parameter_initializer()
+
+        # Needs to be here to get the correct cost
+        self.complexity.append((total_flops, total_params))
 
     def set_thresholds(self, distribution, total_flops):
         """set thresholds
