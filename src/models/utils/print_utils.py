@@ -16,22 +16,23 @@ def print_min_max_conf(min_conf, max_conf, mode="TRAIN"):
 
 def print_cost_of_exits(model):
     # print cost of exit blocks
-    total_flops, _ = model.complexity[-1]
+    total_flops, total_params = model.complexity[-1]
+
     for i, (flops, params) in enumerate(model.complexity[:-1]):
         print(
             f"ee-block-{i}: flops={flops_to_string(flops)}, params={params_to_string(params)}, cost-rate={(flops / total_flops):.2f}"
         )
-    flops, params = model.complexity[-1]
     print(
-        f"exit-full-model: flops={flops_to_string(flops)}, params={params_to_string(params)}, cost-rate={(flops / total_flops):.2f}"
+        f"exit-full-model: flops={flops_to_string(total_flops)}, params={params_to_string(total_params)}, cost-rate={(flops / total_flops):.2f}"
     )
+
 
 def get_time_hh_mm_ss(sec):
     # create timedelta and convert it into string
     td_str = str(timedelta(seconds=sec))
 
     # split string into individual component
-    x = td_str.split(':')
+    x = td_str.split(":")
     time_as_string = f"hh:mm:ss: {x[0]} hours, {x[1]} minutes, {x[2]} seconds"
 
     return time_as_string
