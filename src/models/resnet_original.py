@@ -5,6 +5,7 @@ import torch.nn as nn
 from torch import Tensor
 
 from src.models.utils.basicblock_original import BasicBlock
+from src.models.utils.flops_counter import get_model_complexity_info
 
 import numpy as np
 import random
@@ -48,6 +49,7 @@ class ResNet(nn.Module):
         self.complexity = list()
         self.exits = list()
         self.num_classes = num_classes
+        self.input_shape = input_shape
         layers = repetitions
 
         self.inplanes = 64
@@ -87,6 +89,11 @@ class ResNet(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
+        # Complexity of the entire model and threshold for the early exit
+        total_flops, total_params = self.get_complexity(self)
+        # Needs to be here to get the correct cost
+        self.complexity.append((total_flops, total_params))
+
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
                 nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="relu")
@@ -101,6 +108,17 @@ class ResNet(nn.Module):
             for m in self.modules():
                 if isinstance(m, BasicBlock) and m.bn2.weight is not None:
                     nn.init.constant_(m.bn2.weight, 0)  # type: ignore[arg-type]
+
+    def get_complexity(self, model, print_per_layer=False):
+        """get model complexity in terms of FLOPs and the number of parameters"""
+        flops, params = get_model_complexity_info(
+            model,
+            self.input_shape,
+            print_per_layer_stat=print_per_layer,
+            as_strings=False,
+        )
+
+        return flops, params
 
     def _make_layer(
         self,
