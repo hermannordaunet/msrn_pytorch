@@ -88,9 +88,19 @@ class EE_CNN_Residual(nn.Module):
 
         self.stage_id = 0
 
-        # Complexity of the entire model and threshold for the early exit
-        total_flops, total_params = self.get_complexity(self.counterpart_model)
+        counterpart_model = CNN_Residual(
+            input_shape=tuple(input_shape),
+            num_classes=num_classes,
+            block=block,
+            repetitions=repetitions,
+            init_planes=init_planes,
+            planes=planes,
+        )
 
+        # Complexity of the entire model and threshold for the early exit
+        total_flops, total_params = self.get_complexity(counterpart_model)
+        # Needs to be here to get the correct cost
+        self.complexity.append((total_flops, total_params))
         self.set_thresholds(distribution, total_flops)
 
         # Inital layer
