@@ -139,7 +139,7 @@ def main():
         "use_lr_scheduler": True,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
-        "clip_gradients" : False,
+        "clip_gradients": False,
         "max_grad_norm": 1,
         "multiple_epochs": False,
         "num_epochs": 1,
@@ -367,7 +367,11 @@ def main():
                 print_cost_of_exits(ee_policy_net)
 
             if isinstance(ee_policy_net, ResNet):
-                flops, params = get_model_complexity_info(ee_policy_net.cpu(), tuple(model_param["input_size"]), print_per_layer_stat=False)
+                flops, params = get_model_complexity_info(
+                    ee_policy_net.cpu(),
+                    tuple(model_param["input_size"]),
+                    print_per_layer_stat=False,
+                )
 
                 print(f"Flops: {flops}, Params: {params}")
 
