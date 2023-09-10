@@ -206,13 +206,14 @@ class EE_CNN_Residual(nn.Module):
                 nn.init.kaiming_normal_(
                     module.weight, mode="fan_out", nonlinearity="relu"
                 )
-            elif isinstance(module, nn.BatchNorm2d):
+            elif isinstance(module, (nn.BatchNorm2d, nn.GroupNorm)):
                 nn.init.constant_(module.weight, 1)
                 nn.init.constant_(module.bias, 0)
+
         if zero_init_residual:
             for module in self.modules():
-                if isinstance(module, BasicBlock):
-                    nn.init.constant_(module.bn2.weight, 0)
+                if isinstance(module, BasicBlock) and module.bn2.weight is not None:
+                    nn.init.constant_(module.bn2.weight, 0)  # type: ignore[arg-type]
 
     def is_suitable_for_exit(self):
         """is the position suitable to locate an early-exit block"""
@@ -271,7 +272,10 @@ class EE_CNN_Residual(nn.Module):
                         return pred, conf.item(), idx, self.cost[idx]
 
                 else:
-                    idx_to_remove = self.construct_validation_output(
+                    (
+                        idx_to_remove,
+                        all_samples_exited,
+                    ) = self.construct_validation_output(
                         pred,
                         conf,
                         self.cost[idx],
@@ -280,6 +284,14 @@ class EE_CNN_Residual(nn.Module):
 
                     if idx_to_remove is not None:
                         x = remove_exited_pred_from_batch(x, idx_to_remove)
+
+                    if all_samples_exited:
+                        return (
+                            self.val_batch_pred,
+                            self.val_batch_conf,
+                            self.val_batch_exit,
+                            self.val_batch_cost,
+                        )
 
             else:
                 preds.append(pred)
@@ -293,7 +305,7 @@ class EE_CNN_Residual(nn.Module):
         conf = self.confidence(x)
 
         if not self.training:
-            if conf.shape[0] == 1:
+            if not_batch_eval:
                 return pred, conf.item(), len(self.exits), 1.0
 
             self.construct_validation_output(
@@ -346,7 +358,7 @@ class EE_CNN_Residual(nn.Module):
         )
 
         if remove_idx_empty:
-            return None
+            return None, False
 
         sample_idx = get_elements_from_indices(self.original_idx, idx_to_remove)
 
@@ -358,7 +370,9 @@ class EE_CNN_Residual(nn.Module):
         self.original_idx = remove_indices_from_tensor(self.original_idx, idx_to_remove)
 
         if self.original_idx is not None:
-            return idx_to_remove
+            return idx_to_remove, False
+        else:
+            return None, True
 
 
 def remove_indices_from_tensor(tensor, indices):
