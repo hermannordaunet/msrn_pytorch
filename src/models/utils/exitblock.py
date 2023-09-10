@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 from src.models.utils.classifier import classifier_linear_softmax, classifier_linear
@@ -24,12 +25,13 @@ class ExitBlock(nn.Module):
         in_size = inplanes * self.expansion
         self.confidence = confidence_linear_sigmoid(in_size)
         self.classifier = classifier_linear(in_size, num_classes)
+        # self.classifier = classifier_linear_softmax(in_size, num_classes)
 
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
 
-        x = x.view(x.size(0), -1)
+        x = torch.flatten(x, 1)
         conf = self.confidence(x)
         pred = self.classifier(x)
 
