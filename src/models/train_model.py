@@ -21,6 +21,7 @@ from scipy import stats
 
 # Local import
 from small_dqn import small_DQN
+from resnet_original import ResNet
 from small_dqn_ee import small_DQN_EE
 from ee_cnn_residual import EE_CNN_Residual
 from utils.loss_functions import loss_v1, loss_v2
@@ -201,14 +202,17 @@ def main():
                 conf_min_max.append([confs])
 
                 log_cumulative_pred = preds.log()
-                loss = torch.nn.functional.nll_loss(log_cumulative_pred, target) + 1.0 * costs
+                loss = (
+                    torch.nn.functional.nll_loss(log_cumulative_pred, target)
+                    + 1.0 * costs
+                )
 
                 if isinstance(indices, torch.Tensor):
                     samples_at_each_exit = torch.bincount(indices.squeeze())
 
                     for index, count in enumerate(samples_at_each_exit):
                         exit_points[index] += count.item()
-                
+
                 elif isinstance(indices, int):
                     exit_points[indices] += 1
                 else:
