@@ -56,15 +56,6 @@ class EE_CNN_Residual(nn.Module):
                 f"[INFO] The network does not match the ResNet arch. Repetitions and planes mismatch during init."
             )
 
-        self.counterpart_model = CNN_Residual(
-            input_shape=tuple(input_shape),
-            num_classes=num_classes,
-            block=block,
-            repetitions=repetitions,
-            init_planes=init_planes,
-            planes=planes,
-        )
-
         self.input_shape = tuple(input_shape)
         self.channel = self.input_shape[0]
         self.num_classes = num_classes
@@ -133,7 +124,9 @@ class EE_CNN_Residual(nn.Module):
                     nn.BatchNorm2d(planes * block.expansion),
                 )
 
-            self.layers.append(block(self.inplanes, planes, stride, downsample))
+            self.layers.append(
+                nn.Sequential(block(self.inplanes, planes, stride, downsample))
+            )
             self.inplanes = planes * block.expansion
 
             if self.is_suitable_for_exit():
@@ -141,7 +134,7 @@ class EE_CNN_Residual(nn.Module):
                 print(f"Added exit at repetition: {idx+1}, after first block")
 
             for _ in range(1, repetition):
-                self.layers.append(block(self.inplanes, planes))
+                self.layers.append(nn.Sequential(block(self.inplanes, planes)))
 
                 if self.is_suitable_for_exit():
                     self.add_exit_block(exit_type, total_flops)
