@@ -95,8 +95,8 @@ class EE_CNN_Residual(nn.Module):
         self.set_thresholds(distribution, total_flops)
 
         # Inital layer
-        self.layers.append(
-            nn.Sequential(
+        self.layers.extend(
+            (
                 nn.Conv2d(
                     self.channel,
                     self.init_planes,
