@@ -11,6 +11,18 @@ from src.models.utils.confidence import confidence_linear_sigmoid
 
 from src.models.utils.flops_counter import get_model_complexity_info
 
+import numpy as np
+import random
+
+
+def set_seed(seed: int = 42) -> None:
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
 
 def conv1x1(in_planes, out_planes, stride=1):
     """1x1 convolution"""
