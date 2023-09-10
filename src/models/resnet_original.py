@@ -27,16 +27,16 @@ class ResNet(nn.Module):
         **kwargs,
     ) -> None:
         super().__init__()
+
         if norm_layer is None:
             norm_layer = nn.BatchNorm2d
         self._norm_layer = norm_layer
 
         # added by me
         self.complexity = list()
-        self.exits = nn.ModuleList()
+        self.exits = list()
         self.num_classes = num_classes
         layers = repetitions
-
 
         self.inplanes = 64
         self.dilation = 1
@@ -52,7 +52,12 @@ class ResNet(nn.Module):
         self.groups = groups
         self.base_width = width_per_group
         self.conv1 = nn.Conv2d(
-            input_shape[0], self.inplanes, kernel_size=7, stride=2, padding=3, bias=False
+            input_shape[0],
+            self.inplanes,
+            kernel_size=7,
+            stride=2,
+            padding=3,
+            bias=False,
         )
         self.bn1 = norm_layer(self.inplanes)
         self.relu = nn.ReLU(inplace=True)
