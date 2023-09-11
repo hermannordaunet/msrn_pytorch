@@ -189,7 +189,7 @@ class ResNet(nn.Module):
         x = self.softmax(x)
 
         if not self.training:
-            return x, 0, 0, 1
+            return x, 0, 0, 0
         else:
             return [x], [0] , []
 
