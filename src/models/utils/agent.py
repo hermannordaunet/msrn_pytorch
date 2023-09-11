@@ -260,10 +260,12 @@ class Agent:
         # Minimize the loss
         self.optimizer.zero_grad()
         cumulative_loss.backward()
-        self.optimizer.step()
 
         if self.clip_gradients:
             torch.nn.utils.clip_grad_norm_(self.policy_net.parameters(), self.max_grad_norm)
+        
+        self.optimizer.step()
+
 
         if self.scheduler is not None:
             self.scheduler.step()
