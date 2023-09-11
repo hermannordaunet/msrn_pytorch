@@ -123,7 +123,11 @@ class Agent:
         #     experiences = self.memory.sample()
 
         if self.multiple_epochs:
+            multiple_experiences = self.memory.sample(
+                multiple_experiences=True, number_of_experiences=self.num_epochs
+            )
             for epoch in range(self.num_epochs):
+                experiences = multiple_experiences[epoch]
                 self.learn(experiences)
         else:
             experiences = self.memory.sample()
@@ -210,7 +214,6 @@ class Agent:
         # print(action_batch[0:9, ...])
         # print(dones_batch[0:9, ...])
         # print(reward_batch[0:9, ...])
-
 
         if self.target_net:
             # Get max predicted Q values (for next states) from target model
