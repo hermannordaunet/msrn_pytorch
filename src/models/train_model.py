@@ -99,7 +99,7 @@ def train(model, train_loader, optimizer, device: str()):
 
 def main():
     # define training hyperparameters
-    INIT_LR = 1e-3
+    INIT_LR = 1e-4
     BATCH_SIZE = 64
     TEST_BATCH_SIZE = 64  # CRITICAL: exit block cant handle batch size > 1 in eval mode
     EPOCHS = 25
@@ -158,10 +158,10 @@ def main():
     # ).to(device)
 
     print("[INFO] initializing the EE_CNN_Residual model...")
-    model = ResNet(
+    model = EE_CNN_Residual(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
-        num_ee=2,
+        num_ee=0,
         exit_threshold=0.99,
         repetitions=[2, 2, 2, 2],
         init_planes=64,
@@ -236,7 +236,7 @@ def main():
         # print_min_max_conf(min_vals, max_vals)
         # trainCorrect = trainCorrect / len(trainDataLoader.dataset)
 
-        avgValLoss = totalValLoss / valSteps
+        avgValLoss = totalValLoss / len(valDataLoader.dataset)
         valCorrect = valCorrect / len(valDataLoader.dataset)
 
         result = {
@@ -257,7 +257,7 @@ def main():
             )
         )
         print(
-            "Average val loss: {:.6f}, Val accuracy: {:.4f}\n, Exit points: {}".format(
+            "Average val loss: {:.6f}, Val accuracy: {:.4f}\nExit points: {}".format(
                 avgValLoss, valCorrect, exit_points
             )
         )
