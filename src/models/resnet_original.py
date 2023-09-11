@@ -89,6 +89,8 @@ class ResNet(nn.Module):
         self.avgpool = nn.AdaptiveAvgPool2d((1, 1))
         self.fc = nn.Linear(512 * block.expansion, num_classes)
 
+        self.softmax = nn.Softmax(dim=1)
+
         # Complexity of the entire model and threshold for the early exit
         total_flops, total_params = self.get_complexity(self)
         # Needs to be here to get the correct cost
@@ -183,6 +185,8 @@ class ResNet(nn.Module):
         x = self.avgpool(x)
         x = torch.flatten(x, 1)
         x = self.fc(x)
+
+        x = self.softmax(x)
 
         if not self.training:
             return x, 0, 1, 1
