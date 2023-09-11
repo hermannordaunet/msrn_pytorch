@@ -67,7 +67,7 @@ def train(model, train_loader, optimizer, device: str()):
             )
         elif isinstance(model, ResNet):
             pred, conf, cost = model(data)
-            cost.append(torch.tensor(1.0).to(device))
+            cost.append(torch.tensor(0.0).to(device))
             conf_min_max.append(conf)
 
             cumulative_loss, pred_loss, cost_loss = loss_v2(
@@ -84,6 +84,7 @@ def train(model, train_loader, optimizer, device: str()):
         pred_losses.append(float(pred_loss))
         cost_losses.append(float(cost_loss))
         cumulative_loss.backward()
+        torch.nn.utils.clip_grad_norm_(model.parameters(), 1)
         optimizer.step()
         # add the loss to the total training loss so far and
         # calculate the number of correct predictions
@@ -169,7 +170,7 @@ def main():
     ).to(device)
 
     # initialize our optimizer
-    optimizer = AdamW(model.parameters(), lr=INIT_LR)
+    optimizer = Adam(model.parameters(), lr=INIT_LR)
 
     print_cost_of_exits(model)
 
@@ -188,8 +189,8 @@ def main():
             model, trainDataLoader, optimizer, device
         )
 
-        min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
-        print_min_max_conf(min_vals, max_vals)
+        # min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
+        # print_min_max_conf(min_vals, max_vals)
 
         totalValLoss = 0
         valCorrect = 0
