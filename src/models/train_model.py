@@ -24,7 +24,7 @@ from small_dqn import small_DQN
 from resnet_original import ResNet
 from small_dqn_ee import small_DQN_EE
 from ee_cnn_residual import EE_CNN_Residual
-from utils.loss_functions import loss_v1, loss_v2
+from utils.loss_functions import loss_v1, loss_v2, loss_v4
 from utils.data_utils import min_max_conf_from_dataset
 from utils.print_utils import print_min_max_conf, print_cost_of_exits
 
@@ -58,6 +58,14 @@ def train(model, train_loader, optimizer, device: str()):
                 pred, target, conf, cost, num_ee=num_ee
             )
         elif isinstance(model, EE_CNN_Residual):
+            pred, conf, cost = model(data)
+            cost.append(torch.tensor(1.0).to(device))
+            conf_min_max.append(conf)
+
+            cumulative_loss, pred_loss, cost_loss = loss_v2(
+                pred, target, conf, cost, num_ee=num_ee
+            )
+        elif isinstance(model, ResNet):
             pred, conf, cost = model(data)
             cost.append(torch.tensor(1.0).to(device))
             conf_min_max.append(conf)
@@ -149,7 +157,7 @@ def main():
     # ).to(device)
 
     print("[INFO] initializing the EE_CNN_Residual model...")
-    model = EE_CNN_Residual(
+    model = ResNet(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
         num_ee=2,

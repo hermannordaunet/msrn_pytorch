@@ -187,7 +187,7 @@ class ResNet(nn.Module):
         if not self.training:
             return x, 0, 1, 1
         else:
-            return [x], [0], [1]
+            return [x], [0] , []
 
     def forward(self, x: Tensor) -> Tensor:
         return self._forward_impl(x)
