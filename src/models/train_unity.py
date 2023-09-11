@@ -110,7 +110,7 @@ def main():
         "distribution": "pareto",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": False, "visualize": False},
+        "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -126,7 +126,7 @@ def main():
         "agent_scale": 1,
         "prioritized_memory": False,
         "memory_size": 25_000,  # 25_000,  # 10_000
-        "minimal_memory_size": 256,  # Either batch_size or minimal_memory_size before training
+        "minimal_memory_size": 512,  # Either batch_size or minimal_memory_size before training
         "batch_size": 128,  # Training batch size
         "num_episodes": 500,
         "benchmarks_mean_reward": None,
@@ -139,10 +139,10 @@ def main():
         "use_lr_scheduler": False,
         "scheduler_milestones": [75, 200],  # 45,70 end at 80? or 60, 80
         "scheduler_factor": 0.1,
-        "clip_gradients": False,
+        "clip_gradients": True,
         "max_grad_norm": 1,
-        "multiple_epochs": False,
-        "num_epochs": 1,
+        "multiple_epochs": True,
+        "num_epochs": 3,
         "print_range": 10,
         "visualize": {
             "episodes": 10,
@@ -366,18 +366,9 @@ def main():
                 print("[INFO] Cost of the initalized model")
                 print_cost_of_exits(ee_policy_net)
 
-            if isinstance(ee_policy_net, ResNet):
-                flops, params = get_model_complexity_info(
-                    ee_policy_net.cpu(),
-                    tuple(model_param["input_size"]),
-                    print_per_layer_stat=False,
-                )
+            ee_policy_net.train()
+            ee_target_net.train()
 
-                print(f"Flops: {flops}, Params: {params}")
-
-                ee_policy_net.to(DEVICE)
-
-                ee_policy_net.train()
             # ASK: This is important to get the networks initalized with the same weigths
             # print("[INFO] Copying weight from target net to policy net")
             # ee_target_net.load_state_dict(ee_policy_net.state_dict())
