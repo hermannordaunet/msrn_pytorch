@@ -185,7 +185,7 @@ class ResNet(nn.Module):
         x = self.fc(x)
 
         if not self.training:
-            return x, 0, 1, 1
+            return x, 0, 0, 1
         else:
             return [x], [0] , []
 
