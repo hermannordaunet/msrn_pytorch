@@ -235,7 +235,8 @@ class Agent:
 
         # Get expected Q values from policy model
         pred, conf, cost = self.policy_net(state_batch)
-        cost.append(torch.tensor(1.0).to(self.device))
+        # CRITICAL: Add back the correct loss
+        # cost.append(torch.tensor(1.0).to(self.device))
 
         Q_expected = list()
         for p in pred:
