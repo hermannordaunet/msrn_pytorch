@@ -282,12 +282,6 @@ class Agent:
             target_net (PyTorch model): weights will be copied to
             tau (float): interpolation parameter
         """
-        # for target_param, local_param in zip(
-        #     target_model.parameters(), local_model.parameters()
-        # ):
-        #     target_param.data.copy_(
-        #         tau * local_param.data + (1.0 - tau) * target_param.data
-        #     )
 
         for target_net_param, policy_net_param in zip(
             target_net.parameters(), policy_net.parameters()
@@ -295,13 +289,6 @@ class Agent:
             target_net_param.data.copy_(
                 tau * policy_net_param.data + (1.0 - tau) * target_net_param.data
             )
-
-        # target_model_state_dict = target_net.state_dict()
-        # policy_model_state_dict = policy_net.state_dict()
-        # for key in policy_model_state_dict:
-        #     target_model_state_dict[key] = policy_model_state_dict[
-        #         key
-        #     ] * tau + target_model_state_dict[key] * (1 - tau)
 
     def initalize_optimizer(self):
         # Getting the network parameters
