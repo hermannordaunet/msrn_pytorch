@@ -2,16 +2,21 @@ from datetime import timedelta
 from utils.flops_counter import flops_to_string, params_to_string
 
 
-def print_min_max_conf(min_conf, max_conf, mode="TRAIN"):
+def print_min_max_conf(min_conf, max_conf, mean_conf, mode="TRAIN"):
     min_string = f"[{mode}]: Min exit conf from batch: "
     max_string = f"[{mode}]: Max exit conf from batch: "
+    mean_string = f"[{mode}]: Mean exit conf from batch: "
 
-    for exit, (min_value, max_value) in enumerate(zip(min_conf, max_conf)):
+    for exit, (min_value, max_value, mean_value) in enumerate(
+        zip(min_conf, max_conf, mean_conf)
+    ):
         min_string += f"{exit}: {min_value:.4%}, "
         max_string += f"{exit}: {max_value:.4%}, "
+        mean_string += f"{exit}: {mean_value:.4%}, "
 
     print(min_string[:-2])
     print(max_string[:-2])
+    print(mean_string[:-2])
 
 
 def print_cost_of_exits(model):
