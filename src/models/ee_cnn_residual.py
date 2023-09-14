@@ -322,6 +322,7 @@ class EE_CNN_Residual(nn.Module):
 
         preds.append(pred)
         confs.append(conf)
+        costs.append(1.0)
 
         return preds, confs, costs
 
