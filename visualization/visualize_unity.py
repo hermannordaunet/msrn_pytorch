@@ -48,7 +48,7 @@ def visualize_trained_model(env, agent, config, verbose=False):
             episode_done = False
             while not episode_done:
                 act = agent.act(state_batch_tensor, num_agents=num_total_agents)
-                move_action, laser_action = act
+                move_action, laser_action, confs, exits, costs = act
 
                 for _, team in enumerate(team_name_list):
                     decision_steps, _ = env.get_steps(team)
