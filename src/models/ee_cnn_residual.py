@@ -158,9 +158,9 @@ class EE_CNN_Residual(nn.Module):
         # self.dropout = nn.Dropout(dropout_prob)
 
         in_size = planes * block.expansion
-        # self.classifier = classifier_linear(in_size, self.num_classes)
-        self.classifier = classifier_linear_softmax(in_size, self.num_classes)
         self.confidence = confidence_linear_sigmoid(in_size)
+        self.classifier = classifier_linear(in_size, num_classes)
+        # self.classifier = classifier_linear(in_size, self.num_classes)
 
         self.stages.append(nn.Sequential(*self.layers))
         if initalize_parameters:
