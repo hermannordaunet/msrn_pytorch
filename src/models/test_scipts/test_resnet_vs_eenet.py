@@ -22,6 +22,7 @@ def set_seed(seed: int = 42) -> None:
 
 
 def main():
+    set_seed(1027)
     ee_net = EE_CNN_Residual(
         input_shape=(5, 280, 280),
         num_ee=0,
