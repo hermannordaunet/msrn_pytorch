@@ -698,8 +698,8 @@ def model_trainer(
                 )
                 print(f"Last loss: {agent.cumulative_loss}")
 
-                min_vals, max_vals = min_max_conf_from_dataset(conf_min_max)
-                print_min_max_conf(min_vals, max_vals)
+                min_vals, max_vals, mean_vals = min_max_conf_from_dataset(conf_min_max)
+                print_min_max_conf(min_vals, max_vals, mean_vals)
 
                 print(f"Number of transistions in memory: {len(agent.memory)}")
 
