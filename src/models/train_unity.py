@@ -694,10 +694,11 @@ def model_trainer(
                     f"Average Score last {len(scores_window)} episodes: {avg_score:.2f}"
                 )
                 print(f"Last loss: {agent.cumulative_loss}")
-                print(f"Number of transistions in memory: {len(agent.memory)}")
 
-                # min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
-                # print_min_max_conf(min_vals, max_vals)
+                min_vals, max_vals = min_max_conf_from_dataset(conf_min_max)
+                print_min_max_conf(min_vals, max_vals)
+
+                print(f"Number of transistions in memory: {len(agent.memory)}")
 
             if len(losses) > 1:
                 plot_loss_from_list(
