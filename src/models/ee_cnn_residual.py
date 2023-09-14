@@ -132,14 +132,18 @@ class EE_CNN_Residual(nn.Module):
 
             if self.is_suitable_for_exit():
                 self.add_exit_block(exit_type, total_flops)
-                print(f"Added exit at repetition: {idx+1}, after first block")
+                print(
+                    f"Added exit at repetition (planes: {planes}): {idx+1}, after first block"
+                )
 
-            for _ in range(1, repetition):
+            for block_idx in range(1, repetition):
                 self.layers.append(nn.Sequential(block(self.inplanes, planes)))
 
                 if self.is_suitable_for_exit():
                     self.add_exit_block(exit_type, total_flops)
-                    print(f"Added exit at repetition: {idx+1}, after second block")
+                    print(
+                        f"Added exit at repetition (planes: {planes}): {idx+1}, after {block_idx+1} blocks"
+                    )
 
             stride = 2
 
