@@ -188,8 +188,8 @@ def main():
             model, trainDataLoader, optimizer, device
         )
 
-        min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
-        print_min_max_conf(min_vals, max_vals)
+        min_vals, max_vals, mean_vals = min_max_conf_from_dataset(batch_confs)
+        print_min_max_conf(min_vals, max_vals, mean_vals)
 
         totalValLoss = 0
         valCorrect = 0
@@ -197,7 +197,7 @@ def main():
         exit_points = [0] * (len(model.exits) + 1)
         conf_min_max = list()
 
-        model.forced_exit_point = 2
+        model.forced_exit_point = None
         # switch off autograd for evaluation
         with torch.no_grad():
             # set the model in evaluation mode
