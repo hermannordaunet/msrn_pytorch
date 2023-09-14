@@ -210,8 +210,18 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
             mean_score = np.mean(eval_scores_all_agents)
 
             print(
-                f"[INFO] Mean performance on policy net after {current_episode} episodes: {mean_score}"
+                f"[EVAL] Mean performance on policy net after {current_episode} episodes: {mean_score}"
             )
+
+            if not all_agents_active:
+                print_exit_points_from_agents(
+                    eval_agents, active_agent_id=active_agent_id
+                )
+            else:
+                print_exit_points_from_agents(eval_agents)
+
+        if was_in_training:
+            agent.policy_net.train()
 
     except (
         KeyboardInterrupt,
