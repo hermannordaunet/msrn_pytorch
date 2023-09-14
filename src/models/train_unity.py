@@ -572,6 +572,7 @@ def model_trainer(
                         -1
                     ],  # random agent from each team
                     "episode_score": 0,
+                    "exit_points": [0] * (agent.policy_net.num_ee + 1),
                 }
                 agent_id = training_agents[team]["agent_id"]
                 agent_obs = decision_steps[agent_id].obs
