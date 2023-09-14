@@ -63,6 +63,20 @@ def extract_one_agent_each_team(eval_agents: dict):
     return one_agent_keys
 
 
+def print_exit_points_from_agents(eval_agents: dict, active_agent_id=None):
+    for team, team_data in eval_agents.items():
+        agent_ids = team_data.keys()
+        if active_agent_id is None:
+            agents_to_print = team_data.keys()
+        else:
+            agents_to_print = active_agent_id
+
+        for agent_id in agent_ids:
+            if agent_id in agents_to_print:
+                exit_points = eval_agents[team][agent_id]["exit_points"]
+                print(f"Agent ID: {agent_id}, Exit Points: {exit_points}")
+
+
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
     if agent.policy_net.training:
         was_in_training = True
