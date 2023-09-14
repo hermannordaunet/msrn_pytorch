@@ -102,8 +102,8 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
-        "loss_function": "v4",
-        "num_ee": 0,
+        "loss_function": "v6",
+        "num_ee": 2,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
@@ -556,22 +556,9 @@ def model_trainer(
         state_batch_tensor = torch.zeros((num_teams, *state_size))
 
         for episode in range(1, num_episodes + 1):
-            evaluate_this_episode = not episode % evaluate_every_n_th_episode
-
-            if evaluate_model and evaluate_this_episode:
-                if verbose:
-                    print(f"\nEvaluation started")
-
-                if agent.policy_net.training:
-                    was_in_training = True
-                    agent.policy_net.eval()
-
-                evaluate_trained_model(env, agent, config, episode, verbose=verbose)
-
-                if was_in_training:
-                    agent.policy_net.train()
-
             training_agents = dict()
+            conf_min_max = list()
+            random_actions = 0
 
             if verbose:
                 print(f"\nEpisode {episode}/{num_episodes} started")
@@ -585,6 +572,7 @@ def model_trainer(
                         -1
                     ],  # random agent from each team
                     "episode_score": 0,
+                    "exit_points": [0] * (agent.policy_net.num_ee + 1),
                 }
                 agent_id = training_agents[team]["agent_id"]
                 agent_obs = decision_steps[agent_id].obs
@@ -594,13 +582,11 @@ def model_trainer(
             # min_max_conf = list()
             episode_done = False
             while not episode_done:
-                move_action, laser_action = agent.act(
+                move_action, laser_action, confs, exits, costs = agent.act(
                     state_batch_tensor.detach().clone(),
                     epsilon=eps,
                     num_agents=num_teams,
                 )
-
-                # move_action, laser_action = act  # , idx, cost, conf = act
 
                 for team_idx, team in enumerate(team_name_list):
                     agent_id = training_agents[team]["agent_id"]
@@ -652,10 +638,22 @@ def model_trainer(
                         agent.step(state, action, log_prob, reward, done)
                     else:
                         optimized = agent.step(state, action, reward, next_state, done)
+                        if optimized:
+                            conf_min_max.append(agent.train_conf)
 
                     state_batch_tensor[team_idx, ...] = next_state.detach().clone()
 
                     training_agents[team]["episode_score"] += reward
+
+                    if isinstance(exits, int):
+                        training_agents[team]["exit_points"][exits] += 1
+                    elif isinstance(exits, torch.Tensor):
+                        exit = exits[team_idx]
+                        training_agents[team]["exit_points"][exit] += 1
+                    elif exits is None:
+                        random_actions += 1
+                    else:
+                        print("The type of exits are not supported at this point")
 
                     episode_done = done
 
@@ -696,10 +694,11 @@ def model_trainer(
                     f"Average Score last {len(scores_window)} episodes: {avg_score:.2f}"
                 )
                 print(f"Last loss: {agent.cumulative_loss}")
-                print(f"Number of transistions in memory: {len(agent.memory)}")
 
-                # min_vals, max_vals = min_max_conf_from_dataset(min_max_conf)
-                # print_min_max_conf(min_vals, max_vals)
+                min_vals, max_vals = min_max_conf_from_dataset(conf_min_max)
+                print_min_max_conf(min_vals, max_vals)
+
+                print(f"Number of transistions in memory: {len(agent.memory)}")
 
             if len(losses) > 1:
                 plot_loss_from_list(
@@ -732,6 +731,14 @@ def model_trainer(
                     )
 
                     break
+
+            evaluate_this_episode = not episode % evaluate_every_n_th_episode
+
+            if evaluate_model and evaluate_this_episode:
+                if verbose:
+                    print(f"\nEvaluation started")
+
+                evaluate_trained_model(env, agent, config, episode, verbose=verbose)
 
     except (
         KeyboardInterrupt,

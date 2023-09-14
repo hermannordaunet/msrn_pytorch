@@ -7,8 +7,8 @@ def print_min_max_conf(min_conf, max_conf, mode="TRAIN"):
     max_string = f"[{mode}]: Max exit conf from batch: "
 
     for exit, (min_value, max_value) in enumerate(zip(min_conf, max_conf)):
-        min_string += f"{exit}: {min_value:.2%}, "
-        max_string += f"{exit}: {max_value:.2%}, "
+        min_string += f"{exit}: {min_value:.4%}, "
+        max_string += f"{exit}: {max_value:.4%}, "
 
     print(min_string[:-2])
     print(max_string[:-2])

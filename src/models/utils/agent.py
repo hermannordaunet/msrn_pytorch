@@ -7,7 +7,7 @@ import torch.optim as optim
 # Local imports
 from utils.replay_memory import ReplayMemory
 from utils.prioritized_memory import PrioritizedMemory
-from utils.loss_functions import loss_v1, loss_v2, loss_v3, loss_v4, loss_v5
+from utils.loss_functions import loss_v1, loss_v2, loss_v3, loss_v4, loss_v5, loss_v6
 
 from utils.print_utils import print_min_max_conf
 from utils.data_utils import min_max_conf_from_dataset
@@ -176,8 +176,12 @@ class Agent:
             # CRITICAL: Slow for-loop?
             for count in range(num_agents):
                 move_actions_batch[count, :, random_action_idx[count]] = 1.0
+            
+            exits = None
+            costs = None
+            confs = None
 
-        return move_actions_batch, laser_action_batch  # , exits, costs, confs
+        return move_actions_batch, laser_action_batch, confs, exits, costs
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
@@ -243,14 +247,10 @@ class Agent:
             expected_value = p.gather(1, action_batch)
             Q_expected.append(expected_value)
 
-        # cumulative_loss, pred_loss, cost_loss = loss_v2(
-        #    Q_expected, Q_targets, conf, cost, num_ee=num_ee
-        # )
-
         loss = self.initalize_loss_function()
 
         cumulative_loss, pred_loss, cost_loss = loss(
-            Q_expected, Q_targets, num_ee=num_ee
+            Q_expected, Q_targets, conf, cost, num_ee=num_ee
         )
 
         # Append conf to a list for debugging later
@@ -338,5 +338,7 @@ class Agent:
             return loss_v4
         elif self.model_param["loss_function"] == "v5":
             return loss_v5
+        elif self.model_param["loss_function"] == "v6":
+            return loss_v6
         else:
             raise Exception("invalid loss function")

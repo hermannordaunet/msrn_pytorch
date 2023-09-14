@@ -12,6 +12,7 @@ from mlagents_envs.exception import (
 # Local imports
 from src.models.utils.data_utils import get_grid_based_perception
 
+
 def visualize_trained_model(env, agent, config, verbose=False):
     num_visual_episodes = config["visualize"]["episodes"]
 
@@ -48,7 +49,7 @@ def visualize_trained_model(env, agent, config, verbose=False):
             episode_done = False
             while not episode_done:
                 act = agent.act(state_batch_tensor, num_agents=num_total_agents)
-                move_action, laser_action = act
+                move_action, laser_action, confs, exits, costs = act
 
                 for _, team in enumerate(team_name_list):
                     decision_steps, _ = env.get_steps(team)

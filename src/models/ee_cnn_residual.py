@@ -252,7 +252,7 @@ class EE_CNN_Residual(nn.Module):
         if self.training:
             preds, confs, costs = list(), list(), list()
 
-        if not self.training:
+        if not self.training and not not_batch_eval:
             self.original_idx = None
 
             self.val_batch_pred = None
@@ -322,6 +322,7 @@ class EE_CNN_Residual(nn.Module):
 
         preds.append(pred)
         confs.append(conf)
+        costs.append(1.0)
 
         return preds, confs, costs
 

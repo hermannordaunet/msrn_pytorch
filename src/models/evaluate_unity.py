@@ -63,7 +63,25 @@ def extract_one_agent_each_team(eval_agents: dict):
     return one_agent_keys
 
 
+def print_exit_points_from_agents(eval_agents: dict, active_agent_id: list() = None):
+    for team, team_data in eval_agents.items():
+        agent_ids = team_data.keys()
+        if active_agent_id is None:
+            agents_to_print = team_data.keys()
+        else:
+            agents_to_print = active_agent_id
+
+        for agent_id in agent_ids:
+            if agent_id in agents_to_print:
+                exit_points = eval_agents[team][agent_id]["exit_points"]
+                print(f"Agent ID: {agent_id}, Exit Points: {exit_points}")
+
+
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
+    if agent.policy_net.training:
+        was_in_training = True
+        agent.policy_net.eval()
+
     num_eval_episodes = config["eval"]["episodes"]
     all_agents_active = config["eval"]["all_agents_active"]
 
@@ -103,6 +121,8 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
 
                     eval_agents[team][agent_id] = {
                         "episode_score": 0,
+                        "exit_points": [0] * (agent.policy_net.num_ee + 1),
+                        "agent_confs": [[] for _ in range(agent.policy_net.num_ee + 1)],
                     }
 
             episode_done = False
@@ -111,8 +131,9 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                 active_agent_id = extract_one_agent_each_team(eval_agents)
 
             while not episode_done:
-                act = agent.act(state_batch_tensor, num_agents=num_total_agents)
-                move_action, laser_action = act
+                move_action, laser_action, confs, exits, costs = agent.act(
+                    state_batch_tensor, num_agents=num_total_agents
+                )
 
                 for team_idx, team in enumerate(team_name_list):
                     decision_steps, _ = env.get_steps(team)
@@ -121,16 +142,33 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                         for agent_id in agents_need_action:
                             agent_move_action = move_action[agent_id, ...]
                             agent_laser_action = laser_action[agent_id, ...]
+
+                            exit = exits[agent_id]
+                            conf = confs[agent_id]
+                            eval_agents[team][agent_id]["exit_points"][exit] += 1
+                            eval_agents[team][agent_id]["agent_confs"][exit].append(
+                                conf.detach().clone()
+                            )
+
                             env.set_action_for_agent(
                                 team,
                                 agent_id,
                                 ActionTuple(agent_move_action, agent_laser_action),
                             )
+
                     else:
                         agent_id = active_agent_id[team_idx]
                         if agent_id in agents_need_action:
                             agent_move_action = move_action[agent_id, ...]
                             agent_laser_action = laser_action[agent_id, ...]
+
+                            exit = exits[agent_id]
+                            conf = confs[agent_id]
+                            eval_agents[team][agent_id]["exit_points"][exit] += 1
+                            eval_agents[team][agent_id]["agent_confs"][exit].append(
+                                conf
+                            )
+
                             env.set_action_for_agent(
                                 team,
                                 agent_id,
@@ -172,8 +210,18 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
             mean_score = np.mean(eval_scores_all_agents)
 
             print(
-                f"[INFO] Mean performance on policy net after {current_episode} episodes: {mean_score}"
+                f"[EVAL] Mean performance on policy net after {current_episode} episodes: {mean_score}"
             )
+
+            if not all_agents_active:
+                print_exit_points_from_agents(
+                    eval_agents, active_agent_id=active_agent_id
+                )
+            else:
+                print_exit_points_from_agents(eval_agents)
+
+        if was_in_training:
+            agent.policy_net.train()
 
     except (
         KeyboardInterrupt,
