@@ -645,6 +645,16 @@ def model_trainer(
 
                     training_agents[team]["episode_score"] += reward
 
+                    if isinstance(exits, int):
+                        training_agents[team]["exit_points"][exits] += 1
+                    elif isinstance(exits, torch.Tensor):
+                        exit = exits[team_idx]
+                        training_agents[team]["exit_points"][exit] += 1
+                    elif exits is None:
+                        random_actions += 1
+                    else:
+                        print("The type of exits are not supported at this point")
+
                     episode_done = done
 
             scores_all_training_agents = [
