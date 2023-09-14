@@ -281,6 +281,7 @@ class EE_CNN_Residual(nn.Module):
         for idx, exitblock in enumerate(self.exits):
             x = self.stages[idx](x)
 
+            forced_exit_here = False
             if self.forced_exit_point is not None:
                 forced_exit_here = self.forced_exit_point == idx + 1
                 if not forced_exit_here:
