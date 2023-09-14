@@ -59,7 +59,6 @@ def train(model, train_loader, optimizer, device: str()):
             )
         elif isinstance(model, EE_CNN_Residual):
             pred, conf, cost = model(data)
-            cost.append(torch.tensor(1.0).to(device))
             conf_min_max.append(conf)
 
             cumulative_loss, pred_loss, cost_loss = loss_v2(
@@ -158,7 +157,7 @@ def main():
     # ).to(device)
 
     print("[INFO] initializing the EE_CNN_Residual model...")
-    model = ResNet(
+    model = EE_CNN_Residual(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
         num_ee=2,
@@ -189,8 +188,8 @@ def main():
             model, trainDataLoader, optimizer, device
         )
 
-        # min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
-        # print_min_max_conf(min_vals, max_vals)
+        min_vals, max_vals = min_max_conf_from_dataset(batch_confs)
+        print_min_max_conf(min_vals, max_vals)
 
         totalValLoss = 0
         valCorrect = 0
@@ -249,23 +248,17 @@ def main():
         }
 
         # print(f"\nResults:\n{result}\n")
-
         # print the model training and validation information
+        
         print(
-            "Train loss: {:.6f}, Prediction loss: {:.4f}, Cost Loss: {:.4f}".format(
-                result["train_loss"], result["pred_loss"], result["cost_loss"]
-            )
+            f"Train loss: {result['train_loss']:.6f}, Prediction loss: {result['pred_loss']:.4f}, Cost Loss: {result['cost_loss']:.4f}"
         )
+
         print(
-            "Average val loss: {:.6f}, Val accuracy: {:.4f}\n, Exit points: {}".format(
+            "Average val loss: {:.6f}, Val accuracy: {:.4f}\n,Exit points: {}".format(
                 avgValLoss, valCorrect, exit_points
             )
         )
-
-        # min_vals, max_vals = get_max_min_conf(conf_min_max)
-
-        # print(f"\n[EVAL]: Min values at each exit: {min_vals}")
-        # print(f"[EVAL]: Max values at each exit: {max_vals}\n")
 
     # finish measuring how long training took
     endTime = time.time()
