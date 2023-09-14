@@ -338,5 +338,7 @@ class Agent:
             return loss_v4
         elif self.model_param["loss_function"] == "v5":
             return loss_v5
+        elif self.model_param["loss_function"] == "v6":
+            return loss_v6
         else:
             raise Exception("invalid loss function")
