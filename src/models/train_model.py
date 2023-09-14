@@ -160,7 +160,7 @@ def main():
     model = EE_CNN_Residual(
         input_shape=(IN_CHANNELS, IMG_HEIGHT, IMG_WIDTH),
         num_classes=NUM_CLASSES,
-        num_ee=0,
+        num_ee=2,
         exit_threshold=0.99,
         repetitions=[2, 2, 2, 2],
         init_planes=64,
@@ -197,6 +197,7 @@ def main():
         exit_points = [0] * (len(model.exits) + 1)
         conf_min_max = list()
 
+        model.forced_exit_point = 2
         # switch off autograd for evaluation
         with torch.no_grad():
             # set the model in evaluation mode

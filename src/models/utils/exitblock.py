@@ -20,7 +20,7 @@ class ExitBlock(nn.Module):
         if exit_type == "bnpool":
             self.layers.append(nn.BatchNorm2d(inplanes))
         if exit_type != "plain":
-            self.layers.append(nn.AdaptiveAvgPool2d(1))
+            self.layers.append(nn.AdaptiveAvgPool2d((1,1)))
 
         in_size = inplanes * self.expansion
         self.confidence = confidence_linear_sigmoid(in_size)
