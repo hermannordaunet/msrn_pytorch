@@ -7,7 +7,7 @@ import torch.optim as optim
 # Local imports
 from utils.replay_memory import ReplayMemory
 from utils.prioritized_memory import PrioritizedMemory
-from utils.loss_functions import loss_v1, loss_v2, loss_v3, loss_v4, loss_v5
+from utils.loss_functions import loss_v1, loss_v2, loss_v3, loss_v4, loss_v5, loss_v6
 
 from utils.print_utils import print_min_max_conf
 from utils.data_utils import min_max_conf_from_dataset
