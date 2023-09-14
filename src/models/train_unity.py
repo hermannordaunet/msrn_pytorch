@@ -638,6 +638,8 @@ def model_trainer(
                         agent.step(state, action, log_prob, reward, done)
                     else:
                         optimized = agent.step(state, action, reward, next_state, done)
+                        if optimized:
+                            conf_min_max.append(agent.train_conf)
 
                     state_batch_tensor[team_idx, ...] = next_state.detach().clone()
 
