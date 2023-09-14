@@ -732,6 +732,14 @@ def model_trainer(
 
                     break
 
+            evaluate_this_episode = not episode % evaluate_every_n_th_episode
+
+            if evaluate_model and evaluate_this_episode:
+                if verbose:
+                    print(f"\nEvaluation started")
+
+                evaluate_trained_model(env, agent, config, episode, verbose=verbose)
+
     except (
         KeyboardInterrupt,
         UnityCommunicationException,
