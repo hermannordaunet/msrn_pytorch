@@ -302,16 +302,16 @@ class EE_CNN_Residual(nn.Module):
                     if forced_exit_here:
                         exit_all_threshold = float("-inf")
 
-                        (
-                            idx_to_remove,
-                            all_samples_exited,
-                        ) = self.construct_validation_output(
-                            pred,
-                            conf,
-                            self.cost[idx],
-                            idx,
-                            threshold=exit_all_threshold,
-                        )
+                    (
+                        idx_to_remove,
+                        all_samples_exited,
+                    ) = self.construct_validation_output(
+                        pred,
+                        conf,
+                        self.cost[idx],
+                        idx,
+                        threshold=exit_all_threshold,
+                    )
 
                     if idx_to_remove is not None:
                         x = remove_exited_pred_from_batch(x, idx_to_remove)
