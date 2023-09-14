@@ -151,13 +151,14 @@ class Agent:
 
         random_number = random.random()
         if epsilon <= random_number:
-            # Returning action for network
-            # action_indexes = torch.max(action_values, dim=1)[1]
+            # Returning action from the last exit of the network
             act_state = act_state.to(self.device)
 
             was_in_training = self.policy_net.training
 
             self.policy_net.eval()
+            self.policy_net.forced_exit_point = self.policy_net.num_ee + 1
+
             with torch.no_grad():
                 action_values, confs, exits, costs = self.policy_net(act_state)
 
@@ -168,6 +169,8 @@ class Agent:
 
             if was_in_training:
                 self.policy_net.train()
+            
+            self.policy_net.forced_exit_point = None
 
         else:
             # Returning a random action
@@ -176,7 +179,7 @@ class Agent:
             # CRITICAL: Slow for-loop?
             for count in range(num_agents):
                 move_actions_batch[count, :, random_action_idx[count]] = 1.0
-            
+
             exits = None
             costs = None
             confs = None
