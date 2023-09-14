@@ -68,6 +68,9 @@ class EE_CNN_Residual(nn.Module):
         self.exit_type = exit_type
         self.exit_threshold = exit_threshold
 
+        # A variable we can set to get the network to take the whole network during q-learning
+        self.forced_exit_point: int = None
+
         # Containers for the network
         self.layers = nn.ModuleList()
         self.exits = nn.ModuleList()
@@ -247,6 +250,17 @@ class EE_CNN_Residual(nn.Module):
         self.stage_id += 1
 
     def forward(self, x):
+        if self.forced_exit_point:
+            within_exit_amount = 1 <= self.forced_exit_point <= (self.num_ee + 1)
+            if not within_exit_amount:
+                print(
+                    "[ERROR] The set exit point is higher than the number of exits in the network or lower than 1. The exit point will be set to the last point in the network"
+                )
+                self.forced_exit_point = self.num_ee + 1
+                print(
+                    f"[INFO] Forced exit set to exit number: {self.forced_exit_point}"
+                )
+
         not_batch_eval = x.shape[0] == 1
 
         if self.training:
@@ -262,26 +276,38 @@ class EE_CNN_Residual(nn.Module):
 
         for idx, exitblock in enumerate(self.exits):
             x = self.stages[idx](x)
+            
+            if self.forced_exit_point is not None:
+                forced_exit_here = self.forced_exit_point == idx + 1
+                if not forced_exit_here:
+                    continue
+                
             pred, conf = exitblock(x)
 
             if not self.training:
                 # exit condition:
+
                 if not_batch_eval:
                     conf_over_threshold = conf.item() > self.exit_threshold
 
-                    if conf_over_threshold:
+                    if conf_over_threshold or forced_exit_here:
                         return pred, conf.item(), idx, self.cost[idx]
 
                 else:
-                    (
-                        idx_to_remove,
-                        all_samples_exited,
-                    ) = self.construct_validation_output(
-                        pred,
-                        conf,
-                        self.cost[idx],
-                        idx,
-                    )
+                    exit_all_threshold = None
+                    if forced_exit_here:
+                        exit_all_threshold = float("-inf")
+
+                        (
+                            idx_to_remove,
+                            all_samples_exited,
+                        ) = self.construct_validation_output(
+                            pred,
+                            conf,
+                            self.cost[idx],
+                            idx,
+                            threshold=exit_all_threshold,
+                        )
 
                     if idx_to_remove is not None:
                         x = remove_exited_pred_from_batch(x, idx_to_remove)
