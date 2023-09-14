@@ -121,6 +121,8 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
 
                     eval_agents[team][agent_id] = {
                         "episode_score": 0,
+                        "exit_points": [0] * (agent.policy_net.num_ee + 1),
+                        "agent_confs": [[] for _ in range(agent.policy_net.num_ee + 1)],
                     }
 
             episode_done = False
