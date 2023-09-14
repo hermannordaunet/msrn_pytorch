@@ -2,6 +2,7 @@ import torch
 
 import numpy as np
 
+
 def min_max_conf_from_dataset(conf_list: list()) -> tuple():
     # Calculate max and min conf of each exit during training
     # get the number of columns
@@ -15,11 +16,14 @@ def min_max_conf_from_dataset(conf_list: list()) -> tuple():
 
     min_vals, _ = torch.min(tensor_of_conf, dim=0)
     max_vals, _ = torch.max(tensor_of_conf, dim=0)
+    mean_vals = torch.mean(tensor_of_conf, dim=0)
 
     min_vals = min_vals.tolist()
     max_vals = max_vals.tolist()
+    mean_vals = mean_vals.tolist()
 
-    return (min_vals, max_vals)
+    return (min_vals, max_vals, mean_vals)
+
 
 def get_grid_based_perception_numpy(agent_obs):
     grid_state_numpy = agent_obs[0]
