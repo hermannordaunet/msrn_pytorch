@@ -102,8 +102,8 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
-        "loss_function": "v4",
-        "num_ee": 0,
+        "loss_function": "v6",
+        "num_ee": 2,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
