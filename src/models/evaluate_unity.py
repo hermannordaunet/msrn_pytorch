@@ -63,7 +63,7 @@ def extract_one_agent_each_team(eval_agents: dict):
     return one_agent_keys
 
 
-def print_exit_points_from_agents(eval_agents: dict, active_agent_id=None):
+def print_exit_points_from_agents(eval_agents: dict, active_agent_id: list() = None):
     for team, team_data in eval_agents.items():
         agent_ids = team_data.keys()
         if active_agent_id is None:
