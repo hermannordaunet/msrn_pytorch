@@ -104,6 +104,7 @@ def main():
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
         "loss_function": "v6",
         "num_ee": 2,
+        "exit_threshold": 0.9,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
@@ -347,6 +348,7 @@ def main():
                 num_classes=model_param["num_classes"],
                 repetitions=model_param["repetitions"],
                 distribution=model_param["distribution"],
+                exit_threshold=model_param["exit_threshold"],
             ).to(DEVICE)
 
             print(f"[INFO] Initalizing Q network target of type {model_type}")
@@ -359,6 +361,7 @@ def main():
                 num_classes=model_param["num_classes"],
                 repetitions=model_param["repetitions"],
                 distribution=model_param["distribution"],
+                exit_threshold=model_param["exit_threshold"],
                 initalize_parameters=False,
             ).to(DEVICE)
 
