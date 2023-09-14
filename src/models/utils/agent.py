@@ -176,8 +176,12 @@ class Agent:
             # CRITICAL: Slow for-loop?
             for count in range(num_agents):
                 move_actions_batch[count, :, random_action_idx[count]] = 1.0
+            
+            exits = None
+            costs = None
+            confs = None
 
-        return move_actions_batch, laser_action_batch  # , exits, costs, confs
+        return move_actions_batch, laser_action_batch, confs, exits, costs
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
