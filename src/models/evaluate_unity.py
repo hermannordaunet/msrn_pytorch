@@ -142,16 +142,33 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                         for agent_id in agents_need_action:
                             agent_move_action = move_action[agent_id, ...]
                             agent_laser_action = laser_action[agent_id, ...]
+
+                            exit = exits[agent_id]
+                            conf = confs[agent_id]
+                            eval_agents[team][agent_id]["exit_points"][exit] += 1
+                            eval_agents[team][agent_id]["agent_confs"][exit].append(
+                                conf.detach().clone()
+                            )
+
                             env.set_action_for_agent(
                                 team,
                                 agent_id,
                                 ActionTuple(agent_move_action, agent_laser_action),
                             )
+
                     else:
                         agent_id = active_agent_id[team_idx]
                         if agent_id in agents_need_action:
                             agent_move_action = move_action[agent_id, ...]
                             agent_laser_action = laser_action[agent_id, ...]
+
+                            exit = exits[agent_id]
+                            conf = confs[agent_id]
+                            eval_agents[team][agent_id]["exit_points"][exit] += 1
+                            eval_agents[team][agent_id]["agent_confs"][exit].append(
+                                conf
+                            )
+
                             env.set_action_for_agent(
                                 team,
                                 agent_id,
