@@ -81,6 +81,8 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
     if agent.policy_net.training:
         was_in_training = True
         agent.policy_net.eval()
+    
+    agent.policy_net.forced_exit_point = None
 
     num_eval_episodes = config["eval"]["episodes"]
     all_agents_active = config["eval"]["all_agents_active"]
