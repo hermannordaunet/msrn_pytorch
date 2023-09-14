@@ -197,6 +197,7 @@ def main():
         exit_points = [0] * (len(model.exits) + 1)
         conf_min_max = list()
 
+        model.forced_exit_point = 2
         # switch off autograd for evaluation
         with torch.no_grad():
             # set the model in evaluation mode
