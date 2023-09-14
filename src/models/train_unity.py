@@ -588,8 +588,6 @@ def model_trainer(
                     num_agents=num_teams,
                 )
 
-                # move_action, laser_action = act  # , idx, cost, conf = act
-
                 for team_idx, team in enumerate(team_name_list):
                     agent_id = training_agents[team]["agent_id"]
                     team_move_action = move_action[team_idx, ...]
