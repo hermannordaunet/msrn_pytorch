@@ -12,6 +12,7 @@ from mlagents_envs.exception import (
 # Local imports
 from src.models.utils.data_utils import get_grid_based_perception
 
+
 def visualize_trained_model(env, agent, config, verbose=False):
     num_visual_episodes = config["visualize"]["episodes"]
 
