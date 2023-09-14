@@ -582,7 +582,7 @@ def model_trainer(
             # min_max_conf = list()
             episode_done = False
             while not episode_done:
-                move_action, laser_action = agent.act(
+                move_action, laser_action, confs, exits, costs = agent.act(
                     state_batch_tensor.detach().clone(),
                     epsilon=eps,
                     num_agents=num_teams,
