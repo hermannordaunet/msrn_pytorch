@@ -137,7 +137,7 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
 
             while not episode_done:
                 move_action, laser_action, confs, exits, costs = agent.act(
-                    state_batch_tensor, num_agents=num_total_agents
+                    state_batch_tensor, num_agents=num_total_agents, eval_agent=True
                 )
 
                 for team_idx, team in enumerate(team_name_list):
