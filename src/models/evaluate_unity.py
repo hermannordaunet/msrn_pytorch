@@ -63,7 +63,9 @@ def extract_one_agent_each_team(eval_agents: dict):
     return one_agent_keys
 
 
-def print_exit_points_from_agents(eval_agents: dict, active_agent_id: list() = None):
+def print_exit_points_from_agents(
+    eval_agents: dict, active_agent_id: list() = None, include_reward=False, mode: str = "EVAL"
+):
     for team, team_data in eval_agents.items():
         agent_ids = team_data.keys()
         if active_agent_id is None:
@@ -74,15 +76,16 @@ def print_exit_points_from_agents(eval_agents: dict, active_agent_id: list() = N
         for agent_id in agent_ids:
             if agent_id in agents_to_print:
                 exit_points = eval_agents[team][agent_id]["exit_points"]
-                print(f"Agent ID: {agent_id}, Exit Points: {exit_points}")
-
+                reward = eval_agents[team][agent_id]["episode_score"]
+                if include_reward:
+                    print(f"[{mode}] Agent ID: {agent_id}, Reward: {reward}, Exit Points: {exit_points}")
+                else:
+                    print(f"[{mode}] Agent ID: {agent_id}, Exit Points: {exit_points}")
 
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
     if agent.policy_net.training:
         was_in_training = True
         agent.policy_net.eval()
-    
-    agent.policy_net.forced_exit_point = None
 
     num_eval_episodes = config["eval"]["episodes"]
     all_agents_active = config["eval"]["all_agents_active"]
