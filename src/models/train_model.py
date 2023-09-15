@@ -165,7 +165,7 @@ def main():
         repetitions=[2, 2, 2, 2],
         init_planes=64,
         planes=[64, 128, 256, 512],
-        distribution="pareto",
+        distribution="linear",
     ).to(device)
 
     # initialize our optimizer
