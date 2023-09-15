@@ -133,7 +133,7 @@ class EE_CNN_Residual(nn.Module):
             if self.is_suitable_for_exit():
                 self.add_exit_block(exit_type, total_flops)
                 print(
-                    f"Added exit at repetition (planes: {planes}): {idx+1}, after first block"
+                    f"Added exit at repetition (planes: {planes}): {idx+1}, after 1 block"
                 )
 
             for block_idx in range(1, repetition):
