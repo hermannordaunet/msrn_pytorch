@@ -135,7 +135,7 @@ class Agent:
 
         return True
 
-    def act(self, act_state, epsilon=0.0, num_agents=1):
+    def act(self, act_state, epsilon=0.0, num_agents=1, eval_agent=False):
         """Returns actions for given state as per current policy.
 
         Params:
@@ -146,8 +146,12 @@ class Agent:
 
         # Same for everyone
         laser_action_batch = np.zeros((num_agents, 1, 1))
-
         move_actions_batch = np.zeros((num_agents, 1, self.policy_net.num_classes))
+
+        if eval_agent:
+            self.policy_net.forced_exit_point = None
+        else:
+            self.policy_net.forced_exit_point = self.policy_net.num_ee + 1
 
         random_number = random.random()
         if epsilon <= random_number:
@@ -157,7 +161,6 @@ class Agent:
             was_in_training = self.policy_net.training
 
             self.policy_net.eval()
-            self.policy_net.forced_exit_point = self.policy_net.num_ee + 1
 
             with torch.no_grad():
                 action_values, confs, exits, costs = self.policy_net(act_state)
@@ -169,7 +172,7 @@ class Agent:
 
             if was_in_training:
                 self.policy_net.train()
-            
+
             self.policy_net.forced_exit_point = None
 
         else:
