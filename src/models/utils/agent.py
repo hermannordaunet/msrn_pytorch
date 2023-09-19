@@ -148,13 +148,13 @@ class Agent:
         laser_action_batch = np.zeros((num_agents, 1, 1))
         move_actions_batch = np.zeros((num_agents, 1, self.policy_net.num_classes))
 
-        if eval_agent:
-            self.policy_net.forced_exit_point = None
-        else:
-            self.policy_net.forced_exit_point = self.policy_net.num_ee + 1
-
         random_number = random.random()
         if epsilon <= random_number:
+            if eval_agent:
+                self.policy_net.forced_exit_point = None
+            else:
+                self.policy_net.forced_exit_point = self.policy_net.num_ee + 1
+
             # Returning action from the last exit of the network
             act_state = act_state.to(self.device)
 
@@ -243,6 +243,7 @@ class Agent:
 
         # ASK: The Q_targets have no "info" of which action it took to get the score
 
+        self.policy_net.forced_exit_point = None
         # Get expected Q values from policy model
         pred, conf, cost = self.policy_net(state_batch)
         # CRITICAL: Add back the correct loss
