@@ -94,7 +94,7 @@ def loss_v3(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
 
     # pred_loss = F.nll_loss(cumulative_pred[-1], target)
     pred_loss = F.smooth_l1_loss(cumulative_pred[-1], target)
-    cumulative_loss = pred_loss + lambda_coef * cumulative_cost[-1].item()  # .mean()
+    cumulative_loss = pred_loss + lambda_coef * cumulative_cost[-1]  # .mean()
     for i in range(num_ee - 1, -1, -1):
         cumulative_pred[i] = conf[i] * pred[i] + (1 - conf[i]) * cumulative_pred[i + 1]
         cumulative_cost[i] = conf[i] * cost[i] + (1 - conf[i]) * cumulative_cost[i + 1]
