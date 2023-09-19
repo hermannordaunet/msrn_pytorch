@@ -133,7 +133,7 @@ class EE_CNN_Residual(nn.Module):
             if self.is_suitable_for_exit():
                 self.add_exit_block(exit_type, total_flops)
                 print(
-                    f"Added exit at repetition (planes: {planes}): {idx+1}, after first block"
+                    f"Added exit at repetition (planes: {planes}): {idx+1}, after 1 block"
                 )
 
             for block_idx in range(1, repetition):
@@ -160,7 +160,7 @@ class EE_CNN_Residual(nn.Module):
         in_size = planes * block.expansion
         self.confidence = confidence_linear_sigmoid(in_size)
         self.classifier = classifier_linear(in_size, num_classes)
-        # self.classifier = classifier_linear(in_size, self.num_classes)
+        # self.classifier = classifier_linear_softmax(in_size, self.num_classes)
 
         self.stages.append(nn.Sequential(*self.layers))
         if initalize_parameters:

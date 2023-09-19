@@ -135,7 +135,7 @@ class Agent:
 
         return True
 
-    def act(self, act_state, epsilon=0.0, num_agents=1):
+    def act(self, act_state, epsilon=0.0, num_agents=1, eval_agent=False):
         """Returns actions for given state as per current policy.
 
         Params:
@@ -146,18 +146,21 @@ class Agent:
 
         # Same for everyone
         laser_action_batch = np.zeros((num_agents, 1, 1))
-
         move_actions_batch = np.zeros((num_agents, 1, self.policy_net.num_classes))
 
         random_number = random.random()
         if epsilon <= random_number:
+            if eval_agent:
+                self.policy_net.forced_exit_point = None
+            else:
+                self.policy_net.forced_exit_point = self.policy_net.num_ee + 1
+
             # Returning action from the last exit of the network
             act_state = act_state.to(self.device)
 
             was_in_training = self.policy_net.training
 
             self.policy_net.eval()
-            self.policy_net.forced_exit_point = self.policy_net.num_ee + 1
 
             with torch.no_grad():
                 action_values, confs, exits, costs = self.policy_net(act_state)
@@ -240,6 +243,7 @@ class Agent:
 
         # ASK: The Q_targets have no "info" of which action it took to get the score
 
+        self.policy_net.forced_exit_point = None
         # Get expected Q values from policy model
         pred, conf, cost = self.policy_net(state_batch)
         # CRITICAL: Add back the correct loss

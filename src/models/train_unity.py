@@ -196,16 +196,16 @@ def main():
             # relative_path = (
             #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             # )
-            FILE_NAME = relative_path
 
         else:
             relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
-            FILE_NAME = relative_path
 
     else:
-        FILE_NAME = None
+        relative_path = None
+    
+    FILE_NAME = relative_path
 
     random_worker_id = random.randint(0, 1250)
     print(f"[INFO] Random worker id: {random_worker_id}")
