@@ -650,13 +650,14 @@ def model_trainer(
 
                     state_batch_tensor[team_idx, ...] = next_state.detach().clone()
 
-                    training_agents[team]["episode_score"] += reward
+                    if float(reward) != 0.0:
+                        training_agents[team][agent_id]["episode_score"] += reward
 
                     if isinstance(exits, int):
-                        training_agents[team]["exit_points"][exits] += 1
+                        training_agents[team][agent_id]["exit_points"][exits] += 1
                     elif isinstance(exits, torch.Tensor):
                         exit = exits[team_idx]
-                        training_agents[team]["exit_points"][exit] += 1
+                        training_agents[team][agent_id]["exit_points"][exit] += 1
                     elif exits is None:
                         random_actions += 1
                     else:
@@ -664,9 +665,7 @@ def model_trainer(
 
                     episode_done = done
 
-            scores_all_training_agents = [
-                team_info["episode_score"] for team_info in training_agents.values()
-            ]
+            scores_all_training_agents = extract_scores_for_all_agents(training_agents, flatten=True)
 
             scores_window.append(scores_all_training_agents)  # save most recent score
             scores.append(scores_all_training_agents)  # save most recent score
