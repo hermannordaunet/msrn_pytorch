@@ -88,11 +88,11 @@ def extract_exit_points_from_agents(
 
                 message = f"[{mode}] Agent ID: {agent_id} , Exit Points: {exit_points}"
 
-                if include_reward:
-                    message += f", Reward: {reward}"
-
                 if random_actions:
                     message += f", Random Actions: {random_actions}"
+
+                if include_reward:
+                    message += f", Reward: {reward}"
 
                 print(message)
 

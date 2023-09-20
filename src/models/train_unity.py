@@ -106,13 +106,13 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
-        "loss_function": "v6",
+        "loss_function": "v7",
         "num_ee": 2,
-        "exit_threshold": 0.9,
+        "exit_threshold": 0.995,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
-        "distribution": "pareto",
+        "distribution": None,
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
         "mode_setups": {"train": True, "eval": True, "visualize": False},
@@ -153,7 +153,7 @@ def main():
             "episodes": 10,
         },
         "eval": {
-            "episodes": 5,
+            "episodes": 3,
             "every-n-th-episode": 50,
             "all_agents_active": False,
         },
@@ -588,7 +588,8 @@ def model_trainer(
             # min_max_conf = list()
             episode_done = False
             while not episode_done:
-                move_action, laser_action, confs, exits, costs = agent.act(
+                # move_action, laser_action, confs, exits, costs
+                move_action, laser_action, exits, costs = agent.act(
                     state_batch_tensor.detach().clone(),
                     epsilon=eps,
                     num_agents=num_teams,

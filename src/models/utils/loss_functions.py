@@ -1,4 +1,5 @@
 # Found in the EEnets pytorch implementation.
+import torch.nn as nn
 import torch.nn.functional as F
 
 
@@ -99,7 +100,7 @@ def loss_v3(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
         cumulative_pred[i] = conf[i] * pred[i] + (1 - conf[i]) * cumulative_pred[i + 1]
         cumulative_cost[i] = conf[i] * cost[i] + (1 - conf[i]) * cumulative_cost[i + 1]
         # pred_loss = F.nll_loss(cumulative_pred[i].log(), target)
-        pred_loss = F.smooth_l1_loss(cumulative_pred[i], target)
+        pred_loss = F.smooth_l1_loss(cumulative_pred[i], cumulative_pred[-1])
         cost_loss = cumulative_cost[i].mean()
         cumulative_loss += pred_loss + lambda_coef * cost_loss
 
@@ -156,8 +157,29 @@ def loss_v6(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
         cumulative_pred[i] = conf[i] * pred[i] + (1 - conf[i]) * cumulative_pred[i + 1]
         cumulative_cost[i] = conf[i] * cost[i] + (1 - conf[i]) * cumulative_cost[i + 1]
         # pred_loss = F.nll_loss(cumulative_pred[i].log(), target)
-        pred_loss = F.mse_loss(cumulative_pred[i], target)
+        pred_loss = F.mse_loss(cumulative_pred[i], cumulative_pred[-1])
         cost_loss = cumulative_cost[i].mean()
         cumulative_loss += pred_loss + lambda_coef * cost_loss
 
     return cumulative_loss, 0, 0
+
+
+def loss_v7(pred, target, actions, cost, num_ee=0):
+    Q_expected = list()
+    for p in pred:
+        expected_value = p.gather(1, actions)
+        Q_expected.append(expected_value)
+
+    # cumulative_pred = [None] * num_ee + [Q_expected[num_ee]]
+    pred_loss_exits = list()
+    cost_loss = 0
+
+    q_loss_full = F.mse_loss(Q_expected[num_ee], target)
+    
+    m = nn.LogSoftmax(dim=1)
+    for i in range(num_ee - 1, -1, -1):
+
+        pred_loss = F.nll_loss(m(pred[i].squeeze()), actions.squeeze())
+        pred_loss_exits.append(pred_loss)
+    
+    return q_loss_full, pred_loss_exits, cost_loss, Q_expected[-1]

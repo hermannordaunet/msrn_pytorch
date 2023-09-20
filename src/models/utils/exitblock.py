@@ -2,7 +2,10 @@ import torch
 import torch.nn as nn
 
 from src.models.utils.classifier import classifier_linear_softmax, classifier_linear
-from src.models.utils.confidence import confidence_linear_sigmoid
+from src.models.utils.confidence import (
+    confidence_linear_sigmoid,
+    confidence_linear_softmax,
+)
 
 
 class ExitBlock(nn.Module):
@@ -20,19 +23,23 @@ class ExitBlock(nn.Module):
         if exit_type == "bnpool":
             self.layers.append(nn.BatchNorm2d(inplanes))
         if exit_type != "plain":
-            self.layers.append(nn.AdaptiveAvgPool2d((1,1)))
+            self.layers.append(nn.AdaptiveAvgPool2d((1, 1)))
 
         in_size = inplanes * self.expansion
-        self.confidence = confidence_linear_sigmoid(in_size)
-        self.classifier = classifier_linear(in_size, num_classes)
-        # self.classifier = classifier_linear_softmax(in_size, num_classes)
+
+        # self.confidence = confidence_linear_sigmoid(in_size)
+        # self.confidence = confidence_linear_softmax(in_size)
+
+        # self.classifier = classifier_linear(in_size, num_classes)
+        self.classifier = classifier_linear_softmax(in_size, num_classes)
 
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
 
         x = torch.flatten(x, 1)
-        conf = self.confidence(x)
-        pred = self.classifier(x)
 
-        return pred, conf
+        pred = self.classifier(x)
+        # conf = self.confidence(x)
+
+        return pred  # , conf

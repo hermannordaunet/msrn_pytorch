@@ -7,7 +7,15 @@ import torch.optim as optim
 # Local imports
 from utils.replay_memory import ReplayMemory
 from utils.prioritized_memory import PrioritizedMemory
-from utils.loss_functions import loss_v1, loss_v2, loss_v3, loss_v4, loss_v5, loss_v6
+from utils.loss_functions import (
+    loss_v1,
+    loss_v2,
+    loss_v3,
+    loss_v4,
+    loss_v5,
+    loss_v6,
+    loss_v7,
+)
 
 from utils.print_utils import print_min_max_conf
 from utils.data_utils import min_max_conf_from_dataset
@@ -163,7 +171,8 @@ class Agent:
             self.policy_net.eval()
 
             with torch.no_grad():
-                action_values, confs, exits, costs = self.policy_net(act_state)
+                # action_values, confs, exits, costs = self.policy_net(act_state)
+                action_values, exits, costs = self.policy_net(act_state)
 
             action_indexes = torch.argmax(action_values, dim=1)
             # CRITICAL: Slow for-loop?
@@ -185,9 +194,14 @@ class Agent:
 
             exits = None
             costs = None
-            confs = None
+            # confs = None
 
-        return move_actions_batch, laser_action_batch, confs, exits, costs
+        return (
+            move_actions_batch,
+            laser_action_batch,
+            exits,
+            costs,
+        )  # confs, exits, costs
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
@@ -200,6 +214,8 @@ class Agent:
         # CRITICAL: Understand all this code. Written for the IN5490 project.
         # I have forgotten all the details of the DQN training loop with the
         # local and tarfet network.
+        
+        # self.freeze_exit_layers()
 
         num_ee = len(self.policy_net.exits)
 
@@ -227,7 +243,7 @@ class Agent:
 
         if self.target_net:
             # Get max predicted Q values (for next states) from target model
-            next_pred, _, _ = self.target_net(next_state_batch)
+            next_pred, _ = self.target_net(next_state_batch)
 
         else:
             print("[ERROR] The agent has no target net. Only use for eval/visualize")
@@ -245,32 +261,44 @@ class Agent:
 
         self.policy_net.forced_exit_point = None
         # Get expected Q values from policy model
-        pred, conf, cost = self.policy_net(state_batch)
+        pred, cost = self.policy_net(state_batch)
         # CRITICAL: Add back the correct loss
         # cost.append(torch.tensor(1.0).to(self.device))
 
-        Q_expected = list()
-        for p in pred:
-            expected_value = p.gather(1, action_batch)
-            Q_expected.append(expected_value)
-
         loss = self.initalize_loss_function()
 
-        cumulative_loss, pred_loss, cost_loss = loss(
-            Q_expected, Q_targets, conf, cost, num_ee=num_ee
+        # cumulative_loss, pred_loss, cost_loss = loss(
+        #     Q_expected, Q_targets, action_batch, conf, cost, num_ee=num_ee
+        # )
+
+        q_full_net_loss, pred_loss_exits, cost_loss, last_Q_expected = loss(
+            pred, Q_targets, action_batch, cost, num_ee=num_ee
         )
 
+        conf = list()
+        for p in pred:
+            sliced_pred = torch.index_select(p, dim=1, index=action_batch.squeeze())
+            conf.append(sliced_pred)
+
+        # conf = torch.max(conf_list, 1)[0]
         # Append conf to a list for debugging later
-        self.cumulative_loss = cumulative_loss
-        self.pred_loss = pred_loss
-        self.cost_loss = cost_loss
         self.train_conf = conf
-        self.last_Q_expected = Q_expected[-1]
+        self.cost_loss = cost_loss
+        self.pred_loss = pred_loss_exits
+
         self.last_Q_targets = Q_targets
+        self.last_Q_expected = last_Q_expected
+
+        self.cumulative_loss = q_full_net_loss
+
+        # self.freeze_exit_layers()
 
         # Minimize the loss
         self.optimizer.zero_grad()
-        cumulative_loss.backward()
+        q_full_net_loss.backward()
+
+        # for loss_exit in pred_loss_exits:
+        #     loss_exit.backward()
 
         if self.clip_gradients:
             torch.nn.utils.clip_grad_norm_(
@@ -301,6 +329,14 @@ class Agent:
             target_net_param.data.copy_(
                 tau * policy_net_param.data + (1.0 - tau) * target_net_param.data
             )
+
+    def freeze_exit_layers(self):
+        for exit in self.policy_net.exits:
+            exit.classifier[0].require_grad = False
+
+    def unfreeze_exit_layers(self):
+        for exit in self.policy_net.exits:
+            exit.classifier[0].require_grad = True
 
     def initalize_optimizer(self):
         # Getting the network parameters
@@ -347,5 +383,7 @@ class Agent:
             return loss_v5
         elif self.model_param["loss_function"] == "v6":
             return loss_v6
+        elif self.model_param["loss_function"] == "v7":
+            return loss_v7
         else:
             raise Exception("invalid loss function")
