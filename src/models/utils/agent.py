@@ -277,8 +277,8 @@ class Agent:
 
         conf = list()
         for p in pred:
-            sliced_pred = torch.index_select(p, dim=1, index=action_batch.squeeze())
-            conf.append(sliced_pred)
+            sliced_pred = p[torch.arange(128), action_batch.squeeze()]
+            conf.append(sliced_pred.unsqueeze(1))
 
         # conf = torch.max(conf_list, 1)[0]
         # Append conf to a list for debugging later

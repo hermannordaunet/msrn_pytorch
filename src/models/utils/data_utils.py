@@ -3,7 +3,7 @@ import torch
 import numpy as np
 
 
-def min_max_conf_from_dataset(conf_list: list()) -> tuple():
+def min_max_conf_from_dataset(conf_list: list(), include_last=False) -> tuple():
     # Calculate max and min conf of each exit during training
     # get the number of columns
     # rng = np.random.default_rng(seed)
@@ -22,7 +22,10 @@ def min_max_conf_from_dataset(conf_list: list()) -> tuple():
     max_vals = max_vals.tolist()
     mean_vals = mean_vals.tolist()
 
-    return (min_vals, max_vals, mean_vals)
+    if include_last:
+        return (min_vals, max_vals, mean_vals)
+
+    return (min_vals[:-1], max_vals[:-1], mean_vals[:-1])
 
 
 def get_grid_based_perception_numpy(agent_obs):

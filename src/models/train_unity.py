@@ -702,7 +702,7 @@ def model_trainer(
                 )
                 print(f"Last loss: {agent.cumulative_loss}")
 
-                min_vals, max_vals, mean_vals = min_max_conf_from_dataset(conf_min_max)
+                min_vals, max_vals, mean_vals = min_max_conf_from_dataset(conf_min_max, include_last=False)
                 print_min_max_conf(min_vals, max_vals, mean_vals)
 
                 extract_exit_points_from_agents(

@@ -2,7 +2,7 @@ from datetime import timedelta
 from utils.flops_counter import flops_to_string, params_to_string
 
 
-def print_min_max_conf(min_conf, max_conf, mean_conf, mode="TRAIN"):
+def print_min_max_conf(min_conf, max_conf, mean_conf, mode="TRAIN", include_last=False):
     min_string = f"[{mode}]: Min exit conf from batch: "
     max_string = f"[{mode}]: Max exit conf from batch: "
     mean_string = f"[{mode}]: Mean exit conf from batch: "
