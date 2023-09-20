@@ -151,7 +151,7 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                 active_agent_id = extract_one_agent_each_team(eval_agents)
 
             while not episode_done:
-                move_action, laser_action, confs, exits, costs = agent.act(
+                move_action, laser_action, exits, costs = agent.act(
                     state_batch_tensor, num_agents=num_total_agents, eval_agent=True
                 )
 
