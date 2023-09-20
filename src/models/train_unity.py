@@ -153,8 +153,8 @@ def main():
             "episodes": 10,
         },
         "eval": {
-            "episodes": 3,
-            "every-n-th-episode": 50,
+            "episodes": 1,
+            "every-n-th-episode": 1,
             "all_agents_active": False,
         },
     }
