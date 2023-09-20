@@ -63,8 +63,13 @@ def extract_one_agent_each_team(eval_agents: dict):
     return one_agent_keys
 
 
-def print_exit_points_from_agents(
-    eval_agents: dict, active_agent_id: list() = None, include_reward=False, mode: str = "EVAL"
+def extract_exit_points_from_agents(
+    eval_agents: dict,
+    active_agent_id: list() = None,
+    include_reward=False,
+    mode: str = "EVAL",
+    print_out=True,
+    random_actions: list = None,
 ):
     for team, team_data in eval_agents.items():
         agent_ids = team_data.keys()
@@ -77,10 +82,20 @@ def print_exit_points_from_agents(
             if agent_id in agents_to_print:
                 exit_points = eval_agents[team][agent_id]["exit_points"]
                 reward = eval_agents[team][agent_id]["episode_score"]
+
+                if not print_out:
+                    return exit_points, reward
+
+                message = f"[{mode}] Agent ID: {agent_id} , Exit Points: {exit_points}"
+
                 if include_reward:
-                    print(f"[{mode}] Agent ID: {agent_id}, Reward: {reward}, Exit Points: {exit_points}")
-                else:
-                    print(f"[{mode}] Agent ID: {agent_id}, Exit Points: {exit_points}")
+                    message += f", Reward: {reward}"
+
+                if random_actions:
+                    message += f", Random Actions: {random_actions}"
+
+                print(message)
+
 
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
     if agent.policy_net.training:
@@ -219,11 +234,11 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
             )
 
             if not all_agents_active:
-                print_exit_points_from_agents(
-                    eval_agents, active_agent_id=active_agent_id
+                extract_exit_points_from_agents(
+                    eval_agents, active_agent_id=active_agent_id, print_out=True
                 )
             else:
-                print_exit_points_from_agents(eval_agents)
+                extract_exit_points_from_agents(eval_agents, print_out=True)
 
         if was_in_training:
             agent.policy_net.train()
