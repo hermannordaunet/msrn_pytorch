@@ -106,13 +106,13 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
-        "loss_function": "v6",
+        "loss_function": "v3",
         "num_ee": 2,
-        "exit_threshold": 0.9,
+        "exit_threshold": 0.995,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
-        "distribution": "pareto",
+        "distribution": None,
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
         "mode_setups": {"train": True, "eval": True, "visualize": False},
