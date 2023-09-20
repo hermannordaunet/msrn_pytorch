@@ -26,8 +26,6 @@ This might need to be adjusted so that there are test at the layer we add the ex
 
 # Food Collector environment
 A run with the first agent that takes Early Exits, rendered in Unity.
-
-https://media.github.uio.no/user/3730/files/09808a6f-7b62-4f18-baa1-c5da94eb3b8b
-
+https://github.uio.no/hermanno/Master-Codebase/blob/09797d62c544e5a5f96a1a5ae64c96ce0efdd935/visual_unity/bad_agents.mov
 
 If there is problem with video playback, the video is also available in this [directory](/visual_unity/)

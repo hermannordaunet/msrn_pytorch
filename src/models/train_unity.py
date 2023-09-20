@@ -35,7 +35,11 @@ from visualization.visualize import (
 )
 
 from visualization.visualize_unity import visualize_trained_model
-from evaluate_unity import evaluate_trained_model
+from evaluate_unity import (
+    evaluate_trained_model,
+    extract_exit_points_from_agents,
+    extract_scores_for_all_agents,
+)
 
 from src.models.utils.flops_counter import get_model_complexity_info
 
@@ -569,15 +573,14 @@ def model_trainer(
             env.reset()
 
             for team_idx, team in enumerate(team_name_list):
+                training_agents[team] = dict()
                 decision_steps, _ = env.get_steps(team)
-                training_agents[team] = {
-                    "agent_id": decision_steps.agent_id[
-                        -1
-                    ],  # random agent from each team
+                agent_id = decision_steps.agent_id[-1]  # random agent from each team
+
+                training_agents[team][agent_id] = {
                     "episode_score": 0,
                     "exit_points": [0] * (agent.policy_net.num_ee + 1),
                 }
-                agent_id = training_agents[team]["agent_id"]
                 agent_obs = decision_steps[agent_id].obs
                 state = get_grid_based_perception(agent_obs).detach().clone()
                 state_batch_tensor[team_idx, ...] = state
@@ -589,10 +592,11 @@ def model_trainer(
                     state_batch_tensor.detach().clone(),
                     epsilon=eps,
                     num_agents=num_teams,
+                    eval_agent=False,
                 )
 
                 for team_idx, team in enumerate(team_name_list):
-                    agent_id = training_agents[team]["agent_id"]
+                    agent_id = list(training_agents[team].keys())[0]
                     team_move_action = move_action[team_idx, ...]
                     team_laser_action = laser_action[team_idx, ...]
                     env.set_action_for_agent(
@@ -606,7 +610,7 @@ def model_trainer(
                 for team_idx, team in enumerate(team_name_list):
                     decision_steps, terminal_steps = env.get_steps(team)
                     agents_need_action = decision_steps.agent_id
-                    agent_id = training_agents[team]["agent_id"]
+                    agent_id = list(training_agents[team].keys())[0]
 
                     if agent_id in agents_need_action:
                         agent_obs = decision_steps[agent_id].obs

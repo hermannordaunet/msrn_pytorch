@@ -17,7 +17,7 @@ from src.models.utils.data_utils import get_grid_based_perception
 from src.models.evaluate_unity import (
     extract_one_agent_each_team,
     extract_scores_for_all_agents,
-    print_exit_points_from_agents,
+    extract_exit_points_from_agents,
 )
 
 
@@ -157,15 +157,19 @@ def visualize_trained_model(env, agent, config, verbose=False):
             print(f"[VISUALIZE] Mean performance on policy net: {mean_score}")
 
             if not all_agents_active:
-                print_exit_points_from_agents(
+                extract_exit_points_from_agents(
                     visual_agents,
                     active_agent_id=active_agent_id,
                     include_reward=True,
                     mode="VISUALIZE",
+                    print_out=True,
                 )
             else:
-                print_exit_points_from_agents(
-                    visual_agents, include_reward=True, mode="VISUALIZE"
+                extract_exit_points_from_agents(
+                    visual_agents,
+                    include_reward=True,
+                    mode="VISUALIZE",
+                    print_out=True,
                 )
     except (
         KeyboardInterrupt,
