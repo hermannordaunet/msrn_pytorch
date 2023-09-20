@@ -208,7 +208,7 @@ def main():
 
     else:
         relative_path = None
-    
+
     FILE_NAME = relative_path
 
     random_worker_id = random.randint(0, 1250)
