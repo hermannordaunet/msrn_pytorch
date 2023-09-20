@@ -71,10 +71,10 @@ class Agent:
         self.device = self.model_param["device"]
         # self.small_eps = small_eps # For prioritized memory
 
-        self.cumulative_loss = None
         self.pred_loss = None
         self.cost_loss = None
         self.train_conf = None
+        self.cumulative_loss = None
 
         if self.prioritized_memory:
             self.memory = PrioritizedMemory(self.memory_size, self.batch_size)
@@ -85,9 +85,9 @@ class Agent:
         self.initalize_optimizer()
 
         if config["use_lr_scheduler"]:
-            if (config["scheduler_milestones"] is not None) and (
-                config["scheduler_factor"] is not None
-            ):
+            use_scheduler_milestones = config["scheduler_milestones"] is not None
+            scheduler_factor = config["scheduler_factor"] is not None
+            if use_scheduler_milestones and scheduler_factor:
                 self.scheduler = optim.lr_scheduler.MultiStepLR(
                     self.optimizer,
                     milestones=config["scheduler_milestones"],
