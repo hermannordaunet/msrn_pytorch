@@ -704,6 +704,14 @@ def model_trainer(
                 min_vals, max_vals, mean_vals = min_max_conf_from_dataset(conf_min_max)
                 print_min_max_conf(min_vals, max_vals, mean_vals)
 
+                extract_exit_points_from_agents(
+                    training_agents,
+                    include_reward=True,
+                    mode="TRAIN",
+                    print_out=True,
+                    random_actions=random_actions,
+                )
+
                 print(f"Number of transistions in memory: {len(agent.memory)}")
 
             if len(losses) > 1:
