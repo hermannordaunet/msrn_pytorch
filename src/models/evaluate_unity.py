@@ -86,7 +86,7 @@ def extract_exit_points_from_agents(
                 if not print_out:
                     return exit_points, reward
 
-                message = f"[{mode}] Agent ID: {agent_id} , Exit Points: {exit_points}"
+                message = f"[{mode}] Agent ID: {agent_id}, Exit Points: {exit_points}"
 
                 if random_actions:
                     message += f", Random Actions: {random_actions}"
@@ -235,10 +235,15 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
 
             if not all_agents_active:
                 extract_exit_points_from_agents(
-                    eval_agents, active_agent_id=active_agent_id, print_out=True
+                    eval_agents,
+                    active_agent_id=active_agent_id,
+                    include_reward=True,
+                    print_out=True,
                 )
             else:
-                extract_exit_points_from_agents(eval_agents, print_out=True)
+                extract_exit_points_from_agents(
+                    eval_agents, include_reward=True, print_out=True
+                )
 
         if was_in_training:
             agent.policy_net.train()

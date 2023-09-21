@@ -106,7 +106,8 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
-        "loss_function": "v7",
+        "loss_function": "v5",
+        "exit_loss_function": "loss_exit",
         "num_ee": 2,
         "exit_threshold": 0.995,
         "repetitions": [2, 2, 2, 2],
@@ -666,7 +667,9 @@ def model_trainer(
 
                     episode_done = done
 
-            scores_all_training_agents = extract_scores_for_all_agents(training_agents, flatten=True)
+            scores_all_training_agents = extract_scores_for_all_agents(
+                training_agents, flatten=True
+            )
 
             scores_window.append(scores_all_training_agents)  # save most recent score
             scores.append(scores_all_training_agents)  # save most recent score
@@ -702,7 +705,9 @@ def model_trainer(
                 )
                 print(f"Last loss: {agent.cumulative_loss}")
 
-                min_vals, max_vals, mean_vals = min_max_conf_from_dataset(conf_min_max, include_last=False)
+                min_vals, max_vals, mean_vals = min_max_conf_from_dataset(
+                    conf_min_max, include_last=False
+                )
                 print_min_max_conf(min_vals, max_vals, mean_vals)
 
                 extract_exit_points_from_agents(

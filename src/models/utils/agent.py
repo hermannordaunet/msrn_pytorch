@@ -15,6 +15,7 @@ from utils.loss_functions import (
     loss_v5,
     loss_v6,
     loss_v7,
+    loss_exit
 )
 
 from utils.print_utils import print_min_max_conf
@@ -90,9 +91,9 @@ class Agent:
             self.memory = ReplayMemory(self.memory_size, self.batch_size)
 
         self.optimizer = None
-        # self.exit_optimizer = None
+        self.exit_optimizer = None
         self.initalize_optimizer()
-        # self.initalize_exit_optimizer()
+        self.initalize_exit_optimizer()
 
         if config["use_lr_scheduler"]:
             use_scheduler_milestones = config["scheduler_milestones"] is not None
@@ -269,15 +270,21 @@ class Agent:
         # CRITICAL: Add back the correct loss
         # cost.append(torch.tensor(1.0).to(self.device))
 
+        Q_expected = list()
+        for p in pred:
+            expected_value = p.gather(1, action_batch)
+            Q_expected.append(expected_value)
+
         loss = self.initalize_loss_function()
+        exit_loss = self.initalize_exit_loss()
 
-        # cumulative_loss, pred_loss, cost_loss = loss(
-        #     Q_expected, Q_targets, action_batch, conf, cost, num_ee=num_ee
-        # )
-
-        q_full_net_loss, pred_loss_exits, cumulative_loss, cost_loss, last_Q_expected = loss(
-            pred, Q_targets, action_batch, cost, num_ee=num_ee
+        q_full_net_loss = loss(
+            Q_expected, Q_targets, num_ee=num_ee
         )
+
+        # q_full_net_loss, pred_loss_exits, cumulative_loss, cost_loss, last_Q_expected = loss(
+        #     pred, Q_targets, action_batch, cost, num_ee=num_ee
+        # )
 
         conf = list()
         for p in pred:
@@ -287,22 +294,20 @@ class Agent:
         # conf = torch.max(conf_list, 1)[0]
         # Append conf to a list for debugging later
         self.train_conf = conf
-        self.cost_loss = cost_loss
-        self.pred_loss = pred_loss_exits
+        # self.cost_loss = cost_loss
+        self.pred_loss = q_full_net_loss
 
         self.last_Q_targets = Q_targets
-        self.last_Q_expected = last_Q_expected
+        self.last_Q_expected = Q_expected[-1]
 
-        self.cumulative_loss = cumulative_loss
+        self.cumulative_loss = q_full_net_loss
 
-        # self.freeze_exit_layers()
+        self.freeze_exit_layers()
 
         # Minimize the loss
         self.optimizer.zero_grad()
-        cumulative_loss.backward()
+        q_full_net_loss.backward()
 
-        # for loss_exit in pred_loss_exits:
-        #     loss_exit.backward(retain_graph=True)
 
         if self.clip_gradients:
             torch.nn.utils.clip_grad_norm_(
@@ -315,6 +320,22 @@ class Agent:
         if self.scheduler is not None:
             self.scheduler.step()
 
+        self.unfreeze_exit_layers()
+        
+        pred, _, _ = self.policy_net(state_batch)
+
+        loss_exit = None
+        for exit_pred in pred[:-1]:
+            if loss_exit is None:
+                loss_exit = exit_loss(exit_pred, action_batch)
+            else:
+                loss_exit += exit_loss(exit_pred, action_batch)
+
+        loss_exit.backward()
+
+        self.exit_optimizer.step()
+
+        
         # Update target network
         self.soft_update(self.policy_net, self.target_net, self.tau)
 
@@ -423,3 +444,9 @@ class Agent:
             return loss_v7
         else:
             raise Exception("invalid loss function")
+
+    def initalize_exit_loss(self):
+        if self.model_param["exit_loss_function"] == "loss_exit":
+            return loss_exit
+        else:
+            raise Exception("invalid loss function for exit nodes")
