@@ -7,7 +7,10 @@ from src.models.cnn_residual import CNN_Residual
 from src.models.utils.exitblock import ExitBlock
 from src.models.utils.basicblock import BasicBlock
 from src.models.utils.classifier import classifier_linear_softmax, classifier_linear
-from src.models.utils.confidence import confidence_linear_sigmoid, confidence_linear_softmax
+from src.models.utils.confidence import (
+    confidence_linear_sigmoid,
+    confidence_linear_softmax,
+)
 
 from src.models.utils.flops_counter import get_model_complexity_info
 
@@ -279,7 +282,7 @@ class EE_CNN_Residual(nn.Module):
             self.original_idx = None
 
             self.val_batch_pred = None
-            # self.val_batch_conf = None
+            self.val_batch_conf = None
             self.val_batch_exit = None
             self.val_batch_cost = None
 
@@ -293,16 +296,17 @@ class EE_CNN_Residual(nn.Module):
                     continue
 
             pred = exitblock(x)
-            max_pred = torch.max(pred, 1)[0]
+            conf = torch.max(pred, 1)[0]
+            conf = conf.unsqueeze(1)
 
             if not self.training:
                 # exit condition:
 
                 if not_batch_eval:
-                    conf_over_threshold = max_pred > self.exit_threshold
+                    conf_over_threshold = conf.item() > self.exit_threshold
 
                     if conf_over_threshold or forced_exit_here:
-                        return pred, max_pred, idx, self.cost[idx]
+                        return pred, conf, idx, self.cost[idx]
 
                 else:
                     exit_all_threshold = None
@@ -314,7 +318,7 @@ class EE_CNN_Residual(nn.Module):
                         all_samples_exited,
                     ) = self.construct_validation_output(
                         pred,
-                        # conf,
+                        conf,
                         self.cost[idx],
                         idx,
                         threshold=exit_all_threshold,
@@ -326,14 +330,14 @@ class EE_CNN_Residual(nn.Module):
                     if all_samples_exited:
                         return (
                             self.val_batch_pred,
-                            # self.val_batch_conf,
+                            self.val_batch_conf,
                             self.val_batch_exit,
                             self.val_batch_cost,
                         )
 
             else:
                 preds.append(pred)
-                # confs.append(conf)
+                confs.append(conf)
                 costs.append(self.cost[idx])
 
         x = self.stages[-1](x)
@@ -341,28 +345,29 @@ class EE_CNN_Residual(nn.Module):
 
         pred = self.classifier(x)
         # conf = self.confidence(x)
-        max_pred = torch.max(pred, 1)[0]
+        conf = torch.max(pred, 1)[0]
+        conf = conf.unsqueeze(1)
 
         if not self.training:
             if not_batch_eval:
-                return pred, max_pred, len(self.exits), 1.0
+                return pred, conf, len(self.exits), 1.0
 
             self.construct_validation_output(
-                pred, 1, len(self.exits), threshold=float("-inf")
+                pred, conf, 1, len(self.exits), threshold=float("-inf")
             )
 
             return (
                 self.val_batch_pred,
-                # self.val_batch_conf,
+                self.val_batch_conf,
                 self.val_batch_exit,
                 self.val_batch_cost,
             )
 
         preds.append(pred)
-        # confs.append(conf)
+        confs.append(conf)
         costs.append(1.0)
 
-        return preds, costs # confs, costs
+        return preds, confs, costs
 
     def find_conf_above_threshold(self, conf, threshold=None):
         if threshold:
@@ -378,22 +383,20 @@ class EE_CNN_Residual(nn.Module):
     def construct_validation_output(
         self,
         pred,
-        # conf,
+        conf,
         cost,
         exit_idx,
         threshold=None,
     ):
-        conf = torch.max(pred, 1)[0]
         if self.val_batch_pred is None:
             self.val_batch_pred = torch.zeros_like(pred)
-            # self.val_batch_conf = torch.zeros_like(conf)
+            self.val_batch_conf = torch.zeros_like(conf)
             self.val_batch_exit = torch.zeros_like(conf, dtype=torch.int)
-            # self.val_batch_cost = torch.zeros_like(cost)
+            self.val_batch_cost = torch.zeros_like(conf)
 
         if self.original_idx is None:
             self.original_idx = torch.zeros_like(conf, dtype=torch.int64).squeeze()
             self.original_idx[:] = torch.arange(conf.shape[0])
-        
 
         idx_to_remove, remove_idx_empty = self.find_conf_above_threshold(
             conf, threshold=threshold
@@ -405,9 +408,9 @@ class EE_CNN_Residual(nn.Module):
         sample_idx = get_elements_from_indices(self.original_idx, idx_to_remove)
 
         self.val_batch_pred[sample_idx, :] = pred[idx_to_remove, :]
-        # self.val_batch_conf[sample_idx, :] = conf[idx_to_remove, :]
+        self.val_batch_conf[sample_idx, :] = conf[idx_to_remove, :]
         self.val_batch_exit[sample_idx] = exit_idx
-        # self.val_batch_cost[sample_idx] = cost
+        self.val_batch_cost[sample_idx] = cost
 
         self.original_idx = remove_indices_from_tensor(self.original_idx, idx_to_remove)
 

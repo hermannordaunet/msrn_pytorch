@@ -172,9 +172,9 @@ class Agent:
 
             with torch.no_grad():
                 # action_values, confs, exits, costs = self.policy_net(act_state)
-                action_values, exits, costs = self.policy_net(act_state)
+                action_values, confs, exits, costs = self.policy_net(act_state)
 
-            action_indexes, confs = torch.max(action_values, dim=1)
+            _, action_indexes = torch.max(action_values, dim=1) 
 
             # CRITICAL: Slow for-loop?
             for count in range(num_agents):
@@ -245,7 +245,7 @@ class Agent:
 
         if self.target_net:
             # Get max predicted Q values (for next states) from target model
-            next_pred, _ = self.target_net(next_state_batch)
+            next_pred, _, _ = self.target_net(next_state_batch)
 
         else:
             print("[ERROR] The agent has no target net. Only use for eval/visualize")
@@ -263,7 +263,7 @@ class Agent:
 
         self.policy_net.forced_exit_point = None
         # Get expected Q values from policy model
-        pred, cost = self.policy_net(state_batch)
+        pred, conf, cost = self.policy_net(state_batch)
         # CRITICAL: Add back the correct loss
         # cost.append(torch.tensor(1.0).to(self.device))
 
