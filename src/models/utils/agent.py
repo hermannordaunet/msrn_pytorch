@@ -174,7 +174,8 @@ class Agent:
                 # action_values, confs, exits, costs = self.policy_net(act_state)
                 action_values, exits, costs = self.policy_net(act_state)
 
-            action_indexes = torch.argmax(action_values, dim=1)
+            action_indexes, confs = torch.max(action_values, dim=1)
+
             # CRITICAL: Slow for-loop?
             for count in range(num_agents):
                 move_actions_batch[count, :, action_indexes[count]] = 1.0
@@ -194,11 +195,12 @@ class Agent:
 
             exits = None
             costs = None
-            # confs = None
+            confs = None
 
         return (
             move_actions_batch,
             laser_action_batch,
+            confs,
             exits,
             costs,
         )  # confs, exits, costs
@@ -214,7 +216,7 @@ class Agent:
         # CRITICAL: Understand all this code. Written for the IN5490 project.
         # I have forgotten all the details of the DQN training loop with the
         # local and tarfet network.
-        
+
         # self.freeze_exit_layers()
 
         num_ee = len(self.policy_net.exits)

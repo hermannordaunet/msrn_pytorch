@@ -589,7 +589,7 @@ def model_trainer(
             episode_done = False
             while not episode_done:
                 # move_action, laser_action, confs, exits, costs
-                move_action, laser_action, exits, costs = agent.act(
+                move_action, laser_action, confs, exits, costs = agent.act(
                     state_batch_tensor.detach().clone(),
                     epsilon=eps,
                     num_agents=num_teams,
