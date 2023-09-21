@@ -675,7 +675,7 @@ def model_trainer(
             scores.append(scores_all_training_agents)  # save most recent score
 
             # CRITICAL: This line has an error if no learning has been done. Not enough samples in memory.
-            losses.append(agent.cumulative_loss.item())  # save most recent loss
+            losses.append(agent.full_net_loss.item())  # save most recent loss
 
             if warm_start is not None and episode > warm_start:
                 eps = max(eps_end, eps_decay * eps)  # decrease epsilon
@@ -703,7 +703,8 @@ def model_trainer(
                 print(
                     f"Average Score last {len(scores_window)} episodes: {avg_score:.2f}"
                 )
-                print(f"Last loss: {agent.cumulative_loss}")
+                print(f"Last loss: {agent.full_net_loss}")
+                print(f"Cumulative exit loss: {agent.cumulative_exits_loss}")
 
                 min_vals, max_vals, mean_vals = min_max_conf_from_dataset(
                     conf_min_max, include_last=False

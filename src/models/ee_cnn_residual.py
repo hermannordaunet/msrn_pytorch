@@ -78,6 +78,7 @@ class EE_CNN_Residual(nn.Module):
         self.layers = nn.ModuleList()
         self.exits = nn.ModuleList()
         self.stages = nn.ModuleList()
+        self.layers_without_exit = nn.ModuleList()
 
         # Cost at each exit and the complexity
         self.cost = list()
@@ -162,11 +163,14 @@ class EE_CNN_Residual(nn.Module):
 
         in_size = planes * block.expansion
         # self.confidence = confidence_linear_sigmoid(in_size)
-        self.confidence = confidence_linear_softmax(in_size)
+        # self.confidence = confidence_linear_softmax(in_size)
         self.classifier = classifier_linear(in_size, num_classes)
         # self.classifier = classifier_linear_softmax(in_size, self.num_classes)
 
         self.stages.append(nn.Sequential(*self.layers))
+        self.layers_without_exit.extend(self.layers)
+        self.layers_without_exit.append(self.classifier)
+        
         if initalize_parameters:
             self.parameter_initializer()
 
@@ -249,6 +253,7 @@ class EE_CNN_Residual(nn.Module):
         """
 
         self.stages.append(nn.Sequential(*self.layers))
+        self.layers_without_exit.extend(self.layers)
         self.exits.append(
             ExitBlock(self.inplanes, self.num_classes, self.input_shape, exit_type)
         )

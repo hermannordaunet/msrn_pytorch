@@ -84,7 +84,8 @@ class Agent:
         self.pred_loss = None
         self.cost_loss = None
         self.train_conf = None
-        self.cumulative_loss = None
+        self.full_net_loss = None
+        self.cumulative_exits_loss = None
 
         if self.prioritized_memory:
             self.memory = PrioritizedMemory(self.memory_size, self.batch_size)
@@ -299,9 +300,7 @@ class Agent:
         self.last_Q_targets = Q_targets
         self.last_Q_expected = Q_expected[-1]
 
-        self.cumulative_loss = q_full_net_loss
-
-        self.freeze_exit_layers()
+        self.full_net_loss = q_full_net_loss
 
         # Minimize the loss
         self.optimizer.zero_grad()
@@ -313,12 +312,9 @@ class Agent:
             )
 
         self.optimizer.step()
-        # self.exit_optimizer.step()
 
         if self.scheduler is not None:
             self.scheduler.step()
-
-        self.unfreeze_exit_layers()
 
         pred, _, _ = self.policy_net(state_batch)
 
@@ -329,6 +325,9 @@ class Agent:
             else:
                 loss_exit += exit_loss(exit_pred, action_batch)
 
+        self.cumulative_exits_loss = loss_exit
+
+        self.exit_optimizer.zero_grad()
         loss_exit.backward()
 
         self.exit_optimizer.step()
@@ -363,7 +362,7 @@ class Agent:
 
     def initalize_optimizer(self):
         # Getting the network parameters
-        policy_net_parameters = self.policy_net.parameters()
+        policy_net_parameters = self.policy_net.layers_without_exit.parameters()
 
         if self.config["optimizer"] == "adam":
             self.optimizer = optim.Adam(
