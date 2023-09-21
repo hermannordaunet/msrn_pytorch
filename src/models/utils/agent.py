@@ -90,7 +90,9 @@ class Agent:
             self.memory = ReplayMemory(self.memory_size, self.batch_size)
 
         self.optimizer = None
+        self.exit_optimizer = None
         self.initalize_optimizer()
+        self.initalize_exit_optimizer()
 
         if config["use_lr_scheduler"]:
             use_scheduler_milestones = config["scheduler_milestones"] is not None
@@ -174,7 +176,7 @@ class Agent:
                 # action_values, confs, exits, costs = self.policy_net(act_state)
                 action_values, confs, exits, costs = self.policy_net(act_state)
 
-            _, action_indexes = torch.max(action_values, dim=1) 
+            _, action_indexes = torch.max(action_values, dim=1)
 
             # CRITICAL: Slow for-loop?
             for count in range(num_agents):
@@ -297,10 +299,10 @@ class Agent:
 
         # Minimize the loss
         self.optimizer.zero_grad()
-        q_full_net_loss.backward()
+        q_full_net_loss.backward(retain_graph=True)
 
-        # for loss_exit in pred_loss_exits:
-        #     loss_exit.backward()
+        for loss_exit in pred_loss_exits:
+            loss_exit.backward(retain_graph=True)
 
         if self.clip_gradients:
             torch.nn.utils.clip_grad_norm_(
@@ -308,6 +310,7 @@ class Agent:
             )
 
         self.optimizer.step()
+        self.exit_optimizer.step()
 
         if self.scheduler is not None:
             self.scheduler.step()
@@ -366,6 +369,37 @@ class Agent:
         elif self.config["optimizer"] == "RMSprop":
             self.optimizer = optim.RMSprop(
                 policy_net_parameters,
+                lr=self.config["learning_rate"]["lr"],
+                # weight_decay=self.config["weight_decay"],
+            )
+        else:
+            raise Exception("invalid optimizer")
+
+    def initalize_exit_optimizer(self):
+        exit_parameters = self.policy_net.exits.parameters()
+
+        if self.config["optimizer"] == "adam":
+            self.exit_optimizer = optim.Adam(
+                exit_parameters,
+                lr=self.config["learning_rate"]["lr"],
+                # weight_decay=self.config["weight_decay"],
+            )
+
+        elif self.config["optimizer"] == "adamW":
+            self.exit_optimizer = optim.AdamW(
+                exit_parameters,
+                lr=self.config["learning_rate"]["lr"],
+                # weight_decay=self.config["weight_decay"],
+            )
+        elif self.config["optimizer"] == "SGD":
+            self.exit_optimizer = optim.SGD(
+                exit_parameters,
+                lr=self.config["learning_rate"]["lr"],
+                # weight_decay=self.config["weight_decay"],
+            )
+        elif self.config["optimizer"] == "RMSprop":
+            self.exit_optimizer = optim.RMSprop(
+                exit_parameters,
                 lr=self.config["learning_rate"]["lr"],
                 # weight_decay=self.config["weight_decay"],
             )
