@@ -90,9 +90,9 @@ class Agent:
             self.memory = ReplayMemory(self.memory_size, self.batch_size)
 
         self.optimizer = None
-        self.exit_optimizer = None
+        # self.exit_optimizer = None
         self.initalize_optimizer()
-        self.initalize_exit_optimizer()
+        # self.initalize_exit_optimizer()
 
         if config["use_lr_scheduler"]:
             use_scheduler_milestones = config["scheduler_milestones"] is not None
@@ -275,7 +275,7 @@ class Agent:
         #     Q_expected, Q_targets, action_batch, conf, cost, num_ee=num_ee
         # )
 
-        q_full_net_loss, pred_loss_exits, cost_loss, last_Q_expected = loss(
+        q_full_net_loss, pred_loss_exits, cumulative_loss, cost_loss, last_Q_expected = loss(
             pred, Q_targets, action_batch, cost, num_ee=num_ee
         )
 
@@ -293,16 +293,16 @@ class Agent:
         self.last_Q_targets = Q_targets
         self.last_Q_expected = last_Q_expected
 
-        self.cumulative_loss = q_full_net_loss
+        self.cumulative_loss = cumulative_loss
 
         # self.freeze_exit_layers()
 
         # Minimize the loss
         self.optimizer.zero_grad()
-        q_full_net_loss.backward(retain_graph=True)
+        cumulative_loss.backward()
 
-        for loss_exit in pred_loss_exits:
-            loss_exit.backward(retain_graph=True)
+        # for loss_exit in pred_loss_exits:
+        #     loss_exit.backward(retain_graph=True)
 
         if self.clip_gradients:
             torch.nn.utils.clip_grad_norm_(
@@ -310,7 +310,7 @@ class Agent:
             )
 
         self.optimizer.step()
-        self.exit_optimizer.step()
+        # self.exit_optimizer.step()
 
         if self.scheduler is not None:
             self.scheduler.step()
