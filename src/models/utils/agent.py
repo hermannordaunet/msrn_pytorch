@@ -302,7 +302,7 @@ class Agent:
         q_full_net_loss.backward(retain_graph=True)
 
         for loss_exit in pred_loss_exits:
-            loss_exit.backward()
+            loss_exit.backward(retain_graph=True)
 
         if self.clip_gradients:
             torch.nn.utils.clip_grad_norm_(
