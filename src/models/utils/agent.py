@@ -15,7 +15,8 @@ from utils.loss_functions import (
     loss_v5,
     loss_v6,
     loss_v7,
-    loss_exit
+    loss_v8,
+    loss_exit,
 )
 
 from utils.print_utils import print_min_max_conf
@@ -278,9 +279,7 @@ class Agent:
         loss = self.initalize_loss_function()
         exit_loss = self.initalize_exit_loss()
 
-        q_full_net_loss = loss(
-            Q_expected, Q_targets, num_ee=num_ee
-        )
+        q_full_net_loss = loss(Q_expected, Q_targets, num_ee=num_ee)
 
         # q_full_net_loss, pred_loss_exits, cumulative_loss, cost_loss, last_Q_expected = loss(
         #     pred, Q_targets, action_batch, cost, num_ee=num_ee
@@ -308,7 +307,6 @@ class Agent:
         self.optimizer.zero_grad()
         q_full_net_loss.backward()
 
-
         if self.clip_gradients:
             torch.nn.utils.clip_grad_norm_(
                 self.policy_net.parameters(), self.max_grad_norm
@@ -321,7 +319,7 @@ class Agent:
             self.scheduler.step()
 
         self.unfreeze_exit_layers()
-        
+
         pred, _, _ = self.policy_net(state_batch)
 
         loss_exit = None
@@ -335,7 +333,6 @@ class Agent:
 
         self.exit_optimizer.step()
 
-        
         # Update target network
         self.soft_update(self.policy_net, self.target_net, self.tau)
 
@@ -442,6 +439,8 @@ class Agent:
             return loss_v6
         elif self.model_param["loss_function"] == "v7":
             return loss_v7
+        elif self.model_param["loss_function"] == "v8":
+            return loss_v8
         else:
             raise Exception("invalid loss function")
 

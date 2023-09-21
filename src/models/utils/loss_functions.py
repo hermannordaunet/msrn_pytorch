@@ -192,4 +192,28 @@ def loss_v7(pred, target, actions, cost, num_ee=0):
 
         cumulative_loss += pred_loss
     
-    return q_loss_full, cumulative_loss, cost_loss, Q_expected[-1]
+    return q_loss_full, pred_loss_exits, cumulative_loss, cost_loss, Q_expected[-1]
+
+
+def loss_v8(pred, target, actions, cost, num_ee=0):
+    Q_expected = list()
+    for p in pred:
+        expected_value = p.gather(1, actions)
+        Q_expected.append(expected_value)
+
+    # cumulative_pred = [None] * num_ee + [Q_expected[num_ee]]
+    pred_loss_exits = list()
+    cost_loss = 0
+
+    q_loss_full = F.smooth_l1_loss(Q_expected[num_ee], target)
+    cumulative_loss = q_loss_full
+
+    m = nn.LogSoftmax(dim=1)
+    for i in range(num_ee - 1, -1, -1):
+
+        pred_loss = F.nll_loss(m(pred[i].squeeze()), actions.squeeze())
+        pred_loss_exits.append(pred_loss)
+
+        cumulative_loss += pred_loss
+    
+    return q_loss_full, pred_loss_exits, cumulative_loss, cost_loss, Q_expected[-1]
