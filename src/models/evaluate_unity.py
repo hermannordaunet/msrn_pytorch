@@ -99,7 +99,7 @@ def extract_exit_points_from_agents(
                     message += f", Reward: {reward}"
 
                 if include_food_info:
-                    message += f"Good Food: {good_food}, Bad Food: {bad_food}"
+                    message += f", Good Food: {good_food}, Bad Food: {bad_food}"
 
                 print(message)
 
@@ -224,7 +224,9 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                             if agent_reward > 0.0:
                                 agent_dict["good_food"] += 1
 
-                            agent_dict["episode_score"] += agent_reward
+                            if float(agent_reward) != 0.0:
+                                agent_dict["episode_score"] += agent_reward
+
                     else:
                         agent_id = active_agent_id[team_idx]
                         if agent_id in agents_need_action:
