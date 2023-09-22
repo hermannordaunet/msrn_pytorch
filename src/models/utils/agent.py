@@ -272,14 +272,15 @@ class Agent:
         # CRITICAL: Add back the correct loss
         # cost.append(torch.tensor(1.0).to(self.device))
 
-        Q_expected = list()
-        for p in pred:
-            expected_value = p.gather(1, action_batch)
-            Q_expected.append(expected_value)
+        # Q_expected = list()
+        # for p in pred:
+        #     expected_value = pred[-1].gather(1, action_batch)
+        #     Q_expected.append(expected_value)
 
         loss = self.initalize_loss_function()
         exit_loss = self.initalize_exit_loss()
 
+        Q_expected = pred[-1].gather(1, action_batch)
         q_full_net_loss = loss(Q_expected, Q_targets, num_ee=num_ee)
 
         # q_full_net_loss, pred_loss_exits, cumulative_loss, cost_loss, last_Q_expected = loss(
@@ -316,10 +317,12 @@ class Agent:
         if self.scheduler is not None:
             self.scheduler.step()
 
-        pred, _, _ = self.policy_net(state_batch)
+        pred, conf, cost = self.policy_net(state_batch)
 
         loss_exit = None
-        for exit_pred in pred[:-1]:
+        exit_preds = pred[:-1]
+        exit_costs = cost[:-1]
+        for idx, (exit_pred, exit_cost) in enumerate(zip(reversed(exit_preds), reversed(exit_costs))):
             if loss_exit is None:
                 loss_exit = exit_loss(exit_pred, action_batch)
             else:

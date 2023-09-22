@@ -116,7 +116,7 @@ def main():
         "distribution": None,
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": False, "eval": False, "visualize": True},
+        "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -155,8 +155,8 @@ def main():
             "all_agents_active": True,
         },
         "eval": {
-            "episodes": 5,
-            "every-n-th-episode": 35,
+            "episodes": 1,
+            "every-n-th-episode": 1,
             "all_agents_active": False,
         },
     }
@@ -656,6 +656,12 @@ def model_trainer(
                             conf_min_max.append(agent.train_conf)
 
                     state_batch_tensor[team_idx, ...] = next_state.detach().clone()
+
+                    if reward < 0.0:
+                        agent_dict["bad_food"] += 1
+
+                    if reward > 0.0:
+                        agent_dict["good_food"] += 1
 
                     if float(reward) != 0.0:
                         agent_dict["episode_score"] += reward
