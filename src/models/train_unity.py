@@ -152,7 +152,7 @@ def main():
         "print_range": 10,
         "visualize": {
             "episodes": 10,
-            "all_agents_active": False,
+            "all_agents_active": True,
         },
         "eval": {
             "episodes": 5,
@@ -581,6 +581,8 @@ def model_trainer(
                 agent_id = decision_steps.agent_id[-1]  # random agent from each team
 
                 training_agents[team][agent_id] = {
+                    "bad_food": 0,
+                    "good_food": 0,
                     "episode_score": 0,
                     "exit_points": [0] * (agent.policy_net.num_ee + 1),
                 }
@@ -615,6 +617,7 @@ def model_trainer(
                     decision_steps, terminal_steps = env.get_steps(team)
                     agents_need_action = decision_steps.agent_id
                     agent_id = list(training_agents[team].keys())[0]
+                    agent_dict = training_agents[team][agent_id]
 
                     if agent_id in agents_need_action:
                         agent_obs = decision_steps[agent_id].obs
@@ -655,13 +658,13 @@ def model_trainer(
                     state_batch_tensor[team_idx, ...] = next_state.detach().clone()
 
                     if float(reward) != 0.0:
-                        training_agents[team][agent_id]["episode_score"] += reward
+                        agent_dict["episode_score"] += reward
 
                     if isinstance(exits, int):
-                        training_agents[team][agent_id]["exit_points"][exits] += 1
+                        agent_dict["exit_points"][exits] += 1
                     elif isinstance(exits, torch.Tensor):
                         exit = exits[team_idx]
-                        training_agents[team][agent_id]["exit_points"][exit] += 1
+                        agent_dict["exit_points"][exit] += 1
                     elif exits is None:
                         random_actions += 1
                     else:
@@ -716,6 +719,7 @@ def model_trainer(
                 extract_exit_points_from_agents(
                     training_agents,
                     include_reward=True,
+                    include_food_info=True, 
                     mode="TRAIN",
                     print_out=True,
                     random_actions=random_actions,

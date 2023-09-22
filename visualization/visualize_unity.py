@@ -60,6 +60,8 @@ def visualize_trained_model(env, agent, config, verbose=False):
                     state_batch_tensor[agent_id, ...] = state
 
                     visual_agents[team][agent_id] = {
+                        "bad_food": 0,
+                        "good_food": 0,
                         "episode_score": 0,
                         "exit_points": [0] * (agent.policy_net.num_ee + 1),
                         "agent_confs": [[] for _ in range(agent.policy_net.num_ee + 1)],
@@ -122,28 +124,40 @@ def visualize_trained_model(env, agent, config, verbose=False):
                     agents_need_action = decision_steps.agent_id
                     if all_agents_active:
                         for agent_id in agents_need_action:
+                            agent_dict = visual_agents[team][agent_id]
                             agent_obs = decision_steps[agent_id].obs
                             next_state = get_grid_based_perception(agent_obs)
                             state = next_state
                             state_batch_tensor[agent_id, ...] = state
 
                             agent_reward = decision_steps[agent_id].reward
-                            visual_agents[team][agent_id][
-                                "episode_score"
-                            ] += agent_reward
+                            if agent_reward < 0.0:
+                                visual_agents[team][agent_id]["bad_food"] += 1
+
+                            if agent_reward > 0.0:
+                                visual_agents[team][agent_id]["good_food"] += 1
+
+                            if float(agent_reward) != 0.0:
+                                agent_dict["episode_score"] += agent_reward
 
                     else:
                         agent_id = active_agent_id[team_idx]
                         if agent_id in agents_need_action:
+                            agent_dict = visual_agents[team][agent_id]
                             agent_obs = decision_steps[agent_id].obs
                             next_state = get_grid_based_perception(agent_obs)
                             state = next_state
                             state_batch_tensor[agent_id, ...] = state
 
                             agent_reward = decision_steps[agent_id].reward
-                            visual_agents[team][agent_id][
-                                "episode_score"
-                            ] += agent_reward
+                            if agent_reward < 0.0:
+                                visual_agents[team][agent_id]["bad_food"] += 1
+
+                            if agent_reward > 0.0:
+                                visual_agents[team][agent_id]["good_food"] += 1
+
+                            if float(agent_reward) != 0.0:
+                                agent_dict["episode_score"] += agent_reward
 
                     terminated_agent_ids = terminal_steps.agent_id
                     done = True if len(terminated_agent_ids) > 0 else False
@@ -161,6 +175,7 @@ def visualize_trained_model(env, agent, config, verbose=False):
                     visual_agents,
                     active_agent_id=active_agent_id,
                     include_reward=True,
+                    include_food_info=True,
                     mode="VISUALIZE",
                     print_out=True,
                 )
@@ -168,6 +183,7 @@ def visualize_trained_model(env, agent, config, verbose=False):
                 extract_exit_points_from_agents(
                     visual_agents,
                     include_reward=True,
+                    include_food_info=True,
                     mode="VISUALIZE",
                     print_out=True,
                 )

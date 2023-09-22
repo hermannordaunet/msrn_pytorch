@@ -67,6 +67,7 @@ def extract_exit_points_from_agents(
     eval_agents: dict,
     active_agent_id: list() = None,
     include_reward=False,
+    include_food_info=False,
     mode: str = "EVAL",
     print_out=True,
     random_actions: list = None,
@@ -80,8 +81,11 @@ def extract_exit_points_from_agents(
 
         for agent_id in agent_ids:
             if agent_id in agents_to_print:
-                exit_points = eval_agents[team][agent_id]["exit_points"]
-                reward = eval_agents[team][agent_id]["episode_score"]
+                agent_dict = eval_agents[team][agent_id]
+                exit_points = agent_dict["exit_points"]
+                reward = agent_dict["episode_score"]
+                bad_food = agent_dict["bad_food"]
+                good_food = agent_dict["good_food"]
 
                 if not print_out:
                     return exit_points, reward
@@ -93,6 +97,9 @@ def extract_exit_points_from_agents(
 
                 if include_reward:
                     message += f", Reward: {reward}"
+
+                if include_food_info:
+                    message += f"Good Food: {good_food}, Bad Food: {bad_food}"
 
                 print(message)
 
@@ -140,6 +147,8 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     state_batch_tensor[agent_id, ...] = state
 
                     eval_agents[team][agent_id] = {
+                        "bad_food": 0,
+                        "good_food": 0,
                         "episode_score": 0,
                         "exit_points": [0] * (agent.policy_net.num_ee + 1),
                         "agent_confs": [[] for _ in range(agent.policy_net.num_ee + 1)],
@@ -202,23 +211,38 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     agents_need_action = decision_steps.agent_id
                     if all_agents_active:
                         for agent_id in agents_need_action:
+                            agent_dict = eval_agents[team][agent_id]
                             agent_obs = decision_steps[agent_id].obs
                             next_state = get_grid_based_perception(agent_obs)
                             state = next_state
                             state_batch_tensor[agent_id, ...] = state
 
                             agent_reward = decision_steps[agent_id].reward
-                            eval_agents[team][agent_id]["episode_score"] += agent_reward
+                            if agent_reward < 0.0:
+                                agent_dict["bad_food"] += 1
+
+                            if agent_reward > 0.0:
+                                agent_dict["good_food"] += 1
+
+                            agent_dict["episode_score"] += agent_reward
                     else:
                         agent_id = active_agent_id[team_idx]
                         if agent_id in agents_need_action:
+                            agent_dict = eval_agents[team][agent_id]
                             agent_obs = decision_steps[agent_id].obs
                             next_state = get_grid_based_perception(agent_obs)
                             state = next_state
                             state_batch_tensor[agent_id, ...] = state
 
                             agent_reward = decision_steps[agent_id].reward
-                            eval_agents[team][agent_id]["episode_score"] += agent_reward
+                            if agent_reward < 0.0:
+                                agent_dict["bad_food"] += 1
+
+                            if agent_reward > 0.0:
+                                agent_dict["good_food"] += 1
+
+                            if float(agent_reward) != 0.0:
+                                agent_dict["episode_score"] += agent_reward
 
                     terminated_agent_ids = terminal_steps.agent_id
                     done = True if len(terminated_agent_ids) > 0 else False
@@ -238,11 +262,15 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     eval_agents,
                     active_agent_id=active_agent_id,
                     include_reward=True,
+                    include_food_info=True,
                     print_out=True,
                 )
             else:
                 extract_exit_points_from_agents(
-                    eval_agents, include_reward=True, print_out=True
+                    eval_agents,
+                    include_reward=True,
+                    include_food_info=True,
+                    print_out=True,
                 )
 
         if was_in_training:
