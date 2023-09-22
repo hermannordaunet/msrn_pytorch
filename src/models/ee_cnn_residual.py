@@ -40,7 +40,7 @@ class EE_CNN_Residual(nn.Module):
         num_classes=10,
         block=BasicBlock,
         num_ee=1,
-        exit_type=None,
+        exit_type="bnpool",
         exit_threshold=0.9,
         repetitions=list(),
         init_planes=int(),

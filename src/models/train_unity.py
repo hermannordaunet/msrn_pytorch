@@ -116,7 +116,7 @@ def main():
         "distribution": None,
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": True, "visualize": False},
+        "mode_setups": {"train": False, "eval": False, "visualize": True},
         "manual_seed": 350,  # TODO: Seed everything
         "device": DEVICE,
     }
@@ -178,7 +178,7 @@ def main():
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     # EVAL_MODEL = model_param["mode_setups"]["eval"]
 
-    TIMESTAMP = None  # int(1694004681)
+    TIMESTAMP = int(1695313265)
 
     VERBOSE = True
 
@@ -204,9 +204,9 @@ def main():
             # )
 
         else:
-            relative_path = "builds/FoodCollector_1_env_no_respawn.app"
+            # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
-            # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
+            relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
 
     else:
         relative_path = None
@@ -477,6 +477,7 @@ def main():
             num_classes=model_param["num_classes"],
             repetitions=model_param["repetitions"],
             distribution=model_param["distribution"],
+            exit_threshold=model_param["exit_threshold"],
         )
 
         models_directory = model_param["models_dir"]
