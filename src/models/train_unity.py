@@ -152,10 +152,11 @@ def main():
         "print_range": 10,
         "visualize": {
             "episodes": 10,
+            "all_agents_active": False,
         },
         "eval": {
-            "episodes": 1,
-            "every-n-th-episode": 1,
+            "episodes": 5,
+            "every-n-th-episode": 35,
             "all_agents_active": False,
         },
     }
