@@ -366,30 +366,31 @@ class Agent:
     def initalize_optimizer(self):
         # Getting the network parameters
         policy_net_parameters = self.policy_net.layers_without_exit.parameters()
+        lr_backbone = self.config["learning_rate"]["lr"]
 
         if self.config["optimizer"] == "adam":
             self.optimizer = optim.Adam(
                 policy_net_parameters,
-                lr=self.config["learning_rate"]["lr"],
+                lr=lr_backbone,
                 # weight_decay=self.config["weight_decay"],
             )
 
         elif self.config["optimizer"] == "adamW":
             self.optimizer = optim.AdamW(
                 policy_net_parameters,
-                lr=self.config["learning_rate"]["lr"],
+                lr=lr_backbone,
                 # weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "SGD":
             self.optimizer = optim.SGD(
                 policy_net_parameters,
-                lr=self.config["learning_rate"]["lr"],
+                lr=lr_backbone,
                 # weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "RMSprop":
             self.optimizer = optim.RMSprop(
                 policy_net_parameters,
-                lr=self.config["learning_rate"]["lr"],
+                lr=lr_backbone,
                 # weight_decay=self.config["weight_decay"],
             )
         else:
@@ -397,30 +398,31 @@ class Agent:
 
     def initalize_exit_optimizer(self):
         exit_parameters = self.policy_net.exits.parameters()
+        exit_lr = self.config["learning_rate"]["lr_exit"]
 
         if self.config["optimizer"] == "adam":
             self.exit_optimizer = optim.Adam(
                 exit_parameters,
-                lr=self.config["learning_rate"]["lr"],
+                lr=exit_lr,
                 # weight_decay=self.config["weight_decay"],
             )
 
         elif self.config["optimizer"] == "adamW":
             self.exit_optimizer = optim.AdamW(
                 exit_parameters,
-                lr=self.config["learning_rate"]["lr"],
+                lr=exit_lr,
                 # weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "SGD":
             self.exit_optimizer = optim.SGD(
                 exit_parameters,
-                lr=self.config["learning_rate"]["lr"],
+                lr=exit_lr,
                 # weight_decay=self.config["weight_decay"],
             )
         elif self.config["optimizer"] == "RMSprop":
             self.exit_optimizer = optim.RMSprop(
                 exit_parameters,
-                lr=self.config["learning_rate"]["lr"],
+                lr=exit_lr,
                 # weight_decay=self.config["weight_decay"],
             )
         else:
