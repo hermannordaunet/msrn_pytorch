@@ -16,7 +16,7 @@ from src.models.utils.data_utils import get_grid_based_perception
 
 
 def extract_scores_for_all_agents(
-    eval_agents: dict, all_agents_active=True, flatten=False
+    eval_agents: dict, all_agents_active=True, food_info=False, flatten=False
 ):
     # Extract the team keys from the eval_agents
     team_keys = list(eval_agents.keys())
@@ -34,22 +34,42 @@ def extract_scores_for_all_agents(
 
     if flatten:
         # Flatten the scores into a 1D list
-        scores = []
+        scores = list()
+
+        if food_info:
+            bad_food = list()
+            good_food = list()
+
         for team_id, team_key in enumerate(team_keys):
             for agent_key in agent_keys[team_id]:
-                scores.append(eval_agents[team_key][agent_key]["episode_score"])
+                agent_dict = eval_agents[team_key][agent_key]
+                scores.append(agent_dict["episode_score"])
+
+                if food_info:
+                    bad_food.append(agent_dict["bad_food"])
+                    good_food.append(agent_dict["good_food"])
     else:
         # Initialize a 2D list with zeros based on the number of teams and episodes
         num_teams = len(team_keys)
         scores = [None] * num_teams
+
+        if food_info:
+            bad_food = [None] * num_teams
+            good_food = [None] * num_teams
 
         # Iterate through teams and episodes to fill the scores
         for i, team_key in enumerate(team_keys):
             scores[i] = [0] * len(agent_keys[i])
             for j, episode_key in enumerate(agent_keys[i]):
                 if episode_key in eval_agents[team_key]:
-                    scores[i][j] = eval_agents[team_key][episode_key]["episode_score"]
-
+                    agent_dict = eval_agents[team_key][episode_key]
+                    scores[i][j] = agent_dict["episode_score"]
+                    bad_food[i][j] = agent_dict["bad_food"]
+                    good_food[i][j] = agent_dict["good_food"]
+    
+    if food_info:
+        return scores, bad_food, good_food
+    
     return scores
 
 
@@ -101,7 +121,7 @@ def extract_exit_points_from_agents(
                 if include_food_info:
                     message += f", Good Food: {good_food}, Bad Food: {bad_food}"
 
-                print(message)
+    print(message)
 
 
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
