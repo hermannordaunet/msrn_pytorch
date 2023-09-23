@@ -125,7 +125,7 @@ def plot_scores_from_nested_list(
 
 
 # save loss plot
-def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./"):
+def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./", loss_type="Q-value"):
     losses = np.array(losses).squeeze()
 
     if losses.ndim > 1:
@@ -145,7 +145,7 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
     sns.set_theme(style="darkgrid")
     sns.lineplot(data=df)
     sns.despine()
-    plt.title(f"{env_name} loss")
+    plt.title(f"{env_name}: {loss_type} loss")
     plt.ylabel("Loss")
     plt.xlabel("Episode")
 
