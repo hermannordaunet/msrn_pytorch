@@ -108,12 +108,12 @@ def main():
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
         "loss_function": "v5",
         "exit_loss_function": "loss_exit",
-        "num_ee": 2,
+        "num_ee": 3,
         "exit_threshold": 0.995,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
-        "distribution": None,
+        "distribution": "linear",
         # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
         "mode_setups": {"train": True, "eval": True, "visualize": False},
@@ -155,8 +155,8 @@ def main():
             "all_agents_active": True,
         },
         "eval": {
-            "episodes": 1,
-            "every-n-th-episode": 1,
+            "episodes": 4,
+            "every-n-th-episode": 35,
             "all_agents_active": False,
         },
     }
@@ -546,7 +546,11 @@ def model_trainer(
 
     num_episodes = config["num_episodes"]
 
-    scores, losses = list(), list()  # list containing scores/losses from each episode
+    scores, losses, exit_losses = (
+        list(),
+        list(),
+        list(),
+    )  # list containing scores/losses from each episode
     scores_window = deque(maxlen=print_range)
 
     # Evaluate variables
@@ -678,8 +682,12 @@ def model_trainer(
 
                     episode_done = done
 
-            scores_all_training_agents = extract_scores_for_all_agents(
-                training_agents, flatten=True
+            (
+                scores_all_training_agents,
+                bad_food,
+                good_food,
+            ) = extract_scores_for_all_agents(
+                training_agents, food_info=True, flatten=True
             )
 
             scores_window.append(scores_all_training_agents)  # save most recent score
@@ -687,6 +695,7 @@ def model_trainer(
 
             # CRITICAL: This line has an error if no learning has been done. Not enough samples in memory.
             losses.append(agent.full_net_loss.item())  # save most recent loss
+            exit_losses.append(agent.cumulative_exits_loss.item())
 
             if warm_start is not None and episode > warm_start:
                 eps = max(eps_end, eps_decay * eps)  # decrease epsilon
@@ -700,9 +709,12 @@ def model_trainer(
                 wandb.log(
                     {
                         "loss": losses[-1],
+                        "exit_loss": exit_losses[-1],
                         "average_score": avg_score,
                         "min_last_score": min(scores_all_training_agents),
                         "max_last_score": max(scores_all_training_agents),
+                        "good_food": np.mean(good_food),
+                        "bad_food": np.mean(bad_food),
                         "epsilon": eps,
                         "Mean Q targets": torch.mean(torch.abs(agent.last_Q_targets)),
                         "Mean Q expected": torch.mean(torch.abs(agent.last_Q_expected)),
@@ -725,7 +737,7 @@ def model_trainer(
                 extract_exit_points_from_agents(
                     training_agents,
                     include_reward=True,
-                    include_food_info=True, 
+                    include_food_info=True,
                     mode="TRAIN",
                     print_out=True,
                     random_actions=random_actions,
@@ -739,6 +751,15 @@ def model_trainer(
                     labels=["train"],
                     env_name=config["env_name"],
                     result_dir=results_directory,
+                )
+
+            if len(exit_losses) > 1:
+                plot_loss_from_list(
+                    exit_losses,
+                    labels=["train"],
+                    env_name=config["env_name"],
+                    result_dir=results_directory,
+                    loss_type="Cumulative Exit"
                 )
 
             if len(scores) > 1:
