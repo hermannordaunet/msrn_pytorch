@@ -140,6 +140,7 @@ def main():
         "learning_rate": {
             "lr": 1e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
+            "lr_exit": 0.001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": False,
@@ -152,7 +153,7 @@ def main():
         "print_range": 10,
         "visualize": {
             "episodes": 10,
-            "all_agents_active": True,
+            "all_agents_active": False,
         },
         "eval": {
             "episodes": 1,
@@ -183,7 +184,7 @@ def main():
     VERBOSE = True
 
     # Unity environment spesific
-    # float_parameter_channel = EnvironmentParametersChannel()
+    float_parameter_channel = EnvironmentParametersChannel()
     stats_side_channel = StatsSideChannel()
 
     engine_config_channel = EngineConfigurationChannel()
@@ -192,7 +193,8 @@ def main():
     SIDE_CHANNELS = [
         engine_config_channel,
         stats_side_channel,
-    ]  # , float_parameter_channel
+        float_parameter_channel,
+    ]
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
@@ -228,7 +230,7 @@ def main():
 
     # Unity environment spesific
     # float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
-    # float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
+    float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
 
     env.reset()
 
@@ -725,7 +727,7 @@ def model_trainer(
                 extract_exit_points_from_agents(
                     training_agents,
                     include_reward=True,
-                    include_food_info=True, 
+                    include_food_info=True,
                     mode="TRAIN",
                     print_out=True,
                     random_actions=random_actions,
