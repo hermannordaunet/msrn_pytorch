@@ -322,7 +322,7 @@ class Agent:
         loss_exit = None
         exit_preds = pred[:-1]
         exit_costs = cost[:-1]
-        for idx, (exit_pred, exit_cost) in enumerate(zip(reversed(exit_preds), reversed(exit_costs))):
+        for idx, (exit_pred, exit_cost) in enumerate(zip(exit_preds, exit_costs)):
             if loss_exit is None:
                 loss_exit = exit_loss(exit_pred, action_batch)
             else:
