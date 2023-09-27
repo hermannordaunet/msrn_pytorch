@@ -109,7 +109,7 @@ def main():
         "loss_function": "v5",
         "exit_loss_function": "loss_exit",
         "num_ee": 3,
-        "exit_threshold": 0.995,
+        "exit_threshold": 0.95,
         "repetitions": [2, 2, 2, 2],
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
@@ -140,7 +140,7 @@ def main():
         "learning_rate": {
             "lr": 1e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
-            "lr_exit": 0.001,
+            "lr_exit": 0.01,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": False,
@@ -761,7 +761,7 @@ def model_trainer(
                     labels=["train"],
                     env_name=config["env_name"],
                     result_dir=results_directory,
-                    loss_type="Cumulative Exit"
+                    loss_type="Cumulative Exit",
                 )
 
             if len(scores) > 1:
@@ -789,10 +789,19 @@ def model_trainer(
                     break
 
             evaluate_this_episode = not episode % evaluate_every_n_th_episode
+            done_training = episode == num_episodes
+            run_evaluation_now = evaluate_this_episode or done_training
 
-            if evaluate_model and evaluate_this_episode:
+            if evaluate_model and run_evaluation_now:
+                message = ""
+
+                if done_training:
+                    message += "\nEvaluation after last episode"
+                
+                message += "\nEvaluation started"
+
                 if verbose:
-                    print(f"\nEvaluation started")
+                    print(message)
 
                 evaluate_trained_model(env, agent, config, episode, verbose=verbose)
 
