@@ -66,10 +66,10 @@ def extract_scores_for_all_agents(
                     scores[i][j] = agent_dict["episode_score"]
                     bad_food[i][j] = agent_dict["bad_food"]
                     good_food[i][j] = agent_dict["good_food"]
-    
+
     if food_info:
         return scores, bad_food, good_food
-    
+
     return scores
 
 
@@ -90,7 +90,7 @@ def extract_exit_points_from_agents(
     include_food_info=False,
     mode: str = "EVAL",
     print_out=True,
-    random_actions: list = None,
+    random_actions=False,
 ):
     for team, team_data in eval_agents.items():
         agent_ids = team_data.keys()
@@ -113,6 +113,7 @@ def extract_exit_points_from_agents(
                 message = f"[{mode}] Agent ID: {agent_id}, Exit Points: {exit_points}"
 
                 if random_actions:
+                    random_actions = agent_dict["random_actions"]
                     message += f", Random Actions: {random_actions}"
 
                 if include_reward:

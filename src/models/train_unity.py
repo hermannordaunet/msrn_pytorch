@@ -134,7 +134,7 @@ def main():
         "memory_size": 25_000,  # 25_000,  # 10_000
         "minimal_memory_size": 512,  # Either batch_size or minimal_memory_size before training
         "batch_size": 128,  # Training batch size
-        "num_episodes": 500,
+        "num_episodes": 1,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {
@@ -156,8 +156,8 @@ def main():
             "all_agents_active": False,
         },
         "eval": {
-            "episodes": 4,
-            "every-n-th-episode": 35,
+            "episodes": 1,
+            "every-n-th-episode": 1,
             "all_agents_active": False,
         },
     }
@@ -590,6 +590,7 @@ def model_trainer(
                     "bad_food": 0,
                     "good_food": 0,
                     "episode_score": 0,
+                    "random_actions": 0,
                     "exit_points": [0] * (agent.policy_net.num_ee + 1),
                 }
                 agent_obs = decision_steps[agent_id].obs
@@ -678,7 +679,7 @@ def model_trainer(
                         exit = exits[team_idx]
                         agent_dict["exit_points"][exit] += 1
                     elif exits is None:
-                        random_actions += 1
+                        agent_dict["random_actions"] += 1
                     else:
                         print("The type of exits are not supported at this point")
 
@@ -742,7 +743,7 @@ def model_trainer(
                     include_food_info=True,
                     mode="TRAIN",
                     print_out=True,
-                    random_actions=random_actions,
+                    random_actions=True,
                 )
 
                 print(f"Number of transistions in memory: {len(agent.memory)}")
