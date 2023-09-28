@@ -131,16 +131,16 @@ def main():
         "laser_length": 1,
         "agent_scale": 1,
         "prioritized_memory": False,
-        "memory_size": 25_000,  # 25_000,  # 10_000
-        "minimal_memory_size": 512,  # Either batch_size or minimal_memory_size before training
-        "batch_size": 128,  # Training batch size
-        "num_episodes": 1,
+        "memory_size": 35_000,  # 25_000,  # 10_000
+        "minimal_memory_size": 999,  # Either batch_size or minimal_memory_size before training
+        "batch_size": 256,  # Training batch size
+        "num_episodes": 300,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {
             "lr": 1e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
-            "lr_exit": 0.01,
+            "lr_exit": 0.001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": False,
@@ -156,8 +156,8 @@ def main():
             "all_agents_active": False,
         },
         "eval": {
-            "episodes": 1,
-            "every-n-th-episode": 1,
+            "episodes": 5,
+            "every-n-th-episode": 35,
             "all_agents_active": False,
         },
     }
@@ -165,7 +165,7 @@ def main():
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 0.001,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 4,
+        "update_every": 25,
     }
 
     epsilon_greedy_param = {
@@ -198,12 +198,12 @@ def main():
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
-            relative_path = (
-                "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
-            )
             # relative_path = (
-            #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+            #     "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
             # )
+            relative_path = (
+                "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+            )
 
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
