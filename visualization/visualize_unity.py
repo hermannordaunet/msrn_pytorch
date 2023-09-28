@@ -71,7 +71,9 @@ def visualize_trained_model(env, agent, config, verbose=False):
 
             if not all_agents_active:
                 active_agent_id = extract_one_agent_each_team(visual_agents)
-
+            else:
+                active_agent_id = None
+                
             while not episode_done:
                 move_action, laser_action, confs, exits, costs = agent.act(
                     state_batch_tensor, num_agents=num_total_agents, eval_agent=True
@@ -164,7 +166,7 @@ def visualize_trained_model(env, agent, config, verbose=False):
                     episode_done = done
 
             visual_scores_all_agents = extract_scores_for_all_agents(
-                visual_agents, all_agents_active=all_agents_active, flatten=True
+                visual_agents, active_agents=active_agent_id, flatten=True
             )
             mean_score = np.mean(visual_scores_all_agents)
 

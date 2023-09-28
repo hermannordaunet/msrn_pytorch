@@ -798,7 +798,7 @@ def model_trainer(
 
                 if done_training:
                     message += "\nEvaluation after last episode"
-                
+
                 message += "\nEvaluation started"
 
                 if verbose:

@@ -16,21 +16,20 @@ from src.models.utils.data_utils import get_grid_based_perception
 
 
 def extract_scores_for_all_agents(
-    eval_agents: dict, all_agents_active=True, food_info=False, flatten=False
+    eval_agents: dict, active_agents=None, food_info=False, flatten=False
 ):
     # Extract the team keys from the eval_agents
     team_keys = list(eval_agents.keys())
 
     # Extract all episode keys from all teams' dictionaries
-    agent_keys = list()
-    for team_key in team_keys:
-        agents_in_team = list(eval_agents[team_key].keys())
+    if active_agents is None:
+        agent_keys = list()
+        for team_key in team_keys:
+            agents_in_team = list(eval_agents[team_key].keys())
 
-        if all_agents_active:
             agent_keys.append(tuple(agents_in_team))
-
-        else:
-            agent_keys.append([agents_in_team[-1]])
+    else:
+        agent_keys = [[item] for item in active_agents]
 
     if flatten:
         # Flatten the scores into a 1D list
@@ -122,7 +121,7 @@ def extract_exit_points_from_agents(
                 if include_food_info:
                     message += f", Good Food: {good_food}, Bad Food: {bad_food}"
 
-    print(message)
+                print(message)
 
 
 def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
@@ -272,7 +271,7 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     episode_done = done
 
             eval_scores_all_agents = extract_scores_for_all_agents(
-                eval_agents, all_agents_active=all_agents_active, flatten=True
+                eval_agents, active_agents=active_agent_id, flatten=True
             )
             mean_score = np.mean(eval_scores_all_agents)
 
