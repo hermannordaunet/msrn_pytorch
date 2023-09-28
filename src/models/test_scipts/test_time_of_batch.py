@@ -8,6 +8,7 @@ import random
 from torchvision import models
 from src.models.ee_cnn_residual import EE_CNN_Residual
 
+device = "cuda"
 model = EE_CNN_Residual(
     input_shape=(3, 280, 280),
     num_ee=2,
@@ -15,7 +16,8 @@ model = EE_CNN_Residual(
     planes=[64, 128, 256, 512],
     num_classes=3,
     repetitions=[2, 2, 2, 2],
-).to("mps")
+    exit_threshold=0.3,
+).to(device)
 
 # model = models.resnet18(pretrained=True)
 model.eval()
@@ -23,10 +25,10 @@ model.eval()
 for_loop_times = list()
 batch_times = list()
 
-num_tests = 10
+num_tests = 20
 for i in range(num_tests):
     print(f"{i}/{num_tests}")
-    images = torch.rand((512, 3, 280, 280)).to("mps")
+    images = torch.rand((512, 3, 280, 280)).to(device)
 
     st_for_loop = time.time()
     with torch.no_grad():
