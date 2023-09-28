@@ -71,7 +71,9 @@ def visualize_trained_model(env, agent, config, verbose=False):
 
             if not all_agents_active:
                 active_agent_id = extract_one_agent_each_team(visual_agents)
-
+            else:
+                active_agent_id = None
+                
             while not episode_done:
                 move_action, laser_action, confs, exits, costs = agent.act(
                     state_batch_tensor, num_agents=num_total_agents, eval_agent=True
