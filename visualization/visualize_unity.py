@@ -166,7 +166,7 @@ def visualize_trained_model(env, agent, config, verbose=False):
                     episode_done = done
 
             visual_scores_all_agents = extract_scores_for_all_agents(
-                visual_agents, all_agents_active=all_agents_active, flatten=True
+                visual_agents, active_agents=active_agent_id, flatten=True
             )
             mean_score = np.mean(visual_scores_all_agents)
 
