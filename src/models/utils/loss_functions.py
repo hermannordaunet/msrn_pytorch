@@ -127,11 +127,13 @@ def loss_v5(pred, target, num_ee=0):
     return pred_loss
 
 
-def loss_exit(pred, actions):
+def loss_exit(pred, exit_cost, actions):
     # m = nn.LogSoftmax(dim=1)
     loss = F.nll_loss(pred.squeeze().log(), actions.squeeze())
 
-    return loss
+    exit_loss = loss * exit_cost
+
+    return exit_loss
 
 
 def loss_v6(pred, target, conf, cost, num_ee=0, lambda_coef=1.0):
