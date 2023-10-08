@@ -324,9 +324,9 @@ class Agent:
         exit_costs = cost[:-1]
         for idx, (exit_pred, exit_cost) in enumerate(zip(exit_preds, exit_costs)):
             if loss_exit is None:
-                loss_exit = exit_loss(exit_pred, action_batch)
+                loss_exit = exit_loss(exit_pred, exit_cost, action_batch)
             else:
-                loss_exit += exit_loss(exit_pred, action_batch)
+                loss_exit += exit_loss(exit_pred, exit_cost, action_batch)
 
         self.cumulative_exits_loss = loss_exit
 
