@@ -114,7 +114,6 @@ def main():
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
         "distribution": "linear",
-        # "numbOfCPUThreadsUsed": 10,  # Number of cpu threads use in the dataloader
         "models_dir": None,
         "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed everything
