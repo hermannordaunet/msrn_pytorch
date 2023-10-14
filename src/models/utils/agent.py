@@ -67,6 +67,7 @@ class Agent:
         self.batch_size = self.config["batch_size"]
         self.multiple_epochs = self.config["multiple_epochs"]
         self.num_epochs = self.config["num_epochs"]
+        self.double_dqn = self.config["double_dqn"]
 
         self.gamma = self.dqn_param["gamma"]
         self.tau = self.dqn_param["tau"]
@@ -256,15 +257,37 @@ class Agent:
             print("[ERROR] The agent has no target net. Only use for eval/visualize")
             exit()
 
-        # CRITICAL: Here we get the Q_targets from the last exit of the network
-        # Here we need the network to be set up with some kind of inf threshold
-        # to get the prediction from the last exit
-        Q_targets_next = next_pred[-1].detach().max(1)[0].unsqueeze(1)
+        # -------------------------------------------------------------------------------------- 
+        # Double DQN
+        if self.double_dqn:
 
-        # Compute Q targets for current states
-        Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
+            # TODO: Check if this can be used to make Double DQN
+            # Use policy_net to select the action that maximizes Q-values for the next state
+            next_action, _, _ = self.policy_net(next_state_batch)
+            max_next_action = torch.argmax(next_action[-1].detach(), dim=1)
+
+            # Use target_net to evaluate the Q-value of taking that action in the next state
+            Q_values_next_state = next_pred[-1].detach().gather(1, max_next_action.unsqueeze(1))
+
+            # Compute Q-targets using the reward and discounted Q-values of the next state
+            Q_targets = reward_batch + (self.gamma * Q_values_next_state * (1 - dones_batch))
+
+        # -------------------------------------------------------------------------------------- 
+        else:
+        # -------------------------------------------------------------------------------------- 
+            # DQN
+
+            # CRITICAL: Here we get the Q_targets from the last exit of the network
+            # Here we need the network to be set up with some kind of inf threshold
+            # to get the prediction from the last exit
+            Q_targets_next = next_pred[-1].detach().max(1)[0].unsqueeze(1)
+
+            # Compute Q targets for current states
+            Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
 
         # ASK: The Q_targets have no "info" of which action it took to get the score
+        # -------------------------------------------------------------------------------------- 
+        
 
         self.policy_net.forced_exit_point = None
         # Get expected Q values from policy model
