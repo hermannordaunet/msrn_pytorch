@@ -124,6 +124,7 @@ def main():
 
     config = {
         "env_name": "FoodCollector",
+        "double_dqn" : True,
         "ppo": False,
         "use_build": True,
         "no_graphics": True,
