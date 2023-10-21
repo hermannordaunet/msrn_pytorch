@@ -108,12 +108,12 @@ def main():
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
         "loss_function": "v5",
         "exit_loss_function": "loss_exit",
-        "num_ee": 3,
+        "num_ee": 5,
         "exit_threshold": 0.95,
-        "repetitions": [2, 2, 2, 2],
+        "repetitions": [3, 4, 6, 3], # [2,2,2,2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
-        "distribution": "linear",
+        "distribution": "pareto",
         "models_dir": None,
         "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed everything
@@ -129,18 +129,18 @@ def main():
         "use_build": True,
         "no_graphics": False,
         "laser_length": 1,
-        "agent_scale": 1,
+        "agent_scale": 1.2,
         "prioritized_memory": False,
         "memory_size": 35_000,  # 25_000,  # 10_000
         "minimal_memory_size": 999,  # Either batch_size or minimal_memory_size before training
         "batch_size": 256,  # Training batch size
-        "num_episodes": 300,
+        "num_episodes": 1000,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {
             "lr": 1e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
-            "lr_exit": 0.001,
+            "lr_exit": 0.01,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": False,
@@ -198,12 +198,12 @@ def main():
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
-            # relative_path = (
-            #     "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
-            # )
             relative_path = (
-                "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+                "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
             )
+            # relative_path = (
+            #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
+            # )
 
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
@@ -230,7 +230,7 @@ def main():
     )
 
     # Unity environment spesific
-    # float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
+    float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
     float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
 
     env.reset()
