@@ -127,7 +127,7 @@ def main():
         "double_dqn" : True,
         "ppo": False,
         "use_build": True,
-        "no_graphics": True,
+        "no_graphics": False,
         "laser_length": 1,
         "agent_scale": 1,
         "prioritized_memory": False,
@@ -188,7 +188,7 @@ def main():
     stats_side_channel = StatsSideChannel()
 
     engine_config_channel = EngineConfigurationChannel()
-    engine_config_channel.set_configuration_parameters(time_scale=10)
+    engine_config_channel.set_configuration_parameters(time_scale=1)
 
     SIDE_CHANNELS = [
         engine_config_channel,
@@ -208,7 +208,8 @@ def main():
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
-            relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
+            # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
+            relative_path = "builds/FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.app"
 
     else:
         relative_path = None
@@ -225,7 +226,7 @@ def main():
         side_channels=SIDE_CHANNELS,
         # seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
-        worker_id=random_worker_id,
+        # worker_id=random_worker_id,
     )
 
     # Unity environment spesific
@@ -589,11 +590,13 @@ def model_trainer(
                 training_agents[team][agent_id] = {
                     "bad_food": 0,
                     "good_food": 0,
+                    "wall_hit" : 0,
                     "episode_score": 0,
                     "random_actions": 0,
                     "exit_points": [0] * (agent.policy_net.num_ee + 1),
                 }
-                agent_obs = decision_steps[agent_id].obs
+                agent_decision_steps = decision_steps[agent_id]
+                agent_obs = agent_decision_steps.obs
                 state = get_grid_based_perception(agent_obs).detach().clone()
                 state_batch_tensor[team_idx, ...] = state
 
@@ -664,11 +667,18 @@ def model_trainer(
 
                     state_batch_tensor[team_idx, ...] = next_state.detach().clone()
 
-                    if reward < 0.0:
+                    if reward == -1.0:
+                        agent_dict["wall_hit"] += 1
+
+                    if reward == -4.0:
                         agent_dict["bad_food"] += 1
 
                     if reward > 0.0:
                         agent_dict["good_food"] += 1
+                    
+                    if reward < -4.0:
+                        agent_dict["wall_hit"] += 1
+                        agent_dict["bad_food"] += 1
 
                     if float(reward) != 0.0:
                         agent_dict["episode_score"] += reward
@@ -683,7 +693,9 @@ def model_trainer(
                     else:
                         print("The type of exits are not supported at this point")
 
+                    print(agent_dict["episode_score"])
                     episode_done = done
+                    
 
             (
                 scores_all_training_agents,
