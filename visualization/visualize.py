@@ -125,7 +125,9 @@ def plot_scores_from_nested_list(
 
 
 # save loss plot
-def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./", loss_type="Q-value"):
+def plot_loss_from_list(
+    losses: list(), labels=None, env_name="", result_dir="./", loss_type="Q-value"
+):
     losses = np.array(losses).squeeze()
 
     if losses.ndim > 1:
@@ -162,7 +164,9 @@ def plot_loss_from_list(losses: list(), labels=None, env_name="", result_dir="./
 # Eval loss and score
 
 
-def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs):
+def plot_grid_based_perception(
+    image_tensor, team_id=None, title=None, save_figure=True, **kwargs
+):
     image_tensor = image_tensor.squeeze().cpu()
     if len(image_tensor.shape) == 4:
         num_rows, num_cols, _, _ = image_tensor.shape
@@ -173,7 +177,7 @@ def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs)
     fig, ax = plt.subplots(
         nrows=num_rows,
         ncols=num_cols,
-        figsize=set_size(subplots=(num_rows, num_cols)),
+        figsize=set_size(subplots=(num_rows, num_cols), golden_ratio=5),
     )
 
     labels = ["food", "agent", "wall", "badFood", "frozenAgent"]
@@ -182,10 +186,10 @@ def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs)
         for col in range(num_cols):
             if num_rows > 1 and num_cols > 1:
                 cur_ax = ax[row, col]
-                cur_ax.imshow(image_tensor[row, col, ...])
+                cur_ax.imshow(image_tensor[row, col, ...], interpolation=None)
             else:
                 cur_ax = ax[col]
-                cur_ax.imshow(image_tensor[col, ...])
+                cur_ax.imshow(image_tensor[col, ...], interpolation=None)
 
             if row == 0:
                 cur_ax.set_title(labels[col])
@@ -198,8 +202,13 @@ def plot_grid_based_perception(image_tensor, team_id=None, title=None, **kwargs)
         if team_id:
             fig.suptitle(f"Agent observation: {team_id}")
 
-    # plt.tight_layout()
-    plt.show(**kwargs)
+    plt.tight_layout()
+
+    if save_figure:
+        plt.savefig(f"grid-based-observation.pdf", format="pdf", bbox_inches="tight")
+
+    plt.close()
+    # plt.show(**kwargs)
 
 
 def main():
