@@ -179,7 +179,7 @@ def main():
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
     # EVAL_MODEL = model_param["mode_setups"]["eval"]
 
-    TIMESTAMP = int(1695313265)
+    TIMESTAMP = int(1697890478)
 
     VERBOSE = True
 
@@ -209,7 +209,8 @@ def main():
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
-            relative_path = "builds/FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.app"
+            # relative_path = "builds/FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.app"
+            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward.app"
 
     else:
         relative_path = None
@@ -255,7 +256,8 @@ def main():
     continuous_size = action_spec.continuous_size
     # discrete_size = action_spec.discrete_size
 
-    model_param["input_size"] = observation_spec[-1].shape[::-1]
+    c, w, h = observation_spec[-1].shape[::-1]
+    model_param["input_size"] = (c ,w, h)
     model_param["num_classes"] = continuous_size
     # channels, screen_width, screen_height = input_size
 
@@ -575,7 +577,6 @@ def model_trainer(
         for episode in range(1, num_episodes + 1):
             training_agents = dict()
             conf_min_max = list()
-            random_actions = 0
 
             if verbose:
                 print(f"\nEpisode {episode}/{num_episodes} started")
@@ -656,6 +657,7 @@ def model_trainer(
                         .detach()
                         .clone()
                     )
+                    # plot_grid_based_perception(state, block=True)
 
                     if isinstance(agent, PPO_Agent):
                         log_prob = 0
@@ -693,7 +695,6 @@ def model_trainer(
                     else:
                         print("The type of exits are not supported at this point")
 
-                    print(agent_dict["episode_score"])
                     episode_done = done
                     
 
