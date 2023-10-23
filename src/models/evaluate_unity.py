@@ -87,6 +87,7 @@ def extract_exit_points_from_agents(
     active_agent_id: list() = None,
     include_reward=False,
     include_food_info=False,
+    include_wall_info=False,
     mode: str = "EVAL",
     print_out=True,
     random_actions=False,
@@ -105,6 +106,7 @@ def extract_exit_points_from_agents(
                 reward = agent_dict["episode_score"]
                 bad_food = agent_dict["bad_food"]
                 good_food = agent_dict["good_food"]
+                wall_hit = agent_dict["wall_hit"]
 
                 if not print_out:
                     return exit_points, reward
@@ -120,6 +122,9 @@ def extract_exit_points_from_agents(
 
                 if include_food_info:
                     message += f", Good Food: {good_food}, Bad Food: {bad_food}"
+
+                if include_wall_info:
+                    message += f", Wall hits: {wall_hit}"
 
                 print(message)
 
@@ -169,6 +174,7 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     eval_agents[team][agent_id] = {
                         "bad_food": 0,
                         "good_food": 0,
+                        "wall_hit": 0,
                         "episode_score": 0,
                         "exit_points": [0] * (agent.policy_net.num_ee + 1),
                         "agent_confs": [[] for _ in range(agent.policy_net.num_ee + 1)],
@@ -238,11 +244,18 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                             state_batch_tensor[agent_id, ...] = state
 
                             agent_reward = decision_steps[agent_id].reward
-                            if agent_reward < 0.0:
+                            if agent_reward == -4.0:
                                 agent_dict["bad_food"] += 1
 
                             if agent_reward > 0.0:
                                 agent_dict["good_food"] += 1
+
+                            if agent_reward == -1.0:
+                                agent_dict["wall_hit"] += 1
+
+                            if agent_reward < -4.0:
+                                agent_dict["bad_food"] += 1
+                                agent_dict["wall_hit"] += 1
 
                             if float(agent_reward) != 0.0:
                                 agent_dict["episode_score"] += agent_reward
@@ -257,11 +270,18 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                             state_batch_tensor[agent_id, ...] = state
 
                             agent_reward = decision_steps[agent_id].reward
-                            if agent_reward < 0.0:
+                            if agent_reward == -4.0:
                                 agent_dict["bad_food"] += 1
 
                             if agent_reward > 0.0:
                                 agent_dict["good_food"] += 1
+
+                            if agent_reward == -1.0:
+                                agent_dict["wall_hit"] += 1
+
+                            if agent_reward < -4.0:
+                                agent_dict["bad_food"] += 1
+                                agent_dict["wall_hit"] += 1
 
                             if float(agent_reward) != 0.0:
                                 agent_dict["episode_score"] += agent_reward
@@ -285,6 +305,7 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     active_agent_id=active_agent_id,
                     include_reward=True,
                     include_food_info=True,
+                    include_wall_info=True, 
                     print_out=True,
                 )
             else:
@@ -292,6 +313,7 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
                     eval_agents,
                     include_reward=True,
                     include_food_info=True,
+                    include_wall_info=True, 
                     print_out=True,
                 )
 

@@ -108,15 +108,15 @@ def main():
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
         "loss_function": "v5",
         "exit_loss_function": "loss_exit",
-        "num_ee": 5,
-        "exit_threshold": 0.95,
-        "repetitions": [3, 4, 6, 3], # [2,2,2,2] resnet18, [3, 4, 6, 3] resnet34
+        "num_ee": 3,
+        "exit_threshold": 0.9,
+        "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
         "distribution": "pareto",
         "models_dir": None,
         "mode_setups": {"train": True, "eval": True, "visualize": False},
-        "manual_seed": 350,  # TODO: Seed everything
+        "manual_seed": 350,  # TODO: Seed ezverything
         "device": DEVICE,
     }
 
@@ -124,12 +124,12 @@ def main():
 
     config = {
         "env_name": "FoodCollector",
-        "double_dqn" : True,
+        "double_dqn": True,
         "ppo": False,
         "use_build": True,
-        "no_graphics": False,
+        "no_graphics": True,
         "laser_length": 1,
-        "agent_scale": 1.2,
+        "agent_scale": 1,
         "prioritized_memory": False,
         "memory_size": 35_000,  # 25_000,  # 10_000
         "minimal_memory_size": 999,  # Either batch_size or minimal_memory_size before training
@@ -156,8 +156,8 @@ def main():
             "all_agents_active": False,
         },
         "eval": {
-            "episodes": 5,
-            "every-n-th-episode": 35,
+            "episodes": 8,
+            "every-n-th-episode": 30,
             "all_agents_active": False,
         },
     }
@@ -188,7 +188,7 @@ def main():
     stats_side_channel = StatsSideChannel()
 
     engine_config_channel = EngineConfigurationChannel()
-    engine_config_channel.set_configuration_parameters(time_scale=1)
+    engine_config_channel.set_configuration_parameters(time_scale=10)
 
     SIDE_CHANNELS = [
         engine_config_channel,
@@ -198,19 +198,22 @@ def main():
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
-            relative_path = (
-                "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
-            )
+            # relative_path = (
+            #     "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
+            # )
             # relative_path = (
             #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             # )
+
+            relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
 
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
-            # relative_path = "builds/FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.app"
-            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward.app"
+            relative_path = (
+                "builds/FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.app"
+            )
 
     else:
         relative_path = None
@@ -754,6 +757,7 @@ def model_trainer(
                     training_agents,
                     include_reward=True,
                     include_food_info=True,
+                    include_wall_info=True,
                     mode="TRAIN",
                     print_out=True,
                     random_actions=True,
