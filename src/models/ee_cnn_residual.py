@@ -41,7 +41,7 @@ class EE_CNN_Residual(nn.Module):
         block=BasicBlock,
         num_ee=1,
         exit_type="bnpool",
-        exit_threshold=0.9,
+        exit_threshold=[0.9],
         repetitions=list(),
         init_planes=int(),
         planes=list(),
@@ -69,7 +69,15 @@ class EE_CNN_Residual(nn.Module):
         # Create the early exit variables
         self.num_ee = num_ee
         self.exit_type = exit_type
-        self.exit_threshold = exit_threshold
+
+        exit_threshold_list_length = len(exit_threshold)
+        if exit_threshold_list_length == 1:
+            self.exit_threshold = [exit_threshold] * self.num_ee
+        elif exit_threshold_list_length != 1 and exit_threshold_list_length != num_ee:
+            print("Not enough thresholds in the list. Needs to match number of ee or be one single value.")
+            exit()
+        else:
+            self.exit_threshold = exit_threshold
 
         # A variable we can set to get the network to take the whole network during q-learning
         self.forced_exit_point: int = None
@@ -308,15 +316,15 @@ class EE_CNN_Residual(nn.Module):
                 # exit condition:
 
                 if not_batch_eval:
-                    conf_over_threshold = conf.item() > self.exit_threshold
+                    conf_over_threshold = conf.item() > self.exit_threshold[idx]
 
                     if conf_over_threshold or forced_exit_here:
                         return pred, conf, idx, self.cost[idx]
 
                 else:
-                    exit_all_threshold = None
+                    exit_threshold = self.exit_threshold[idx]
                     if forced_exit_here:
-                        exit_all_threshold = float("-inf")
+                        exit_threshold = float("-inf")
 
                     (
                         idx_to_remove,
@@ -326,7 +334,7 @@ class EE_CNN_Residual(nn.Module):
                         conf,
                         self.cost[idx],
                         idx,
-                        threshold=exit_all_threshold,
+                        threshold=exit_threshold,
                     )
 
                     if idx_to_remove is not None:
@@ -378,7 +386,9 @@ class EE_CNN_Residual(nn.Module):
         if threshold:
             exit_threshold = threshold
         else:
-            exit_threshold = self.exit_threshold
+            print("This is old.")
+            exit(0)
+            # exit_threshold = self.exit_threshold
 
         idx = torch.where(conf > exit_threshold)[0]
         empty = idx.shape[0] == 0
