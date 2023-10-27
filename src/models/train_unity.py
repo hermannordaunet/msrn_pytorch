@@ -205,7 +205,9 @@ def main():
             #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             # )
 
-            relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
+
+            relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
 
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
@@ -260,7 +262,7 @@ def main():
     # discrete_size = action_spec.discrete_size
 
     c, w, h = observation_spec[-1].shape[::-1]
-    model_param["input_size"] = (c ,w, h)
+    model_param["input_size"] = (c, w, h)
     model_param["num_classes"] = continuous_size
     # channels, screen_width, screen_height = input_size
 
@@ -687,7 +689,7 @@ def model_trainer(
                 training_agents[team][agent_id] = {
                     "bad_food": 0,
                     "good_food": 0,
-                    "wall_hit" : 0,
+                    "wall_hit": 0,
                     "episode_score": 0,
                     "random_actions": 0,
                     "exit_points": [0] * (agent.policy_net.num_ee + 1),
@@ -773,7 +775,7 @@ def model_trainer(
 
                     if reward > 0.0:
                         agent_dict["good_food"] += 1
-                    
+
                     if reward < -4.0:
                         agent_dict["wall_hit"] += 1
                         agent_dict["bad_food"] += 1
@@ -792,7 +794,6 @@ def model_trainer(
                         print("The type of exits are not supported at this point")
 
                     episode_done = done
-                    
 
             (
                 scores_all_training_agents,
