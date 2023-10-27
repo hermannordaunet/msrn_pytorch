@@ -129,7 +129,8 @@ def extract_exit_points_from_agents(
                 print(message)
 
 
-def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
+def evaluate_trained_model(env, agent, config, current_episode=None, verbose=False):
+    was_in_training = False
     if agent.policy_net.training:
         was_in_training = True
         agent.policy_net.eval()
@@ -295,9 +296,14 @@ def evaluate_trained_model(env, agent, config, current_episode, verbose=False):
             )
             mean_score = np.mean(eval_scores_all_agents)
 
-            print(
-                f"[EVAL] Mean performance on policy net after {current_episode} episodes: {mean_score}"
-            )
+            if current_episode is not None:
+                print(
+                    f"[EVAL] Mean performance on policy net after {current_episode} episodes: {mean_score}"
+                )
+            else:
+                print(
+                    f"[EVAL] Mean performance on trained policy net episodes: {mean_score}"
+                )
 
             if not all_agents_active:
                 extract_exit_points_from_agents(
