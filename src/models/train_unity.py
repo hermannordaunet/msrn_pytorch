@@ -109,13 +109,13 @@ def main():
         "loss_function": "v5",
         "exit_loss_function": "loss_exit",
         "num_ee": 3,
-        "exit_threshold": 0.9,
+        "exit_threshold": [0.85, 0.9, 0.925, 0.95],
         "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
         "distribution": "pareto",
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": True, "visualize": False},
+        "mode_setups": {"train": False, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed ezverything
         "device": DEVICE,
     }
@@ -156,7 +156,7 @@ def main():
             "all_agents_active": False,
         },
         "eval": {
-            "episodes": 8,
+            "episodes": 20,
             "every-n-th-episode": 30,
             "all_agents_active": False,
         },
@@ -165,7 +165,7 @@ def main():
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 0.001,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 25,
+        "update_every": 15,
     }
 
     epsilon_greedy_param = {
@@ -176,8 +176,8 @@ def main():
     }
 
     TRAIN_MODEL = model_param["mode_setups"]["train"]
+    EVAL_MODEL = model_param["mode_setups"]["eval"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
-    # EVAL_MODEL = model_param["mode_setups"]["eval"]
 
     TIMESTAMP = int(1697890478)
 
@@ -435,6 +435,97 @@ def main():
             f"[INFO] total time taken to train the model: {get_time_hh_mm_ss(total_sec)} sec"
         )
 
+    if EVAL_MODEL:
+
+        # Close old env and start fresh
+        env.close()
+
+        engine_config_channel.set_configuration_parameters(time_scale=10)
+
+        env = UnityEnvironment(
+            file_name=FILE_NAME,
+            side_channels=SIDE_CHANNELS,
+            # seed=model_param["manual_seed"],
+            no_graphics=config["no_graphics"],
+        )
+
+        env.reset()
+        # If we just trained a model, load that one.
+        # If not, load the model from the timestamp provided.
+
+        runs_directory = Path(f"./results/")
+
+        if TRAIN_MODEL:
+            results_directory, timestamp = get_latest_folder(runs_directory)
+            if not results_directory:
+                print("No folders found in the runs_directory.")
+                exit()
+
+        else:
+            if TIMESTAMP:
+                results_directory = runs_directory / str(TIMESTAMP)
+            else:
+                print("No timestamp provided. Cannot load model without it.")
+                exit()
+
+        parameter_directory = results_directory / "parameters"
+
+        model_param = load_json_as_dict(f"{parameter_directory}/model_param.json")
+        config = load_json_as_dict(f"{parameter_directory}/config.json")
+        dqn_param = load_json_as_dict(f"{parameter_directory}/dqn_param.json")
+
+        model_type = globals()[model_param["model_class_name"]]
+
+        print(f"[INFO] Loading the trained policy net of type {model_type}")
+
+        ee_policy_net = model_type(
+            num_ee=model_param["num_ee"],
+            init_planes=model_param["init_planes"],
+            planes=model_param["planes"],
+            input_shape=model_param["input_size"],
+            num_classes=model_param["num_classes"],
+            repetitions=model_param["repetitions"],
+            distribution=model_param["distribution"],
+            exit_threshold=model_param["exit_threshold"],
+        )
+
+        models_directory = model_param["models_dir"]
+        model_file = f"{models_directory}/last_model.pt"
+        # model_file = f"{models_directory}/untrained_model.pt"
+        print(f"[INFO] Loading weights from {model_file}")
+
+        # Override trained device:
+        print("[INFO] Overriding the device used for training")
+        model_param["device"] = DEVICE
+
+        if ee_policy_net.__class__.__name__ == model_param["model_class_name"]:
+            ee_policy_net.load_state_dict(torch.load(model_file, map_location=DEVICE))
+            ee_policy_net.to(DEVICE)
+        else:
+            print(
+                "[EXIT] The network you want to load is not the same type as the declaired."
+            )
+            exit()
+
+        ee_target_net = None
+
+        # Setting the network in evaluation mode
+        ee_policy_net.eval()
+
+        print("[INFO] Initalizing a Agent object")
+        agent = Agent(
+            ee_policy_net,
+            ee_target_net,
+            model_param=model_param,
+            config=config,
+            dqn_param=dqn_param,
+        )
+
+        evaluate_trained_model(env, agent, config, current_episode=None, verbose=VERBOSE)
+
+        env.close()
+
+
     if VISUALIZE_MODEL:
         # Close old env and start fresh
         env.close()
@@ -444,7 +535,7 @@ def main():
         env = UnityEnvironment(
             file_name=FILE_NAME,
             side_channels=SIDE_CHANNELS,
-            seed=model_param["manual_seed"],
+            # seed=model_param["manual_seed"],
             no_graphics=False,
         )
 
@@ -521,6 +612,8 @@ def main():
         )
 
         visualize_trained_model(env, agent, config, verbose=VERBOSE)
+
+        env.close()
 
 
 def model_trainer(
@@ -821,7 +914,7 @@ def model_trainer(
                 if verbose:
                     print(message)
 
-                evaluate_trained_model(env, agent, config, episode, verbose=verbose)
+                evaluate_trained_model(env, agent, config, current_episode=episode, verbose=verbose)
 
     except (
         KeyboardInterrupt,
