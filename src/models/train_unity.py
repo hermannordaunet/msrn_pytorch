@@ -39,6 +39,7 @@ from evaluate_unity import (
     evaluate_trained_model,
     extract_exit_points_from_agents,
     extract_scores_for_all_agents,
+    extract_one_agent_each_team,
 )
 
 from src.models.utils.flops_counter import get_model_complexity_info
@@ -109,13 +110,13 @@ def main():
         "loss_function": "v5",
         "exit_loss_function": "loss_exit",
         "num_ee": 3,
-        "exit_threshold": [0.85, 0.9, 0.925, 0.95],
+        "exit_threshold": [0.85, 0.9, 0.95],
         "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
         "distribution": "pareto",
         "models_dir": None,
-        "mode_setups": {"train": False, "eval": True, "visualize": False},
+        "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed ezverything
         "device": DEVICE,
     }
@@ -134,13 +135,12 @@ def main():
         "memory_size": 35_000,  # 25_000,  # 10_000
         "minimal_memory_size": 999,  # Either batch_size or minimal_memory_size before training
         "batch_size": 256,  # Training batch size
-        "num_episodes": 1000,
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {
             "lr": 1e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
-            "lr_exit": 0.01,
+            "lr_exit": 0.001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": False,
@@ -151,21 +151,25 @@ def main():
         "multiple_epochs": True,
         "num_epochs": 3,
         "print_range": 10,
-        "visualize": {
+        "train": {
             "episodes": 10,
-            "all_agents_active": False,
+            "all_agents_active": True,
         },
         "eval": {
-            "episodes": 20,
-            "every-n-th-episode": 30,
-            "all_agents_active": False,
+            "episodes": 1,
+            "every-n-th-episode": 1, 
+            "all_agents_active": True,
+        },
+        "visualize": {
+            "episodes": 10,
+            "all_agents_active": True,
         },
     }
 
     dqn_param = {
         "gamma": 0.999,  # Original: 0.99,
         "tau": 0.001,  # TUNE: 0.005 original,  # TODO: Try one more 0. 0.05 (5e-2) previous
-        "update_every": 15,
+        "update_every": 25,
     }
 
     epsilon_greedy_param = {
@@ -205,9 +209,9 @@ def main():
             #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             # )
 
-            # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
+            relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
 
-            relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
 
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
@@ -232,7 +236,7 @@ def main():
         side_channels=SIDE_CHANNELS,
         # seed=model_param["manual_seed"],
         no_graphics=config["no_graphics"],
-        # worker_id=random_worker_id,
+        worker_id=random_worker_id,
     )
 
     # Unity environment spesific
@@ -265,13 +269,6 @@ def main():
     model_param["input_size"] = (c, w, h)
     model_param["num_classes"] = continuous_size
     # channels, screen_width, screen_height = input_size
-
-    # TODO: Implement a test to see if the agents has the same observation specs
-    # if len(set(observation_spec_list)) == 2:
-    #     observation_spec =  observation_spec_list[-1]
-    # else:
-    #     print("The agents has differing observation specs. Needs to be implemented")
-    #     exit()
 
     if DEVICE != "mps":
         run_wandb = wandb.init(
@@ -389,8 +386,8 @@ def main():
             ee_target_net.train()
 
             # ASK: This is important to get the networks initalized with the same weigths
-            # print("[INFO] Copying weight from target net to policy net")
-            # ee_target_net.load_state_dict(ee_policy_net.state_dict())
+            print("[INFO] Copying weight from target net to policy net")
+            ee_target_net.load_state_dict(ee_policy_net.state_dict())
 
             print("[INFO] Initalizing a Agent object")
             agent = Agent(
@@ -438,7 +435,6 @@ def main():
         )
 
     if EVAL_MODEL:
-
         # Close old env and start fresh
         env.close()
 
@@ -523,10 +519,11 @@ def main():
             dqn_param=dqn_param,
         )
 
-        evaluate_trained_model(env, agent, config, current_episode=None, verbose=VERBOSE)
+        evaluate_trained_model(
+            env, agent, config, current_episode=None, verbose=VERBOSE
+        )
 
         env.close()
-
 
     if VISUALIZE_MODEL:
         # Close old env and start fresh
@@ -647,8 +644,6 @@ def model_trainer(
     print_range = config["print_range"]
     early_stop = config["benchmarks_mean_reward"]
 
-    num_episodes = config["num_episodes"]
-
     scores, losses, exit_losses = (
         list(),
         list(),
@@ -660,147 +655,251 @@ def model_trainer(
     evaluate_model = agent.model_param["mode_setups"]["eval"]
     evaluate_every_n_th_episode = config["eval"]["every-n-th-episode"]
 
-    try:
-        team_name_list = list(env.behavior_specs.keys())
-        num_teams = len(team_name_list)
+    num_train_episodes = config["train"]["episodes"]
+    all_train_agents_active = config["train"]["all_agents_active"]
 
+    team_name_list = list(env.behavior_specs.keys())
+    num_teams = len(team_name_list)
+    decision_steps, _ = env.get_steps(team_name_list[-1])
+
+    num_agents_on_teams = len(decision_steps.agent_id)
+    num_total_agents = num_teams * num_agents_on_teams
+
+    state_size = agent.model_param["input_size"]
+    state_batch_tensor = torch.zeros((num_total_agents, *state_size))
+
+    try:
         if verbose:
             print(
                 f"[INFO] Number of parallell environments during training: {num_teams}"
             )
 
-        state_size = agent.model_param["input_size"]
-        state_batch_tensor = torch.zeros((num_teams, *state_size))
-
-        for episode in range(1, num_episodes + 1):
+        for episode in range(1, num_train_episodes + 1):
             training_agents = dict()
             conf_min_max = list()
 
             if verbose:
-                print(f"\nEpisode {episode}/{num_episodes} started")
+                print(f"\nEpisode {episode}/{num_train_episodes} started")
 
             env.reset()
 
             for team_idx, team in enumerate(team_name_list):
                 training_agents[team] = dict()
+
                 decision_steps, _ = env.get_steps(team)
                 agent_id = decision_steps.agent_id[-1]  # random agent from each team
 
-                training_agents[team][agent_id] = {
-                    "bad_food": 0,
-                    "good_food": 0,
-                    "wall_hit": 0,
-                    "episode_score": 0,
-                    "random_actions": 0,
-                    "exit_points": [0] * (agent.policy_net.num_ee + 1),
-                }
-                agent_decision_steps = decision_steps[agent_id]
-                agent_obs = agent_decision_steps.obs
-                state = get_grid_based_perception(agent_obs).detach().clone()
-                state_batch_tensor[team_idx, ...] = state
+                agents_need_action = decision_steps.agent_id
+                for agent_id in agents_need_action:
+                    agent_obs = decision_steps[agent_id].obs
+                    state = get_grid_based_perception(agent_obs).detach().clone()
+                    state_batch_tensor[agent_id, ...] = state
+
+                    training_agents[team][agent_id] = {
+                        "bad_food": 0,
+                        "good_food": 0,
+                        "wall_hit": 0,
+                        "episode_score": 0,
+                        "random_actions": 0,
+                        "exit_points": [0] * (agent.policy_net.num_ee + 1),
+                    }
 
             # min_max_conf = list()
             episode_done = False
+
+            if not all_train_agents_active:
+                active_agent_id = extract_one_agent_each_team(training_agents)
+
             while not episode_done:
                 # move_action, laser_action, confs, exits, costs
-                move_action, laser_action, confs, exits, costs = agent.act(
+                move_actions, laser_actions, confs, exits, costs = agent.act(
                     state_batch_tensor.detach().clone(),
                     epsilon=eps,
-                    num_agents=num_teams,
+                    num_agents=num_total_agents,
                     eval_agent=False,
                 )
 
                 for team_idx, team in enumerate(team_name_list):
-                    agent_id = list(training_agents[team].keys())[0]
-                    team_move_action = move_action[team_idx, ...]
-                    team_laser_action = laser_action[team_idx, ...]
-                    env.set_action_for_agent(
-                        team,
-                        agent_id,
-                        ActionTuple(team_move_action, team_laser_action),
-                    )
+                    decision_steps, _ = env.get_steps(team)
+                    agents_need_action = decision_steps.agent_id
+                    if all_train_agents_active:
+                        agents_to_act = agents_need_action
+                        agent_ids_to_print = None
+                    else:
+                        agents_to_act = [active_agent_id[team_idx]]
+                        agent_ids_to_print = agents_to_act
+
+                    for agent_id in agents_to_act:
+                        agent_move_action = move_actions[agent_id, ...]
+                        agent_laser_action = laser_actions[agent_id, ...]
+
+                        env.set_action_for_agent(
+                            team,
+                            agent_id,
+                            ActionTuple(agent_move_action, agent_laser_action),
+                        )
 
                 env.step()
 
                 for team_idx, team in enumerate(team_name_list):
                     decision_steps, terminal_steps = env.get_steps(team)
-                    agents_need_action = decision_steps.agent_id
-                    agent_id = list(training_agents[team].keys())[0]
-                    agent_dict = training_agents[team][agent_id]
+                    agents_need_action_after_step = decision_steps.agent_id
+                    if all_train_agents_active:
+                        agents_to_act = agents_need_action_after_step
+                        agent_ids_to_print = None
+                    else:
+                        agents_to_act = [active_agent_id[team_idx]]
+                        agent_ids_to_print = active_agent_id[team_idx]
 
-                    if agent_id in agents_need_action:
+                    for agent_id in agents_need_action_after_step:
+                        agent_dict = training_agents[team][agent_id]
                         agent_obs = decision_steps[agent_id].obs
-                        next_state = (
-                            get_grid_based_perception(agent_obs).detach().clone()
+                        if agent_id not in agents_need_action:
+                            next_state = None
+                            print(
+                                f"Got a None next state. team: {team}, episode {episode}"
+                            )
+                        else:
+                            next_state = (
+                                get_grid_based_perception(agent_obs).detach().clone()
+                            )
+
+                        reward = decision_steps[agent_id].reward
+                        action = np.argmax(move_actions[agent_id, ...])
+
+                        state = (
+                            (state_batch_tensor[agent_id, ...])
+                            .unsqueeze(0)
+                            .detach()
+                            .clone()
                         )
-                    else:
-                        next_state = None
-                        print(f"Got a None next state. team: {team}, episode {episode}")
 
-                    reward = decision_steps[agent_id].reward
+                        terminated_agent_ids = terminal_steps.agent_id
+                        done = (
+                            terminal_steps[agent_id].interrupted
+                            if agent_id in terminated_agent_ids
+                            else False
+                        )
 
-                    terminated_agent_ids = terminal_steps.agent_id
-                    done = (
-                        terminal_steps[agent_id].interrupted
-                        if agent_id in terminated_agent_ids
-                        else False
-                    )
+                        if isinstance(agent, PPO_Agent):
+                            log_prob = 0
+                            agent.step(state, action, log_prob, reward, done)
+                        else:
+                            optimized = agent.step(
+                                state, action, reward, next_state, done
+                            )
+                            if optimized:
+                                conf_min_max.append(agent.train_conf)
 
-                    action = np.argmax(move_action)
-                    # Make a clone of the state tensor. This was overwritten later
-                    # making the training loop not work.
-                    state = (
-                        (state_batch_tensor[team_idx, ...])
-                        .unsqueeze(0)
-                        .detach()
-                        .clone()
-                    )
-                    # plot_grid_based_perception(state, block=True)
+                        state_batch_tensor[agent_id, ...] = next_state.detach().clone()
 
-                    if isinstance(agent, PPO_Agent):
-                        log_prob = 0
-                        agent.step(state, action, log_prob, reward, done)
-                    else:
-                        optimized = agent.step(state, action, reward, next_state, done)
-                        if optimized:
-                            conf_min_max.append(agent.train_conf)
+                        if reward == -1.0:
+                            agent_dict["wall_hit"] += 1
 
-                    state_batch_tensor[team_idx, ...] = next_state.detach().clone()
+                        if reward == -4.0:
+                            agent_dict["bad_food"] += 1
 
-                    if reward == -1.0:
-                        agent_dict["wall_hit"] += 1
+                        if reward > 0.0:
+                            agent_dict["good_food"] += 1
 
-                    if reward == -4.0:
-                        agent_dict["bad_food"] += 1
+                        if reward < -4.0:
+                            agent_dict["wall_hit"] += 1
+                            agent_dict["bad_food"] += 1
 
-                    if reward > 0.0:
-                        agent_dict["good_food"] += 1
+                        if float(reward) != 0.0:
+                            agent_dict["episode_score"] += reward
 
-                    if reward < -4.0:
-                        agent_dict["wall_hit"] += 1
-                        agent_dict["bad_food"] += 1
+                        if isinstance(exits, int):
+                            agent_dict["exit_points"][exits] += 1
+                        elif isinstance(exits, torch.Tensor):
+                            exit = exits[team_idx]
+                            agent_dict["exit_points"][exit] += 1
+                        elif exits is None:
+                            agent_dict["random_actions"] += 1
+                        else:
+                            print("The type of exits are not supported at this point")
 
-                    if float(reward) != 0.0:
-                        agent_dict["episode_score"] += reward
+                        episode_done = done
 
-                    if isinstance(exits, int):
-                        agent_dict["exit_points"][exits] += 1
-                    elif isinstance(exits, torch.Tensor):
-                        exit = exits[team_idx]
-                        agent_dict["exit_points"][exit] += 1
-                    elif exits is None:
-                        agent_dict["random_actions"] += 1
-                    else:
-                        print("The type of exits are not supported at this point")
+                    # agent_id = list(training_agents[team].keys())[0]
+                    # agent_dict = training_agents[team][agent_id]
 
-                    episode_done = done
+                    # if agent_id in agents_need_action:
+                    #     agent_obs = decision_steps[agent_id].obs
+                    #     next_state = (
+                    #         get_grid_based_perception(agent_obs).detach().clone()
+                    #     )
+                    # else:
+                    #     next_state = None
+                    #     print(f"Got a None next state. team: {team}, episode {episode}")
+
+                    # reward = decision_steps[agent_id].reward
+
+                    # terminated_agent_ids = terminal_steps.agent_id
+                    # done = (
+                    #     terminal_steps[agent_id].interrupted
+                    #     if agent_id in terminated_agent_ids
+                    #     else False
+                    # )
+
+                    # action = np.argmax(move_action)
+                    # # Make a clone of the state tensor. This was overwritten later
+                    # # making the training loop not work.
+                    # state = (
+                    #     (state_batch_tensor[team_idx, ...])
+                    #     .unsqueeze(0)
+                    #     .detach()
+                    #     .clone()
+                    # )
+                    # # plot_grid_based_perception(state, block=True)
+
+                    # if isinstance(agent, PPO_Agent):
+                    #     log_prob = 0
+                    #     agent.step(state, action, log_prob, reward, done)
+                    # else:
+                    #     optimized = agent.step(state, action, reward, next_state, done)
+                    #     if optimized:
+                    #         conf_min_max.append(agent.train_conf)
+
+                    # state_batch_tensor[team_idx, ...] = next_state.detach().clone()
+
+                    # if reward == -1.0:
+                    #     agent_dict["wall_hit"] += 1
+
+                    # if reward == -4.0:
+                    #     agent_dict["bad_food"] += 1
+
+                    # if reward > 0.0:
+                    #     agent_dict["good_food"] += 1
+
+                    # if reward < -4.0:
+                    #     agent_dict["wall_hit"] += 1
+                    #     agent_dict["bad_food"] += 1
+
+                    # if float(reward) != 0.0:
+                    #     agent_dict["episode_score"] += reward
+
+                    # if isinstance(exits, int):
+                    #     agent_dict["exit_points"][exits] += 1
+                    # elif isinstance(exits, torch.Tensor):
+                    #     exit = exits[team_idx]
+                    #     agent_dict["exit_points"][exit] += 1
+                    # elif exits is None:
+                    #     agent_dict["random_actions"] += 1
+                    # else:
+                    #     print("The type of exits are not supported at this point")
+
+                    # episode_done = done
 
             (
                 scores_all_training_agents,
                 bad_food,
                 good_food,
             ) = extract_scores_for_all_agents(
-                training_agents, food_info=True, flatten=True
+                training_agents,
+                active_agents=agent_ids_to_print,
+                food_info=True,
+                flatten=True,
             )
 
             scores_window.append(scores_all_training_agents)  # save most recent score
@@ -849,6 +948,7 @@ def model_trainer(
 
                 extract_exit_points_from_agents(
                     training_agents,
+                    active_agent_id=agent_ids_to_print,
                     include_reward=True,
                     include_food_info=True,
                     include_wall_info=True,
@@ -873,7 +973,7 @@ def model_trainer(
                     labels=["train"],
                     env_name=config["env_name"],
                     result_dir=results_directory,
-                    loss_type="Cumulative Exit",
+                    loss_type="Cumulative_Exit",
                 )
 
             if len(scores) > 1:
@@ -901,7 +1001,7 @@ def model_trainer(
                     break
 
             evaluate_this_episode = not episode % evaluate_every_n_th_episode
-            done_training = episode == num_episodes
+            done_training = episode == num_train_episodes
             run_evaluation_now = evaluate_this_episode or done_training
 
             if evaluate_model and run_evaluation_now:
@@ -915,7 +1015,9 @@ def model_trainer(
                 if verbose:
                     print(message)
 
-                evaluate_trained_model(env, agent, config, current_episode=episode, verbose=verbose)
+                evaluate_trained_model(
+                    env, agent, config, current_episode=episode, verbose=verbose
+                )
 
     except (
         KeyboardInterrupt,
@@ -938,6 +1040,8 @@ def model_trainer(
 
         save_list_to_json(scores, f"./{results_directory}/scores.json")
         save_list_to_json(losses, f"./{results_directory}/losses.json")
+        save_list_to_json([episode], f"./{results_directory}/episode.json")
+        save_list_to_json(list(scores_window), f"./{results_directory}/scores_window.json")
 
         print("Model is saved, parameters is saved & the Environment is closed...")
 
