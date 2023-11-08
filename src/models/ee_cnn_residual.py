@@ -165,10 +165,6 @@ class EE_CNN_Residual(nn.Module):
 
         self.layers.append(nn.AdaptiveAvgPool2d((1, 1)))
 
-        # Dropout layer for generalization and overfitting
-        # TODO: Find out if this is nice to have in the CNN
-        # self.dropout = nn.Dropout(dropout_prob)
-
         in_size = planes * block.expansion
         # self.confidence = confidence_linear_sigmoid(in_size)
         # self.confidence = confidence_linear_softmax(in_size)
