@@ -229,9 +229,6 @@ class Agent:
 
         batch = self.memory.Transition(*zip(*experiences))
 
-        # Adding all the variables to the device?
-        # TODO: does all the things needs to
-        # be on the device (MPS/GPU). Most likely only the state and next-state
         state_batch = torch.cat(batch.state).to(self.device)
         next_state_batch = torch.cat(batch.next_state).to(self.device)
         action_batch = torch.tensor(batch.action).unsqueeze(1).to(self.device)
@@ -277,9 +274,6 @@ class Agent:
         # -------------------------------------------------------------------------------------- 
             # DQN
 
-            # CRITICAL: Here we get the Q_targets from the last exit of the network
-            # Here we need the network to be set up with some kind of inf threshold
-            # to get the prediction from the last exit
             Q_targets_next = next_pred[-1].detach().max(1)[0].unsqueeze(1)
 
             # Compute Q targets for current states
