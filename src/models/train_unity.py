@@ -156,8 +156,8 @@ def main():
             "all_agents_active": True,
         },
         "eval": {
-            "episodes": 1,
-            "every-n-th-episode": 1, 
+            "episodes": 10,
+            "every-n-th-episode": 30,
             "all_agents_active": True,
         },
         "visualize": {
@@ -644,7 +644,23 @@ def model_trainer(
     print_range = config["print_range"]
     early_stop = config["benchmarks_mean_reward"]
 
-    scores, losses, exit_losses = (
+    (
+        scores,
+        losses,
+        exit_losses,
+        moving_avg_score,
+        mean_q_targets,
+        mean_q_expected,
+        max_train_exit_confs,
+        min_train_exit_confs,
+        mean_train_exit_confs,
+    ) = (
+        list(),
+        list(),
+        list(),
+        list(),
+        list(),
+        list(),
         list(),
         list(),
         list(),
@@ -905,6 +921,9 @@ def model_trainer(
             scores_window.append(scores_all_training_agents)  # save most recent score
             scores.append(scores_all_training_agents)  # save most recent score
 
+            mean_q_targets.append(torch.mean(torch.abs(agent.last_Q_targets)))
+            mean_q_expected.append(torch.mean(torch.abs(agent.last_Q_expected)))
+
             # CRITICAL: This line has an error if no learning has been done. Not enough samples in memory.
             losses.append(agent.full_net_loss.item())  # save most recent loss
             exit_losses.append(agent.cumulative_exits_loss.item())
@@ -915,28 +934,28 @@ def model_trainer(
             if warm_start is None:
                 eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
-            avg_score = np.mean(scores_window)
+            moving_avg_score.append(np.mean(scores_window))
 
             if wandb:
                 wandb.log(
                     {
                         "loss": losses[-1],
                         "exit_loss": exit_losses[-1],
-                        "average_score": avg_score,
+                        "average_score": moving_avg_score[-1],
                         "min_last_score": min(scores_all_training_agents),
                         "max_last_score": max(scores_all_training_agents),
                         "good_food": np.mean(good_food),
                         "bad_food": np.mean(bad_food),
                         "epsilon": eps,
-                        "Mean Q targets": torch.mean(torch.abs(agent.last_Q_targets)),
-                        "Mean Q expected": torch.mean(torch.abs(agent.last_Q_expected)),
+                        "Mean Q targets": mean_q_targets[-1],
+                        "Mean Q expected": mean_q_expected[-1],
                     }
                 )
 
             if verbose:
                 print(f"Episode stats: ")
                 print(
-                    f"Average Score last {len(scores_window)} episodes: {avg_score:.2f}"
+                    f"Average Score last {len(scores_window)} episodes: {moving_avg_score[-1]:.2f}"
                 )
                 print(f"Last loss: {agent.full_net_loss}")
                 print(f"Cumulative exit loss: {agent.cumulative_exits_loss}")
@@ -945,6 +964,10 @@ def model_trainer(
                     conf_min_max, include_last=False
                 )
                 print_min_max_conf(min_vals, max_vals, mean_vals)
+
+                max_train_exit_confs.append(max_vals)
+                min_train_exit_confs.append(min_vals)
+                mean_train_exit_confs.append(mean_vals)
 
                 extract_exit_points_from_agents(
                     training_agents,
@@ -985,15 +1008,11 @@ def model_trainer(
                 )
 
             if verbose:
-                print(
-                    f"Last Q target values: {torch.mean(torch.abs(agent.last_Q_targets))}"
-                )
-                print(
-                    f"Last Q expected values: {torch.mean(torch.abs(agent.last_Q_expected))}"
-                )
+                print(f"Last Q target values: {mean_q_targets[-1]}")
+                print(f"Last Q expected values: {mean_q_expected[-1]}")
 
             if early_stop:
-                if avg_score >= early_stop and episode > 10:
+                if moving_avg_score[-1] >= early_stop and episode > 10:
                     print(
                         f"\nEnvironment solved in {episode} episodes!\tAverage Score: {avg_score:.2f}"
                     )
@@ -1040,8 +1059,24 @@ def model_trainer(
 
         save_list_to_json(scores, f"./{results_directory}/scores.json")
         save_list_to_json(losses, f"./{results_directory}/losses.json")
+        save_list_to_json(exit_losses, f"./{results_directory}/exit_losses.json")
         save_list_to_json([episode], f"./{results_directory}/episode.json")
-        save_list_to_json(list(scores_window), f"./{results_directory}/scores_window.json")
+        save_list_to_json(scores_window, f"./{results_directory}/scores_window.json")
+        save_list_to_json(
+            moving_avg_score, f"./{results_directory}/moving_avg_score.json"
+        )
+
+        save_list_to_json(
+            max_train_exit_confs, f"./{results_directory}/max_train_exit_confs.json"
+        )
+
+        save_list_to_json(
+            min_train_exit_confs, f"./{results_directory}/min_train_exit_confs.json"
+        )
+
+        save_list_to_json(
+            mean_train_exit_confs, f"./{results_directory}/mean_train_exit_confs.json"
+        )
 
         print("Model is saved, parameters is saved & the Environment is closed...")
 

@@ -27,4 +27,4 @@ def save_dict_to_json(dict_obj, file_path):
 
 def save_list_to_json(list_obj, file_path):
     with open(file_path, "w") as f:
-        json.dump(list_obj, f)
+        json.dump(list(list_obj), f)
