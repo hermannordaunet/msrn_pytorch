@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 # TODO: Add some plotting functions into this.
-# TODO: Add set figure size so that we do not need scaling in latex
 # Training loss and score
 
 
@@ -156,7 +155,7 @@ def plot_loss_from_list(
 
     plt.tight_layout()
     plt.savefig(
-        f"{result_dir}/{env_name}_losses.pdf", format="pdf", bbox_inches="tight"
+        f"{result_dir}/{env_name}_{loss_type}_losses.pdf", format="pdf", bbox_inches="tight"
     )
     plt.close()
 
