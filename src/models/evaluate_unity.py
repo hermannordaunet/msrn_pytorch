@@ -163,13 +163,13 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
             env.reset()
 
             for _, team in enumerate(team_name_list):
-                eval_agents[team] = {}
+                eval_agents[team] = dict()
 
                 decision_steps, _ = env.get_steps(team)
                 agents_need_action = decision_steps.agent_id
                 for agent_id in agents_need_action:
                     agent_obs = decision_steps[agent_id].obs
-                    state = get_grid_based_perception(agent_obs)
+                    state = get_grid_based_perception(agent_obs).detach().clone()
                     state_batch_tensor[agent_id, ...] = state
 
                     eval_agents[team][agent_id] = {
@@ -194,42 +194,30 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                 for team_idx, team in enumerate(team_name_list):
                     decision_steps, _ = env.get_steps(team)
                     agents_need_action = decision_steps.agent_id
+
                     if all_agents_active:
-                        for agent_id in agents_need_action:
-                            agent_move_action = move_action[agent_id, ...]
-                            agent_laser_action = laser_action[agent_id, ...]
-
-                            exit = exits[agent_id]
-                            conf = confs[agent_id]
-                            eval_agents[team][agent_id]["exit_points"][exit] += 1
-                            eval_agents[team][agent_id]["agent_confs"][exit].append(
-                                conf.detach().clone()
-                            )
-
-                            env.set_action_for_agent(
-                                team,
-                                agent_id,
-                                ActionTuple(agent_move_action, agent_laser_action),
-                            )
-
+                        agents_to_act = agents_need_action
+                        agent_ids_to_print = None
                     else:
-                        agent_id = active_agent_id[team_idx]
-                        if agent_id in agents_need_action:
-                            agent_move_action = move_action[agent_id, ...]
-                            agent_laser_action = laser_action[agent_id, ...]
+                        agents_to_act = [active_agent_id[team_idx]]
+                        agent_ids_to_print = agents_to_act
+                    
+                    for agent_id in agents_to_act:
+                        agent_move_action = move_action[agent_id, ...]
+                        agent_laser_action = laser_action[agent_id, ...]
 
-                            exit = exits[agent_id]
-                            conf = confs[agent_id]
-                            eval_agents[team][agent_id]["exit_points"][exit] += 1
-                            eval_agents[team][agent_id]["agent_confs"][exit].append(
-                                conf
-                            )
+                        exit = exits[agent_id]
+                        conf = confs[agent_id]
+                        eval_agents[team][agent_id]["exit_points"][exit] += 1
+                        eval_agents[team][agent_id]["agent_confs"][exit].append(
+                            conf.detach().clone()
+                        )
 
-                            env.set_action_for_agent(
-                                team,
-                                agent_id,
-                                ActionTuple(agent_move_action, agent_laser_action),
-                            )
+                        env.set_action_for_agent(
+                            team,
+                            agent_id,
+                            ActionTuple(agent_move_action, agent_laser_action),
+                        )
 
                 env.step()
 
@@ -237,62 +225,68 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                     decision_steps, terminal_steps = env.get_steps(team)
                     agents_need_action = decision_steps.agent_id
                     if all_agents_active:
-                        for agent_id in agents_need_action:
-                            agent_dict = eval_agents[team][agent_id]
-                            agent_obs = decision_steps[agent_id].obs
-                            next_state = get_grid_based_perception(agent_obs)
-                            state = next_state
-                            state_batch_tensor[agent_id, ...] = state
+                        agents_to_act = agents_need_action
+                        agent_ids_to_print = None
+                    else: 
+                        agents_to_act = [active_agent_id[team_idx]]
+                        agent_ids_to_print = agents_to_act
 
-                            agent_reward = decision_steps[agent_id].reward
-                            if agent_reward == -4.0:
-                                agent_dict["bad_food"] += 1
+                    for agent_id in agents_to_act:
+                        agent_dict = eval_agents[team][agent_id]
+                        agent_obs = decision_steps[agent_id].obs
+                        next_state = get_grid_based_perception(agent_obs).detach().clone()
+                        state = next_state
+                        state_batch_tensor[agent_id, ...] = state
 
-                            if agent_reward > 0.0:
-                                agent_dict["good_food"] += 1
+                        agent_reward = decision_steps[agent_id].reward
+                        if agent_reward == -4.0:
+                            agent_dict["bad_food"] += 1
 
-                            if agent_reward == -1.0:
-                                agent_dict["wall_hit"] += 1
+                        if agent_reward > 0.0:
+                            agent_dict["good_food"] += 1
 
-                            if agent_reward < -4.0:
-                                agent_dict["bad_food"] += 1
-                                agent_dict["wall_hit"] += 1
+                        if agent_reward == -1.0:
+                            agent_dict["wall_hit"] += 1
 
-                            if float(agent_reward) != 0.0:
-                                agent_dict["episode_score"] += agent_reward
+                        if agent_reward < -4.0:
+                            agent_dict["bad_food"] += 1
+                            agent_dict["wall_hit"] += 1
 
-                    else:
-                        agent_id = active_agent_id[team_idx]
-                        if agent_id in agents_need_action:
-                            agent_dict = eval_agents[team][agent_id]
-                            agent_obs = decision_steps[agent_id].obs
-                            next_state = get_grid_based_perception(agent_obs)
-                            state = next_state
-                            state_batch_tensor[agent_id, ...] = state
+                        if float(agent_reward) != 0.0:
+                            agent_dict["episode_score"] += agent_reward
 
-                            agent_reward = decision_steps[agent_id].reward
-                            if agent_reward == -4.0:
-                                agent_dict["bad_food"] += 1
+                    # else:
+                    #     agent_id = active_agent_id[team_idx]
+                    #     if agent_id in agents_need_action:
+                    #         agent_dict = eval_agents[team][agent_id]
+                    #         agent_obs = decision_steps[agent_id].obs
+                    #         next_state = get_grid_based_perception(agent_obs)
+                    #         state = next_state
+                    #         state_batch_tensor[agent_id, ...] = state
 
-                            if agent_reward > 0.0:
-                                agent_dict["good_food"] += 1
+                    #         agent_reward = decision_steps[agent_id].reward
+                    #         if agent_reward == -4.0:
+                    #             agent_dict["bad_food"] += 1
 
-                            if agent_reward == -1.0:
-                                agent_dict["wall_hit"] += 1
+                    #         if agent_reward > 0.0:
+                    #             agent_dict["good_food"] += 1
 
-                            if agent_reward < -4.0:
-                                agent_dict["bad_food"] += 1
-                                agent_dict["wall_hit"] += 1
+                    #         if agent_reward == -1.0:
+                    #             agent_dict["wall_hit"] += 1
 
-                            if float(agent_reward) != 0.0:
-                                agent_dict["episode_score"] += agent_reward
+                    #         if agent_reward < -4.0:
+                    #             agent_dict["bad_food"] += 1
+                    #             agent_dict["wall_hit"] += 1
+
+                    #         if float(agent_reward) != 0.0:
+                    #             agent_dict["episode_score"] += agent_reward 
 
                     terminated_agent_ids = terminal_steps.agent_id
                     done = True if len(terminated_agent_ids) > 0 else False
                     episode_done = done
 
             eval_scores_all_agents = extract_scores_for_all_agents(
-                eval_agents, active_agents=active_agent_id, flatten=True
+                eval_agents, active_agents=agent_ids_to_print, flatten=True
             )
             mean_score = np.mean(eval_scores_all_agents)
 
