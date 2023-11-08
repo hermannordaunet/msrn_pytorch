@@ -19,7 +19,6 @@ class BasicBlock(nn.Module):
 
     Basic 3X3 convolution blocks for use on ResNets with layers <= 34.
     Follows improved proposed scheme in http://arxiv.org/pdf/1603.05027v2.pdf
-    TODO: Read and add this paper into my master
     """
 
     expansion: int = 1
