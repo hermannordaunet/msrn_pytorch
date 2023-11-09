@@ -1,4 +1,5 @@
 import torch
+import random
 
 import numpy as np
 
@@ -13,6 +14,7 @@ from mlagents_envs.exception import (
 
 # Local imports
 from src.models.utils.data_utils import get_grid_based_perception
+from src.models.utils.save_utils import save_list_to_json
 
 
 def extract_scores_for_all_agents(
@@ -88,10 +90,18 @@ def extract_exit_points_from_agents(
     include_reward=False,
     include_food_info=False,
     include_wall_info=False,
+    include_action_distribution=False,
     mode: str = "EVAL",
     print_out=True,
     random_actions=False,
 ):
+    all_agents_exit_points = []
+    all_agents_reward = []
+    all_agents_good_food = []
+    all_agents_bad_food = []
+    all_agents_wall_hits = []
+    all_agents_action_dist = []
+
     for team, team_data in eval_agents.items():
         agent_ids = team_data.keys()
         if active_agent_id is None:
@@ -99,37 +109,82 @@ def extract_exit_points_from_agents(
         else:
             agents_to_print = active_agent_id
 
+        team_agents_exit_points = []
+        team_agents_reward = []
+        team_agents_good_food = []
+        team_agents_bad_food = []
+        team_agents_wall_hits = []
+        team_agents_action_dist = []
+
         for agent_id in agent_ids:
             if agent_id in agents_to_print:
                 agent_dict = eval_agents[team][agent_id]
-                exit_points = agent_dict["exit_points"]
-                reward = agent_dict["episode_score"]
-                bad_food = agent_dict["bad_food"]
-                good_food = agent_dict["good_food"]
-                wall_hit = agent_dict["wall_hit"]
+                team_agents_exit_points.append(agent_dict["exit_points"])
+                team_agents_reward.append(agent_dict["episode_score"])
+                team_agents_good_food.append(agent_dict["good_food"])
+                team_agents_bad_food.append(agent_dict["bad_food"])
+                team_agents_wall_hits.append(agent_dict["wall_hit"])
+                team_agents_action_dist.append(agent_dict["move_actions"].tolist()[0][0])
 
-                if not print_out:
-                    return exit_points, reward
+                if print_out:
+                    message = f"[{mode}] Agent ID: {agent_id}, Exit Points: {team_agents_exit_points[-1]}"
 
-                message = f"[{mode}] Agent ID: {agent_id}, Exit Points: {exit_points}"
+                    if random_actions:
+                        random_actions = agent_dict["random_actions"]
+                        message += f", Random Actions: {random_actions}"
 
-                if random_actions:
-                    random_actions = agent_dict["random_actions"]
-                    message += f", Random Actions: {random_actions}"
+                    if include_reward:
+                        message += f", Reward: {team_agents_reward[-1]}"
 
-                if include_reward:
-                    message += f", Reward: {reward}"
+                    if include_food_info:
+                        message += f", Good Food: {team_agents_good_food[-1]}, Bad Food: {team_agents_bad_food[-1]}"
 
-                if include_food_info:
-                    message += f", Good Food: {good_food}, Bad Food: {bad_food}"
+                    if include_wall_info:
+                        message += f", Wall hits: {team_agents_wall_hits[-1]}"
 
-                if include_wall_info:
-                    message += f", Wall hits: {wall_hit}"
+                    if include_action_distribution:
+                        message += f", Action dist: {team_agents_action_dist[-1]}"
 
-                print(message)
+                    print(message)
+
+        all_agents_exit_points.append(team_agents_exit_points)
+        all_agents_reward.append(team_agents_reward)
+        all_agents_good_food.append(team_agents_good_food)
+        all_agents_bad_food.append(team_agents_bad_food)
+        all_agents_wall_hits.append(team_agents_wall_hits)
+        all_agents_action_dist.append(team_agents_action_dist)
+
+    if not print_out:
+        return (
+            all_agents_exit_points,
+            all_agents_reward,
+            all_agents_good_food,
+            all_agents_bad_food,
+            all_agents_wall_hits,
+            all_agents_action_dist,
+        )
 
 
-def evaluate_trained_model(env, agent, config, current_episode=None, verbose=False):
+def evaluate_trained_model(
+    env, agent, config, results_directory=None, current_episode=None, verbose=False
+):
+    eval_each_exit = config["eval"]["one_of_each_exit"]
+    random_agent = config["eval"]["random_agent"]
+
+    cat_dim_action = 0
+    cat_dim_tensors = 1
+
+    message = "[INFO] Evaluating with"
+    if eval_each_exit:
+        message += " one agent per exit"
+    if random_agent:
+        message += " and with a random exiting agent."
+
+    message += " Also with one hybrid agent"
+
+    if eval_each_exit:
+        print(message)
+
     was_in_training = False
     if agent.policy_net.training:
         was_in_training = True
@@ -145,8 +200,23 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
     num_agents_on_teams = len(decision_steps.agent_id)
     num_total_agents = num_teams * num_agents_on_teams
 
+    if (agent.policy_net.num_ee + 3) != num_agents_on_teams:
+        print(
+            "Cannot run this evaluation because there are not enough agents for each exit, one random, and one hybrid"
+        )
+        env.close()
+
     state_size = agent.model_param["input_size"]
     state_batch_tensor = torch.zeros((num_total_agents, *state_size))
+
+    exit_points, rewards, good_food, bad_food, wall_hit, action_dist = (
+        list(),
+        list(),
+        list(),
+        list(),
+        list(),
+        list(),
+    )
 
     try:
         if verbose:
@@ -179,6 +249,7 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                         "episode_score": 0,
                         "exit_points": [0] * (agent.policy_net.num_ee + 1),
                         "agent_confs": [[] for _ in range(agent.policy_net.num_ee + 1)],
+                        "move_actions": np.zeros((1, 1, 3)),
                     }
 
             episode_done = False
@@ -187,9 +258,117 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                 active_agent_id = extract_one_agent_each_team(eval_agents)
 
             while not episode_done:
-                move_action, laser_action, confs, exits, costs = agent.act(
-                    state_batch_tensor, num_agents=num_total_agents, eval_agent=True
-                )
+                # TODO: loop through the agent list if there is a list
+                if not eval_each_exit:
+                    move_action, laser_action, confs, exits, costs = agent.act(
+                        state_batch_tensor, num_agents=num_total_agents, eval_agent=True
+                    )
+                else:
+                    exits = []
+                    confs = None
+                    move_action = None
+                    laser_action = None
+                    for exit_ids in range(1, agent.policy_net.num_ee + 1):
+                        exit_agent_state = state_batch_tensor[exit_ids].unsqueeze(0)
+                        (
+                            exit_move_action,
+                            exit_laser_action,
+                            conf,
+                            exit,
+                            cost,
+                        ) = agent.act(
+                            exit_agent_state,
+                            num_agents=1,
+                            eval_all_exit=True,
+                            eval_exit_point=exit_ids,
+                        )
+                        exits.append(exit)
+                        if confs is None:
+                            confs = conf
+                        else:
+                            confs = torch.cat((confs, conf), dim=cat_dim_tensors)
+
+                        if move_action is None:
+                            move_action = exit_move_action
+                            laser_action = exit_laser_action
+                        else:
+                            move_action = np.concatenate(
+                                (move_action, exit_move_action), axis=cat_dim_action
+                            )
+                            laser_action = np.concatenate(
+                                (laser_action, exit_laser_action), axis=cat_dim_action
+                            )
+
+                    exit_agent_state = state_batch_tensor[-3].unsqueeze(0)
+                    (
+                        exit_move_action,
+                        exit_laser_action,
+                        conf,
+                        exit,
+                        cost,
+                    ) = agent.act(
+                        exit_agent_state,
+                        num_agents=1,
+                    )
+
+                    exits.append(exit)
+                    confs = torch.cat((confs, conf), dim=cat_dim_tensors)
+                    move_action = np.concatenate(
+                        (move_action, exit_move_action), axis=cat_dim_action
+                    )
+                    laser_action = np.concatenate(
+                        (laser_action, exit_laser_action), axis=cat_dim_action
+                    )
+
+                    if random_agent:
+                        random_exit_idx = random.randint(1, agent.policy_net.num_ee + 1)
+                        exit_agent_state = state_batch_tensor[-2].unsqueeze(0)
+                        (
+                            exit_move_action,
+                            exit_laser_action,
+                            conf,
+                            exit,
+                            cost,
+                        ) = agent.act(
+                            exit_agent_state,
+                            num_agents=1,
+                            eval_all_exit=True,
+                            eval_exit_point=random_exit_idx,
+                        )
+
+                        exits.append(exit)
+                        confs = torch.cat((confs, conf), dim=cat_dim_tensors)
+                        move_action = np.concatenate(
+                            (move_action, exit_move_action), axis=cat_dim_action
+                        )
+                        laser_action = np.concatenate(
+                            (laser_action, exit_laser_action), axis=cat_dim_action
+                        )
+
+                    exit_agent_state = state_batch_tensor[-1].unsqueeze(0)
+                    (
+                        exit_move_action,
+                        exit_laser_action,
+                        conf,
+                        exit,
+                        cost,
+                    ) = agent.act(
+                        exit_agent_state,
+                        num_agents=1,
+                        eval_agent=True,
+                    )
+
+                    exits.append(exit)
+                    confs = torch.cat((confs, conf), dim=cat_dim_tensors)
+                    move_action = np.concatenate(
+                        (move_action, exit_move_action), axis=cat_dim_action
+                    )
+                    laser_action = np.concatenate(
+                        (laser_action, exit_laser_action), axis=cat_dim_action
+                    )
+
+                    confs = confs.squeeze()
+                    exits = torch.tensor(exits).unsqueeze(1)
 
                 for team_idx, team in enumerate(team_name_list):
                     decision_steps, _ = env.get_steps(team)
@@ -201,13 +380,14 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                     else:
                         agents_to_act = [active_agent_id[team_idx]]
                         agent_ids_to_print = agents_to_act
-                    
+
                     for agent_id in agents_to_act:
                         agent_move_action = move_action[agent_id, ...]
                         agent_laser_action = laser_action[agent_id, ...]
 
                         exit = exits[agent_id]
                         conf = confs[agent_id]
+                        eval_agents[team][agent_id]["move_actions"] += agent_move_action
                         eval_agents[team][agent_id]["exit_points"][exit] += 1
                         eval_agents[team][agent_id]["agent_confs"][exit].append(
                             conf.detach().clone()
@@ -227,14 +407,16 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                     if all_agents_active:
                         agents_to_act = agents_need_action
                         agent_ids_to_print = None
-                    else: 
+                    else:
                         agents_to_act = [active_agent_id[team_idx]]
                         agent_ids_to_print = agents_to_act
 
                     for agent_id in agents_to_act:
                         agent_dict = eval_agents[team][agent_id]
                         agent_obs = decision_steps[agent_id].obs
-                        next_state = get_grid_based_perception(agent_obs).detach().clone()
+                        next_state = (
+                            get_grid_based_perception(agent_obs).detach().clone()
+                        )
                         state = next_state
                         state_batch_tensor[agent_id, ...] = state
 
@@ -255,32 +437,6 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                         if float(agent_reward) != 0.0:
                             agent_dict["episode_score"] += agent_reward
 
-                    # else:
-                    #     agent_id = active_agent_id[team_idx]
-                    #     if agent_id in agents_need_action:
-                    #         agent_dict = eval_agents[team][agent_id]
-                    #         agent_obs = decision_steps[agent_id].obs
-                    #         next_state = get_grid_based_perception(agent_obs)
-                    #         state = next_state
-                    #         state_batch_tensor[agent_id, ...] = state
-
-                    #         agent_reward = decision_steps[agent_id].reward
-                    #         if agent_reward == -4.0:
-                    #             agent_dict["bad_food"] += 1
-
-                    #         if agent_reward > 0.0:
-                    #             agent_dict["good_food"] += 1
-
-                    #         if agent_reward == -1.0:
-                    #             agent_dict["wall_hit"] += 1
-
-                    #         if agent_reward < -4.0:
-                    #             agent_dict["bad_food"] += 1
-                    #             agent_dict["wall_hit"] += 1
-
-                    #         if float(agent_reward) != 0.0:
-                    #             agent_dict["episode_score"] += agent_reward 
-
                     terminated_agent_ids = terminal_steps.agent_id
                     done = True if len(terminated_agent_ids) > 0 else False
                     episode_done = done
@@ -292,11 +448,11 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
 
             if current_episode is not None:
                 print(
-                    f"[EVAL] Mean performance on policy net after {current_episode} episodes: {mean_score}"
+                    f"[EVAL] Mean performance on policy net after {current_episode} episodes: {mean_score:.2f}"
                 )
             else:
                 print(
-                    f"[EVAL] Mean performance on trained policy net episodes: {mean_score}"
+                    f"[EVAL] Mean performance on trained policy net episodes: {mean_score:.2f}"
                 )
 
             if not all_agents_active:
@@ -305,7 +461,8 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                     active_agent_id=active_agent_id,
                     include_reward=True,
                     include_food_info=True,
-                    include_wall_info=True, 
+                    include_wall_info=True,
+                    include_action_distribution=True,
                     print_out=True,
                 )
             else:
@@ -313,9 +470,20 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
                     eval_agents,
                     include_reward=True,
                     include_food_info=True,
-                    include_wall_info=True, 
+                    include_wall_info=True,
+                    include_action_distribution=True,
                     print_out=True,
                 )
+
+            all_episode_values = extract_exit_points_from_agents(
+                eval_agents, print_out=False
+            )
+            exit_points.append(all_episode_values[0])
+            rewards.append(all_episode_values[1])
+            good_food.append(all_episode_values[2])
+            bad_food.append(all_episode_values[3])
+            wall_hit.append(all_episode_values[4])
+            action_dist.append(all_episode_values[5])
 
         if was_in_training:
             agent.policy_net.train()
@@ -332,12 +500,20 @@ def evaluate_trained_model(env, agent, config, current_episode=None, verbose=Fal
         print("Evaluation was interrupted.")
         print("-" * 100)
         env.close()
-    # finally:
-    # if eval_agents:
-    #     eval_scores_all_agents = [
-    #         team_info["episode_score"] for team_info in eval_agents.values()
-    #     ]
-    # else:
-    #     eval_scores_all_agents = None
+    finally:
+        if results_directory is not None:
+            save_list_to_json(exit_points, f"{results_directory}/exit_points.json")
+            save_list_to_json(rewards, f"{results_directory}/rewards.json")
+            save_list_to_json(good_food, f"{results_directory}/good_food.json")
+            save_list_to_json(bad_food, f"{results_directory}/bad_food.json")
+            save_list_to_json(wall_hit, f"{results_directory}/wall_hit.json")
+            save_list_to_json(action_dist, f"{results_directory}/action_dist.json")
+
+        # if eval_agents:
+        #     eval_scores_all_agents = [
+        #         team_info["episode_score"] for team_info in eval_agents.values()
+        #     ]
+        # else:
+        #     eval_scores_all_agents = None
 
     # return eval_scores_all_agents

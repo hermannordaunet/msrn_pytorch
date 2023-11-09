@@ -149,7 +149,7 @@ class Agent:
 
         return True
 
-    def act(self, act_state, epsilon=0.0, num_agents=1, eval_agent=False):
+    def act(self, act_state, epsilon=0.0, num_agents=1, eval_agent=False, eval_all_exit=False, eval_exit_point=None):
         """Returns actions for given state as per current policy.
 
         Params:
@@ -168,6 +168,9 @@ class Agent:
                 self.policy_net.forced_exit_point = None
             else:
                 self.policy_net.forced_exit_point = self.policy_net.num_ee + 1
+            
+            if eval_all_exit:
+                self.policy_net.forced_exit_point = eval_exit_point
 
             # Returning action from the last exit of the network
             act_state = act_state.to(self.device)

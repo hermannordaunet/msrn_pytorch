@@ -116,7 +116,7 @@ def main():
         "planes": [64, 128, 256, 512],
         "distribution": "pareto",
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": True, "visualize": False},
+        "mode_setups": {"train": False, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed ezverything
         "device": DEVICE,
     }
@@ -159,6 +159,8 @@ def main():
             "episodes": 10,
             "every-n-th-episode": 30,
             "all_agents_active": True,
+            "one_of_each_exit" : True,
+            "random_agent": True,
         },
         "visualize": {
             "episodes": 10,
@@ -218,7 +220,7 @@ def main():
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
             relative_path = (
-                "builds/FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.app"
+                "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
             )
 
     else:
@@ -435,7 +437,17 @@ def main():
         )
 
     if EVAL_MODEL:
-        # Close old env and start fresh
+        timestamp = int(time.time())
+        print(f"[INFO] Eval results added to folder: {timestamp}")
+
+        eval_results_directory = Path(f"./evaluation_results/{timestamp}/")
+
+        # Check if the directory exists
+        if not eval_results_directory.exists():
+            # If it doesn't exist, create it
+            eval_results_directory.mkdir(parents=True)
+
+        # Close  old env and start fresh
         env.close()
 
         engine_config_channel.set_configuration_parameters(time_scale=10)
@@ -510,7 +522,6 @@ def main():
         # Setting the network in evaluation mode
         ee_policy_net.eval()
 
-        print("[INFO] Initalizing a Agent object")
         agent = Agent(
             ee_policy_net,
             ee_target_net,
@@ -520,7 +531,7 @@ def main():
         )
 
         evaluate_trained_model(
-            env, agent, config, current_episode=None, verbose=VERBOSE
+            env, agent, config, results_directory=eval_results_directory, current_episode=None, verbose=VERBOSE
         )
 
         env.close()
@@ -666,6 +677,8 @@ def model_trainer(
         list(),
     )  # list containing scores/losses from each episode
     scores_window = deque(maxlen=print_range)
+
+    best_model_score = float("-inf")
 
     # Evaluate variables
     evaluate_model = agent.model_param["mode_setups"]["eval"]
@@ -934,7 +947,16 @@ def model_trainer(
             if warm_start is None:
                 eps = max(eps_end, eps_decay * eps)  # decrease epsilon
 
-            moving_avg_score.append(np.mean(scores_window))
+            avg_score = np.mean(scores_window)
+            moving_avg_score.append(avg_score)
+
+            if avg_score > best_model_score:
+                save_model(
+                    agent.policy_net,
+                    agent.model_param["models_dir"],
+                    model_type="best",
+                )
+                best_model_score = avg_score
 
             if wandb:
                 wandb.log(
