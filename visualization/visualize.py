@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
@@ -45,6 +47,50 @@ def set_size(width="thesis", fraction=1, subplots=(1, 1), golden_ratio=None):
     fig_height_in = fig_width_in * golden_ratio * (subplots[0] / subplots[1])
 
     return (fig_width_in, fig_height_in)
+
+
+def plot_reward_for_each_agent(
+    score: list(),
+    plot_type="box",
+    labels=None,
+    env_name="",
+    result_dir="./",
+    rotate_labels=True,
+):
+    df = pd.DataFrame(score)
+
+    df_melted = df.melt(
+        var_name="Agent",
+        value_name="Reward",
+    )
+
+    plt.figure(figsize=set_size())
+    sns.set_theme(style="darkgrid")
+    sns.despine()
+    if plot_type == "box":
+        plot = sns.boxplot(
+            x="Agent",
+            y="Reward",
+            data=df_melted,
+            notch=True,
+            flierprops={"marker": "o"},
+        )
+    else:
+        plot = sns.violinplot(x="Agent", y="Reward", data=df_melted)
+
+    plt.title("Boxplot of agent scores in an environment")
+    plt.xlabel("Agents")
+    plt.ylabel("Reward")
+
+    if labels is not None:
+        plot.set_xticklabels(labels)
+
+    if rotate_labels:
+        plot.set_xticklabels(plot.get_xticklabels(), rotation=20)
+
+    plt.savefig(
+        f"{result_dir}/rewards_{plot_type}.pdf", format="pdf", bbox_inches="tight"
+    )
 
 
 # save scores plot
@@ -155,7 +201,9 @@ def plot_loss_from_list(
 
     plt.tight_layout()
     plt.savefig(
-        f"{result_dir}/{env_name}_{loss_type}_losses.pdf", format="pdf", bbox_inches="tight"
+        f"{result_dir}/{env_name}_{loss_type}_losses.pdf",
+        format="pdf",
+        bbox_inches="tight",
     )
     plt.close()
 
@@ -210,24 +258,24 @@ def plot_grid_based_perception(
     # plt.show(**kwargs)
 
 
+def load_json_as_list(file_path):
+    with open(file_path, "r") as json_file:
+        json_data = json.load(json_file)
+    return json_data
+
+
 def main():
-    import time
-    import random
+    score_file = "evaluation_results/1699554932/rewards.json"
+    scores = load_json_as_list(score_file)
 
-    N = 4
-    M = 450
-
-    scores = [[random.random() for i in range(N)] for j in range(M)]
-    losses = [random.random() for i in range(M)]
-
-    start_time = time.time()
-    plot_scores_from_nested_list(scores, labels=["Train"], env_name="FoodCollector")
-    plot_loss_from_list(losses, labels=["Train"], env_name="FoodCollector")
-    end_time = time.time()
-
-    elapsed_time = end_time - start_time
-
-    print(f"Elapsed time: {elapsed_time} seconds")
+    scores = [inner_list[0] for inner_list in scores]
+    new_labels = ["Exit 1", "Exit 2", "Exit 3", "Exit 4", "Full", "Random", "MSRN"]
+    plot_reward_for_each_agent(
+        scores,
+        plot_type="violin",
+        result_dir="evaluation_results/1699554932",
+        labels=new_labels,
+    )
 
 
 if __name__ == "__main__":

@@ -67,7 +67,7 @@ def set_seed(seed: int = 42) -> None:
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
 
- 
+
 def get_latest_folder(runs_directory: Path):
     # Get all subdirectories in the runs_directory
     subdirectories = [d for d in runs_directory.iterdir() if d.is_dir()]
@@ -159,7 +159,7 @@ def main():
             "episodes": 1,
             "every-n-th-episode": 30,
             "all_agents_active": True,
-            "one_of_each_exit" : True,
+            "one_of_each_exit": True,
             "random_agent": True,
         },
         "visualize": {
@@ -238,7 +238,6 @@ def main():
         run_wandb = None
 
     if TRAIN_MODEL:
-
         env = UnityEnvironment(
             file_name=FILE_NAME,
             side_channels=SIDE_CHANNELS,
@@ -248,8 +247,12 @@ def main():
         )
 
         # Unity environment spesific
-        float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
-        float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
+        float_parameter_channel.set_float_parameter(
+            "laser_length", config["laser_length"]
+        )
+        float_parameter_channel.set_float_parameter(
+            "agent_scale", config["agent_scale"]
+        )
 
         env.reset()
 
@@ -277,7 +280,7 @@ def main():
         model_param["input_size"] = (c, w, h)
         model_param["num_classes"] = continuous_size
         # channels, screen_width, screen_height = input_size
-        
+
         timestamp = int(time.time())
         print(f"[INFO] Results added to folder: {timestamp}")
 
@@ -447,10 +450,14 @@ def main():
             # seed=model_param["manual_seed"],
             no_graphics=config["no_graphics"],
         )
-        
+
         # Unity environment spesific
-        float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
-        float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
+        float_parameter_channel.set_float_parameter(
+            "laser_length", config["laser_length"]
+        )
+        float_parameter_channel.set_float_parameter(
+            "agent_scale", config["agent_scale"]
+        )
 
         env.reset()
 
@@ -485,7 +492,7 @@ def main():
         parameter_directory = results_directory / "parameters"
 
         model_param = load_json_as_dict(f"{parameter_directory}/model_param.json")
-        #config = load_json_as_dict(f"{parameter_directory}/config.json")
+        # config = load_json_as_dict(f"{parameter_directory}/config.json")
         dqn_param = load_json_as_dict(f"{parameter_directory}/dqn_param.json")
 
         model_type = globals()[model_param["model_class_name"]]
@@ -538,7 +545,12 @@ def main():
         print(f"[INFO] Started training @ {time.ctime(evalStartTime)}")
 
         evaluate_trained_model(
-            env, agent, config, results_directory=eval_results_directory, current_episode=None, verbose=VERBOSE
+            env,
+            agent,
+            config,
+            results_directory=eval_results_directory,
+            current_episode=None,
+            verbose=VERBOSE,
         )
 
         evalEndTime = time.time()
@@ -1101,7 +1113,7 @@ def model_trainer(
             env.close()
         except:
             print("Environment already closed")
-            
+
         # CRITICAL: Save model here and the nessasary values
         save_model(agent.policy_net, agent.model_param["models_dir"])
 
