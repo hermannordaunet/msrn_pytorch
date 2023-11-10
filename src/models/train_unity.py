@@ -185,7 +185,7 @@ def main():
     EVAL_MODEL = model_param["mode_setups"]["eval"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
 
-    TIMESTAMP = int(1697890478)
+    TIMESTAMP = int(1699472779)
 
     VERBOSE = True
 
@@ -484,7 +484,7 @@ def main():
         parameter_directory = results_directory / "parameters"
 
         model_param = load_json_as_dict(f"{parameter_directory}/model_param.json")
-        config = load_json_as_dict(f"{parameter_directory}/config.json")
+        #config = load_json_as_dict(f"{parameter_directory}/config.json")
         dqn_param = load_json_as_dict(f"{parameter_directory}/dqn_param.json")
 
         model_type = globals()[model_param["model_class_name"]]
