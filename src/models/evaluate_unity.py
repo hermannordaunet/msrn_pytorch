@@ -224,6 +224,7 @@ def evaluate_trained_model(
                 f"[INFO] Number of parallell environments during evaluation: {num_teams}"
             )
 
+
         for episode in range(1, num_eval_episodes + 1):
             eval_agents = dict()
 
@@ -501,6 +502,11 @@ def evaluate_trained_model(
         print("-" * 100)
         env.close()
     finally:
+        try:
+            env.close()
+        except:
+            print("Environment already closed")
+        
         if results_directory is not None:
             save_list_to_json(exit_points, f"{results_directory}/exit_points.json")
             save_list_to_json(rewards, f"{results_directory}/rewards.json")
