@@ -156,7 +156,7 @@ def main():
             "all_agents_active": True,
         },
         "eval": {
-            "episodes": 250,
+            "episodes": 1,
             "every-n-th-episode": 30,
             "all_agents_active": True,
             "one_of_each_exit" : True,
@@ -204,24 +204,19 @@ def main():
 
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
-            # relative_path = (
-            #     "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
-            # )
-            # relative_path = (
-            #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
-            # )
+            # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
 
-            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_7_agents.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_7_agents.x86_64"
 
             # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
+            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_6_agents.x86_64"
 
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
-            relative_path = (
-                "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
-            )
+            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
 
     else:
         relative_path = None
@@ -233,45 +228,6 @@ def main():
 
     # set_seed(model_param["manual_seed"])
 
-    env = UnityEnvironment(
-        file_name=FILE_NAME,
-        side_channels=SIDE_CHANNELS,
-        # seed=model_param["manual_seed"],
-        no_graphics=config["no_graphics"],
-        worker_id=random_worker_id,
-    )
-
-    # Unity environment spesific
-    float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
-    float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
-
-    env.reset()
-
-    behavior_specs = env.behavior_specs
-    behavior_names = env.behavior_specs.keys()
-    team_name_list = list(behavior_names)
-
-    action_spec_list = list()
-    observation_spec_list = list()
-    for team_name in team_name_list:
-        action_spec_list.append(behavior_specs[team_name].action_spec)
-        observation_spec_list.append(behavior_specs[team_name].observation_specs)
-
-    if len(set(action_spec_list)) == 1:
-        action_spec = action_spec_list[-1]
-    else:
-        print("The agents has differing action specs. Needs to be implemented")
-        exit()
-
-    observation_spec = observation_spec_list[0]
-    continuous_size = action_spec.continuous_size
-    # discrete_size = action_spec.discrete_size
-
-    c, w, h = observation_spec[-1].shape[::-1]
-    model_param["input_size"] = (c, w, h)
-    model_param["num_classes"] = continuous_size
-    # channels, screen_width, screen_height = input_size
-
     if DEVICE != "mps" and TRAIN_MODEL:
         run_wandb = wandb.init(
             project="Master-thesis",
@@ -281,6 +237,46 @@ def main():
         run_wandb = None
 
     if TRAIN_MODEL:
+
+        env = UnityEnvironment(
+            file_name=FILE_NAME,
+            side_channels=SIDE_CHANNELS,
+            # seed=model_param["manual_seed"],
+            no_graphics=config["no_graphics"],
+            worker_id=random_worker_id,
+        )
+
+        # Unity environment spesific
+        float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
+        float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
+
+        env.reset()
+
+        behavior_specs = env.behavior_specs
+        behavior_names = env.behavior_specs.keys()
+        team_name_list = list(behavior_names)
+
+        action_spec_list = list()
+        observation_spec_list = list()
+        for team_name in team_name_list:
+            action_spec_list.append(behavior_specs[team_name].action_spec)
+            observation_spec_list.append(behavior_specs[team_name].observation_specs)
+
+        if len(set(action_spec_list)) == 1:
+            action_spec = action_spec_list[-1]
+        else:
+            print("The agents has differing action specs. Needs to be implemented")
+            exit()
+
+        observation_spec = observation_spec_list[0]
+        continuous_size = action_spec.continuous_size
+        # discrete_size = action_spec.discrete_size
+
+        c, w, h = observation_spec[-1].shape[::-1]
+        model_param["input_size"] = (c, w, h)
+        model_param["num_classes"] = continuous_size
+        # channels, screen_width, screen_height = input_size
+        
         timestamp = int(time.time())
         print(f"[INFO] Results added to folder: {timestamp}")
 
@@ -461,6 +457,10 @@ def main():
             # seed=model_param["manual_seed"],
             no_graphics=config["no_graphics"],
         )
+        
+        # Unity environment spesific
+        float_parameter_channel.set_float_parameter("laser_length", config["laser_length"])
+        float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
 
         env.reset()
         # If we just trained a model, load that one.

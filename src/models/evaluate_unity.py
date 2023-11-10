@@ -204,6 +204,7 @@ def evaluate_trained_model(
         print(
             "Cannot run this evaluation because there are not enough agents for each exit, one random, and one hybrid"
         )
+        print(f"Only {num_agents_on_teams} agents in the env")
         env.close()
 
     state_size = agent.model_param["input_size"]
