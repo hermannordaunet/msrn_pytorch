@@ -1,4 +1,5 @@
 import json
+import torch
 
 import numpy as np
 import seaborn as sns
@@ -50,14 +51,14 @@ def set_size(width="thesis", fraction=1, subplots=(1, 1), golden_ratio=None):
 
 
 def plot_reward_for_each_agent(
-    score: list(),
+    dist: list(),
     plot_type="box",
     labels=None,
     env_name="",
     result_dir="./",
     rotate_labels=True,
 ):
-    df = pd.DataFrame(score)
+    df = pd.DataFrame(dist)
 
     df_melted = df.melt(
         var_name="Agent",
@@ -78,7 +79,7 @@ def plot_reward_for_each_agent(
     else:
         plot = sns.violinplot(x="Agent", y="Reward", data=df_melted)
 
-    plt.title("Boxplot of agent scores in an environment")
+    plt.title("Rewards for each agent type")
     plt.xlabel("Agents")
     plt.ylabel("Reward")
 
@@ -90,6 +91,90 @@ def plot_reward_for_each_agent(
 
     plt.savefig(
         f"{result_dir}/rewards_{plot_type}.pdf", format="pdf", bbox_inches="tight"
+    )
+
+
+def plot_action_distribution(
+    score: list(),
+    plot_type="box",
+    labels=None,
+    env_name="",
+    result_dir="./",
+    rotate_labels=True,
+):
+    df = pd.DataFrame([episode[-1] for episode in data if isinstance(episode, list) and episode])
+
+
+    # df_melted = df.melt(
+    #     var_name="Agent",
+    #     value_name="Actions",
+    # )
+
+    
+
+    plt.figure(figsize=set_size())
+    sns.set_theme(style="darkgrid")
+    sns.despine()
+
+    plot = sns.barplot(
+        x="Action",
+        y="Amount",
+        data=df_melted,
+    )
+
+    plt.title("Boxplot of agent scores in an environment")
+    plt.xlabel("Agents")
+    plt.ylabel("Actions")
+
+    if labels is not None:
+        plot.set_xticklabels(labels)
+
+    if rotate_labels:
+        plot.set_xticklabels(plot.get_xticklabels(), rotation=20)
+
+    plt.savefig(
+        f"{result_dir}/action_dist_{plot_type}.pdf", format="pdf", bbox_inches="tight"
+    )
+
+
+def plot_exit_distribution(
+    exit_dist: list(),
+    agent_type="msrn",
+    labels=None,
+    env_name="",
+    result_dir="./",
+    rotate_labels=True,
+):
+    
+    if agent_type == "msrn":
+        last_agent_data = exit_dist[:, -1, :]
+    elif agent_type == "random":
+        last_agent_data =  exit_dist[:, -2, :]
+    else:
+        print("No supported agent type provided. Plotting MSRN exit distribution.")
+
+
+    exit_numbers = np.tile(np.arange(4), (100, 1))  # Repeating exit numbers for each episode
+    episode_numbers = np.repeat(np.arange(1, 101), 4)  # Repeating each episode number 4 times
+
+    # Create a DataFrame
+    df = pd.DataFrame({'Episode': episode_numbers, 'Exit': exit_numbers.flatten(), 'Count': last_agent_data.flatten()})
+
+    # Now create the barplot using Seaborn
+    plt.figure(figsize=set_size())
+    plot = sns.barplot(data=df, x='Exit', y='Count', estimator=np.mean, ci='sd')
+    plt.title('Average Exit Count for the Last Agent with Standard Deviation')
+    sns.set_theme(style="darkgrid")
+    sns.despine()
+
+    if labels is not None:
+        plot.set_xticklabels(labels)
+
+    if rotate_labels:
+        plot.set_xticklabels(plot.get_xticklabels(), rotation=20)
+
+    plt.savefig(
+        f"{result_dir}/exit_dist_{agent_type}.pdf", format="pdf", bbox_inches="tight"
     )
 
 
@@ -265,17 +350,29 @@ def load_json_as_list(file_path):
 
 
 def main():
-    score_file = "evaluation_results/1699554932/rewards.json"
-    scores = load_json_as_list(score_file)
+    timestamp = 1699630854
+    eval_results_dir = f"evaluation_results/{timestamp}"
 
+    score_file = f"{eval_results_dir}/rewards.json"
+    scores = load_json_as_list(score_file)
     scores = [inner_list[0] for inner_list in scores]
-    new_labels = ["Exit 1", "Exit 2", "Exit 3", "Exit 4", "Full", "Random", "MSRN"]
-    plot_reward_for_each_agent(
-        scores,
-        plot_type="violin",
-        result_dir="evaluation_results/1699554932",
-        labels=new_labels,
-    )
+
+    exit_dist_file = f"{eval_results_dir}/action_dist.json"
+    exit_dists = load_json_as_list(exit_dist_file)
+
+    exit_dists = torch.tensor(exit_dists).squeeze()
+    plot_exit_distribution(exit_dists, result_dir=eval_results_dir)
+    plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir)
+
+    new_labels = ["Exit 1", "Exit 2", "Exit 3", "Full", "Random", "MSRN"]
+    # plot_reward_for_each_agent(
+    #     scores,
+    #     plot_type="violin",
+    #     result_dir=eval_results_dir,
+    #     labels=new_labels,
+    # )
+
+
 
 
 if __name__ == "__main__":
