@@ -509,12 +509,14 @@ def evaluate_trained_model(
             print("Environment already closed")
         
         if results_directory is not None:
+            exit_threshold = agent.policy_net.exit_threshold
             save_list_to_json(exit_points, f"{results_directory}/exit_points.json")
             save_list_to_json(rewards, f"{results_directory}/rewards.json")
             save_list_to_json(good_food, f"{results_directory}/good_food.json")
             save_list_to_json(bad_food, f"{results_directory}/bad_food.json")
             save_list_to_json(wall_hit, f"{results_directory}/wall_hit.json")
             save_list_to_json(action_dist, f"{results_directory}/action_dist.json")
+            save_list_to_json(exit_threshold, f"{results_directory}/exit_threshold.json")
 
         # if eval_agents:
         #     eval_scores_all_agents = [
