@@ -128,7 +128,7 @@ def main():
         "double_dqn": True,
         "ppo": False,
         "use_build": True,
-        "no_graphics": False,
+        "no_graphics": True,
         "laser_length": 1,
         "agent_scale": 1,
         "prioritized_memory": False,
@@ -434,17 +434,6 @@ def main():
         )
 
     if EVAL_MODEL:
-        timestamp = int(time.time())
-        print(f"[INFO] Eval results added to folder: {timestamp}")
-
-        eval_results_directory = Path(f"./evaluation_results/{timestamp}/")
-
-        # Check if the directory exists
-        if not eval_results_directory.exists():
-            # If it doesn't exist, create it
-            eval_results_directory.mkdir(parents=True)
-
-        # Close  old env and start fresh
         try:
             env.close()
         except:
@@ -464,6 +453,17 @@ def main():
         float_parameter_channel.set_float_parameter("agent_scale", config["agent_scale"])
 
         env.reset()
+
+        timestamp = int(time.time())
+        print(f"[INFO] Eval results added to folder: {timestamp}")
+
+        eval_results_directory = Path(f"./evaluation_results/{timestamp}/")
+
+        # Check if the directory exists
+        if not eval_results_directory.exists():
+            # If it doesn't exist, create it
+            eval_results_directory.mkdir(parents=True)
+
         # If we just trained a model, load that one.
         # If not, load the model from the timestamp provided.
 
