@@ -67,7 +67,7 @@ def set_seed(seed: int = 42) -> None:
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
 
-
+ 
 def get_latest_folder(runs_directory: Path):
     # Get all subdirectories in the runs_directory
     subdirectories = [d for d in runs_directory.iterdir() if d.is_dir()]
@@ -128,7 +128,7 @@ def main():
         "double_dqn": True,
         "ppo": False,
         "use_build": True,
-        "no_graphics": True,
+        "no_graphics": False,
         "laser_length": 1,
         "agent_scale": 1,
         "prioritized_memory": False,
@@ -216,7 +216,8 @@ def main():
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
-            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
+            # relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
+            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_6_agents.app"
 
     else:
         relative_path = None
