@@ -448,7 +448,10 @@ def main():
             eval_results_directory.mkdir(parents=True)
 
         # Close  old env and start fresh
-        env.close()
+        try:
+            env.close()
+        except:
+            print("Environment already closed")
 
         engine_config_channel.set_configuration_parameters(time_scale=10)
 
@@ -530,15 +533,30 @@ def main():
             dqn_param=dqn_param,
         )
 
+        evalStartTime = time.time()
+        print(f"[INFO] Started training @ {time.ctime(evalStartTime)}")
+
         evaluate_trained_model(
             env, agent, config, results_directory=eval_results_directory, current_episode=None, verbose=VERBOSE
         )
 
-        env.close()
+        evalEndTime = time.time()
+        total_sec = evalEndTime - evalStartTime
+        print(
+            f"[INFO] total time taken to eval the model: {get_time_hh_mm_ss(total_sec)} sec"
+        )
+
+        try:
+            env.close()
+        except:
+            print("Environment already closed")
 
     if VISUALIZE_MODEL:
         # Close old env and start fresh
-        env.close()
+        try:
+            env.close()
+        except:
+            print("Environment already closed")
 
         engine_config_channel.set_configuration_parameters(time_scale=1)
 
@@ -623,7 +641,10 @@ def main():
 
         visualize_trained_model(env, agent, config, verbose=VERBOSE)
 
-        env.close()
+        try:
+            env.close()
+        except:
+            print("Environment already closed")
 
 
 def model_trainer(
@@ -1075,7 +1096,11 @@ def model_trainer(
         if wandb:
             wandb.finish()
 
-        env.close()
+        try:
+            env.close()
+        except:
+            print("Environment already closed")
+            
         # CRITICAL: Save model here and the nessasary values
         save_model(agent.policy_net, agent.model_param["models_dir"])
 

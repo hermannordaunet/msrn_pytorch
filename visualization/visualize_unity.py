@@ -201,3 +201,8 @@ def visualize_trained_model(env, agent, config, verbose=False):
         print("Visualizing was interrupted.")
         print("-" * 100)
         env.close()
+    finally:
+        try:
+            env.close()
+        except:
+            print("Environment already closed")
