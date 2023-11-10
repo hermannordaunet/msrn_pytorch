@@ -156,7 +156,7 @@ def main():
             "all_agents_active": True,
         },
         "eval": {
-            "episodes": 10,
+            "episodes": 250,
             "every-n-th-episode": 30,
             "all_agents_active": True,
             "one_of_each_exit" : True,
@@ -211,7 +211,7 @@ def main():
             #     "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             # )
 
-            relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
+            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_7_agents.x86_64"
 
             # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
 
@@ -272,7 +272,7 @@ def main():
     model_param["num_classes"] = continuous_size
     # channels, screen_width, screen_height = input_size
 
-    if DEVICE != "mps":
+    if DEVICE != "mps" and TRAIN_MODEL:
         run_wandb = wandb.init(
             project="Master-thesis",
             config={**model_param, **config, **dqn_param, **epsilon_greedy_param},
