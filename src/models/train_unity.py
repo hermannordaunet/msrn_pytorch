@@ -110,7 +110,7 @@ def main():
         "loss_function": "v5",
         "exit_loss_function": "loss_exit",
         "num_ee": 3,
-        "exit_threshold": [0.85, 0.9, 0.95],
+        "exit_threshold": [0.65, 0.7, 0.75, 0.8, 0.9],
         "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
@@ -185,7 +185,7 @@ def main():
     EVAL_MODEL = model_param["mode_setups"]["eval"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
 
-    TIMESTAMP = int(1699472908)
+    TIMESTAMP = int(1697890478)
 
     VERBOSE = True
 
@@ -211,7 +211,8 @@ def main():
 
             # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_6_agents.x86_64"
-            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_6_agents.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_6_agents.x86_64"
+            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_8_agents.x86_64"
 
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
@@ -443,7 +444,7 @@ def main():
         except:
             print("Environment already closed")
 
-        engine_config_channel.set_configuration_parameters(time_scale=10)
+        engine_config_channel.set_configuration_parameters(time_scale=20)
 
         env = UnityEnvironment(
             file_name=FILE_NAME,
