@@ -102,15 +102,14 @@ def plot_action_distribution(
     result_dir="./",
     rotate_labels=True,
 ):
-    df = pd.DataFrame([episode[-1] for episode in data if isinstance(episode, list) and episode])
-
+    df = pd.DataFrame(
+        [episode[-1] for episode in data if isinstance(episode, list) and episode]
+    )
 
     # df_melted = df.melt(
     #     var_name="Agent",
     #     value_name="Actions",
     # )
-
-    
 
     plt.figure(figsize=set_size())
     sns.set_theme(style="darkgrid")
@@ -145,26 +144,37 @@ def plot_exit_distribution(
     result_dir="./",
     rotate_labels=True,
 ):
-    
     if agent_type == "msrn":
         last_agent_data = exit_dist[:, -1, :]
     elif agent_type == "random":
-        last_agent_data =  exit_dist[:, -2, :]
+        last_agent_data = exit_dist[:, -2, :]
     else:
         print("No supported agent type provided. Plotting MSRN exit distribution.")
+    number_of_episodes = exit_dist.shape[0]
+    number_of_exits = exit_dist.shape[-1]
+    number_of_agents = exit_dist.shape[1]
 
-
-    exit_numbers = np.tile(np.arange(4), (100, 1))  # Repeating exit numbers for each episode
-    episode_numbers = np.repeat(np.arange(1, 101), 4)  # Repeating each episode number 4 times
+    exit_numbers = np.tile(
+        np.arange(number_of_exits), (number_of_episodes, 1)
+    )  # Repeating exit numbers for each episode
+    episode_numbers = np.repeat(
+        np.arange(1, number_of_episodes+1), number_of_exits
+    )  # Repeating each episode number 4 times
 
     # Create a DataFrame
-    df = pd.DataFrame({'Episode': episode_numbers, 'Exit': exit_numbers.flatten(), 'Count': last_agent_data.flatten()})
+    df = pd.DataFrame(
+        {
+            "Episode": episode_numbers,
+            "Exit": exit_numbers.flatten(),
+            "Count": last_agent_data.flatten(),
+        }
+    )
 
     # Now create the barplot using Seaborn
     plt.figure(figsize=set_size())
-    plot = sns.barplot(data=df, x='Exit', y='Count', estimator=np.mean, ci='sd')
-    plt.title('Average Exit Count for the Last Agent with Standard Deviation')
     sns.set_theme(style="darkgrid")
+    plot = sns.barplot(data=df, x="Exit", y="Count", estimator=np.mean, errorbar="sd")
+    plt.title("Average Exit Count for the Last Agent with Standard Deviation")
     sns.despine()
 
     if labels is not None:
@@ -175,6 +185,51 @@ def plot_exit_distribution(
 
     plt.savefig(
         f"{result_dir}/exit_dist_{agent_type}.pdf", format="pdf", bbox_inches="tight"
+    )
+
+
+def get_macs_for_agent(exit_dist, exit_macs):
+
+    number_of_steps = torch.sum(exit_dist[0,0,0])
+    result = torch.einsum('ijk,k->ij', exit_dist.type(torch.float32), exit_macs) / number_of_steps
+
+    return result
+
+def plot_macs_for_agent(
+    exit_dist: list(),
+    labels=None,
+    env_name="",
+    result_dir="./",
+    rotate_labels=True,
+):
+    
+    num_exits = exit_dist.shape[-1]
+    
+    if num_exits == 4:
+        cost_list = torch.tensor([21.22, 34.36, 42.63, 86.84])
+    elif num_exits == 6:
+        cost_list= torch.tensor([34.38, 64.83, 86.09, 107.35, 117.98, 170.45])
+    else:
+        print("No exit cost_list for this amount of exits.")
+        exit()
+
+    tensor = get_macs_for_agent(exit_dist, cost_list)
+
+    # Now create the barplot using Seaborn
+    plt.figure(figsize=set_size())
+    sns.set_theme(style="darkgrid")
+    plot = sns.barplot(data=tensor, estimator=np.mean, errorbar="sd", capsize=.1)
+    plt.title("MACs for each agent. With Standard Deviation for Random and MSRN")
+    sns.despine()
+
+    if labels is not None:
+        plot.set_xticklabels(labels)
+
+    if rotate_labels:
+        plot.set_xticklabels(plot.get_xticklabels(), rotation=20)
+
+    plt.savefig(
+        f"{result_dir}/macs.pdf", format="pdf", bbox_inches="tight"
     )
 
 
@@ -348,31 +403,51 @@ def load_json_as_list(file_path):
         json_data = json.load(json_file)
     return json_data
 
+def create_dynamic_list(number_of_early_exits, with_random=True):
+    # The base labels that are always included
+    if with_random:
+        base_labels = ["Full", "Random", "MSRN"]
+    else:
+        base_labels = ["Full", "MSRN"]
+    # Create the exit labels based on the number_of_exits variable
+    exit_labels = [f"Exit {i}" for i in range(1, number_of_early_exits + 1)]
+    
+    # Combine the exit labels with the base labels
+    dynamic_list = exit_labels + base_labels
+    
+    return dynamic_list
 
 def main():
-    timestamp = 1699630854
+    timestamp = 1699645352
     eval_results_dir = f"evaluation_results/{timestamp}"
 
     score_file = f"{eval_results_dir}/rewards.json"
     scores = load_json_as_list(score_file)
     scores = [inner_list[0] for inner_list in scores]
 
-    exit_dist_file = f"{eval_results_dir}/action_dist.json"
+    exit_dist_file = f"{eval_results_dir}/exit_points.json"
     exit_dists = load_json_as_list(exit_dist_file)
-
     exit_dists = torch.tensor(exit_dists).squeeze()
+
+    action_dist_file = f"{eval_results_dir}/action_dist.json"
+    action_dist = load_json_as_list(action_dist_file)
+    action_dist = torch.tensor(action_dist).squeeze()
+
+    num_ee = (exit_dists.shape[-1]) - 1
+
+    new_labels = create_dynamic_list(num_ee)
+
+    plot_macs_for_agent(exit_dists, result_dir=eval_results_dir, labels=new_labels)
     plot_exit_distribution(exit_dists, result_dir=eval_results_dir)
-    plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir)
-
-    new_labels = ["Exit 1", "Exit 2", "Exit 3", "Full", "Random", "MSRN"]
-    # plot_reward_for_each_agent(
-    #     scores,
-    #     plot_type="violin",
-    #     result_dir=eval_results_dir,
-    #     labels=new_labels,
-    # )
+    # plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir)
 
 
+    plot_reward_for_each_agent(
+        scores,
+        plot_type="violin",
+        result_dir=eval_results_dir,
+        labels=new_labels,
+    )
 
 
 if __name__ == "__main__":
