@@ -219,7 +219,8 @@ def main():
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
             # relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
-            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_6_agents.app"
+            # relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_6_agents.app"
+            relative_path = "builds/FoodCollector_1_env_respawn_no_wall_penalty_2_and_-4_reward_8_agents.app"
 
     else:
         relative_path = None

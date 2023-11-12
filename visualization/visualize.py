@@ -206,19 +206,23 @@ def plot_macs_for_agent(
     num_exits = exit_dist.shape[-1]
     
     if num_exits == 4:
-        cost_list = torch.tensor([21.22, 34.36, 42.63, 86.84])
+        cost_list = [21.22, 34.36, 42.63, 86.84]
+    elif num_exits == 5:
+        cost_list = [34.38 ,64.83, 86.09, 107.35, 170.45]
     elif num_exits == 6:
-        cost_list= torch.tensor([34.38, 64.83, 86.09, 107.35, 117.98, 170.45])
+        cost_list= [34.38, 64.83, 86.09, 107.35, 117.98, 170.45]
     else:
         print("No exit cost_list for this amount of exits.")
         exit()
+    
+    cost_list = torch.tensor(cost_list)
 
     tensor = get_macs_for_agent(exit_dist, cost_list)
 
     # Now create the barplot using Seaborn
     plt.figure(figsize=set_size())
     sns.set_theme(style="darkgrid")
-    plot = sns.barplot(data=tensor, estimator=np.mean, errorbar="sd", capsize=.1)
+    plot = sns.barplot(data=tensor, estimator=np.mean, errorbar="sd", capsize=.15, errwidth=1)
     plt.title("MACs for each agent. With Standard Deviation for Random and MSRN")
     sns.despine()
 
@@ -418,7 +422,7 @@ def create_dynamic_list(number_of_early_exits, with_random=True):
     return dynamic_list
 
 def main():
-    timestamp = 1699645352
+    timestamp = 1699707985
     eval_results_dir = f"evaluation_results/{timestamp}"
 
     score_file = f"{eval_results_dir}/rewards.json"
@@ -439,7 +443,7 @@ def main():
 
     plot_macs_for_agent(exit_dists, result_dir=eval_results_dir, labels=new_labels)
     plot_exit_distribution(exit_dists, result_dir=eval_results_dir)
-    # plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir)
+    plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir)
 
 
     plot_reward_for_each_agent(
