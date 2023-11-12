@@ -199,13 +199,13 @@ def evaluate_trained_model(
 
     num_agents_on_teams = len(decision_steps.agent_id)
     num_total_agents = num_teams * num_agents_on_teams
-
-    if (agent.policy_net.num_ee + 3) != num_agents_on_teams:
-        print(
-            "Cannot run this evaluation because there are not enough agents for each exit, one random, and one hybrid"
-        )
-        print(f"{num_agents_on_teams} agents in the env")
-        env.close()
+    if eval_each_exit:
+        if (agent.policy_net.num_ee + 3) != num_agents_on_teams:
+            print(
+                "Cannot run this evaluation because there are not enough agents for each exit, one random, and one hybrid"
+            )
+            print(f"{num_agents_on_teams} agents in the env")
+            env.close()
 
     state_size = agent.model_param["input_size"]
     state_batch_tensor = torch.zeros((num_total_agents, *state_size))
@@ -503,11 +503,6 @@ def evaluate_trained_model(
         print("-" * 100)
         env.close()
     finally:
-        try:
-            env.close()
-        except:
-            print("Environment already closed")
-        
         if results_directory is not None:
             exit_threshold = agent.policy_net.exit_threshold
             save_list_to_json(exit_points, f"{results_directory}/exit_points.json")

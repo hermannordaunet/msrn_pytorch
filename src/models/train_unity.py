@@ -110,13 +110,13 @@ def main():
         "loss_function": "v5",
         "exit_loss_function": "loss_exit",
         "num_ee": 3,
-        "exit_threshold": [0.65, 0.7, 0.75, 0.8, 0.9],
+        "exit_threshold": [0.65, 0.7, 0.75],
         "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
         "distribution": "pareto",
         "models_dir": None,
-        "mode_setups": {"train": False, "eval": True, "visualize": False},
+        "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed ezverything
         "device": DEVICE,
     }
@@ -140,7 +140,7 @@ def main():
         "learning_rate": {
             "lr": 1e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
-            "lr_exit": 0.001,
+            "lr_exit": 0.01,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": False,
@@ -152,15 +152,15 @@ def main():
         "num_epochs": 3,
         "print_range": 10,
         "train": {
-            "episodes": 10,
-            "all_agents_active": True,
+            "episodes": 1000,
+            "all_agents_active": False,
         },
         "eval": {
-            "episodes": 100,
+            "episodes": 10,
             "every-n-th-episode": 30,
-            "all_agents_active": True,
-            "one_of_each_exit": True,
-            "random_agent": True,
+            "all_agents_active": False,
+            "one_of_each_exit": False,
+            "random_agent": False,
         },
         "visualize": {
             "episodes": 10,
@@ -206,13 +206,13 @@ def main():
         if platform == "linux" or platform == "linux2":
             # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
             # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
-
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_7_agents.x86_64"
 
             # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
-            # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_6_agents.x86_64"
+            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_6_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_6_agents.x86_64"
-            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_8_agents.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_8_agents.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_7_agents.x86_64"
 
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
@@ -439,7 +439,7 @@ def main():
             f"[INFO] total time taken to train the model: {get_time_hh_mm_ss(total_sec)} sec"
         )
 
-    if EVAL_MODEL:
+    if EVAL_MODEL and not TRAIN_MODEL:
         try:
             env.close()
         except:
@@ -773,6 +773,7 @@ def model_trainer(
                         "episode_score": 0,
                         "random_actions": 0,
                         "exit_points": [0] * (agent.policy_net.num_ee + 1),
+                        "move_actions": np.zeros((1, 1, 3)),
                     }
 
             # min_max_conf = list()
@@ -803,6 +804,8 @@ def model_trainer(
                     for agent_id in agents_to_act:
                         agent_move_action = move_actions[agent_id, ...]
                         agent_laser_action = laser_actions[agent_id, ...]
+
+                        training_agents[team][agent_id]["move_actions"] += agent_move_action
 
                         env.set_action_for_agent(
                             team,
