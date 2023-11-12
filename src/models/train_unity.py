@@ -823,7 +823,7 @@ def model_trainer(
                         agent_ids_to_print = None
                     else:
                         agents_to_act = [active_agent_id[team_idx]]
-                        agent_ids_to_print = active_agent_id[team_idx]
+                        agent_ids_to_print = agents_to_act
 
                     for agent_id in agents_need_action_after_step:
                         agent_dict = training_agents[team][agent_id]
