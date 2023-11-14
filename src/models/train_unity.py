@@ -18,6 +18,7 @@ from utils.save_utils import save_model, save_dict_to_json, save_list_to_json
 
 from small_dqn import small_DQN
 from ee_cnn_residual import EE_CNN_Residual
+from exploding_ee_cnn import Exploding_EE_CNN_Residual
 from resnet_dqn import ResNet_DQN
 from resnet_original import ResNet
 
@@ -106,9 +107,9 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual or small_DQN or ResNet_DQN or ResNet
+        "model_class_name": "Exploding_EE_CNN_Residual",  # EE_CNN_Residual, small_DQN, ResNet_DQN, ResNet, Exploding_EE_CNN_Residual
         "loss_function": "v5",
-        "exit_loss_function": "loss_exit",
+        # "exit_loss_function": "loss_exit",
         "num_ee": 3,
         "exit_threshold": [0.65, 0.7, 0.75],
         "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34

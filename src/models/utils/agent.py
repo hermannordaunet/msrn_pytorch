@@ -471,5 +471,7 @@ class Agent:
     def initalize_exit_loss(self):
         if self.model_param["exit_loss_function"] == "loss_exit":
             return loss_exit
+        elif self.model_param["exit_loss_function"] is None:
+            print("Training without dedicated loss exit")
         else:
             raise Exception("invalid loss function for exit nodes")
