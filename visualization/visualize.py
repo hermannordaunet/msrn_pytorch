@@ -95,38 +95,71 @@ def plot_reward_for_each_agent(
 
 
 def plot_action_distribution(
-    score: list(),
+    action_dist,
+    labels,
+    action_list=["Forward Motion", "Side Motion", "Rotation"],
+    add_error_bar=False,
     plot_type="box",
-    labels=None,
     env_name="",
     result_dir="./",
-    rotate_labels=True,
+    rotate_labels=False,
 ):
-    df = pd.DataFrame(
-        [episode[-1] for episode in data if isinstance(episode, list) and episode]
-    )
+    
+    _, num_agents, action_count = action_dist.shape
 
-    # df_melted = df.melt(
-    #     var_name="Agent",
-    #     value_name="Actions",
-    # )
+    data_tensor = action_dist.cpu().numpy()
+    # Reshaping and computing mean and standard deviation
+    mean_data = data_tensor.mean(axis=0)
+    std_dev_data = data_tensor.std(axis=0)
 
-    plt.figure(figsize=set_size())
+    # Creating a DataFrame suitable for Seaborn plotting
+    df = pd.DataFrame(columns=['Agent', 'Action', 'Mean', 'StdDev'])    
+    data_list = []
+
+    for agent_idx, agent in enumerate(labels):
+        for action_idx, action in enumerate(action_list):
+            df = data_list.append({
+                'Agent': f'{agent}',
+                'Action': f'Action {action}',
+                'Mean': mean_data[agent_idx, action_idx],
+                'StdDev': std_dev_data[agent_idx, action_idx]
+            })
+
+    df = pd.DataFrame(data_list)
+
+    # Plotting the data using Seaborn
+    plt.figure(figsize=set_size(golden_ratio=0.8))
     sns.set_theme(style="darkgrid")
     sns.despine()
 
-    plot = sns.barplot(
-        x="Action",
-        y="Amount",
-        data=df_melted,
-    )
+    plot = sns.barplot(data=df, x='Action', y='Mean', hue='Agent') 
 
-    plt.title("Boxplot of agent scores in an environment")
-    plt.xlabel("Agents")
-    plt.ylabel("Actions")
+    plt.title('Mean Action Counts per Agent with Standard Deviation')
+    plt.xlabel('')
+    plot.xaxis.set_ticks_position('none') 
+    plt.ylabel('Mean Count')
 
-    if labels is not None:
-        plot.set_xticklabels(labels)
+    # Getting the x coordinates of the bars
+    x_coords = [p.get_x() + p.get_width() / 2 for p in plot.patches]
+
+    std_list = df['StdDev'].tolist()
+    # Initialize a new list for the reordered values
+    correct_order_std_list = []
+
+    # Nested loop to reorder the list
+    for i in range(action_count):
+        for j in range(num_agents):
+            # Calculate the index in the original list
+            index = j * action_count + i
+            # Append the value to the reordered list
+            correct_order_std_list.append(std_list[index])
+
+    if add_error_bar:
+        for i in range(len(std_list)):
+            plt.errorbar(x=x_coords[i], y=df.iloc[i]['Mean'], yerr=correct_order_std_list[i], fmt='none', c='black', capsize=3)
+
+    # if labels is not None:
+    #     plot.set_xticklabels(labels)
 
     if rotate_labels:
         plot.set_xticklabels(plot.get_xticklabels(), rotation=20)
@@ -422,7 +455,7 @@ def create_dynamic_list(number_of_early_exits, with_random=True):
     return dynamic_list
 
 def main():
-    timestamp = 1699707985
+    timestamp = "1699707985_34_no_comp_deployed_comp"
     eval_results_dir = f"evaluation_results/{timestamp}"
 
     score_file = f"{eval_results_dir}/rewards.json"
@@ -440,6 +473,8 @@ def main():
     num_ee = (exit_dists.shape[-1]) - 1
 
     new_labels = create_dynamic_list(num_ee)
+
+    plot_action_distribution(action_dist, new_labels, result_dir=eval_results_dir)
 
     plot_macs_for_agent(exit_dists, result_dir=eval_results_dir, labels=new_labels)
     plot_exit_distribution(exit_dists, result_dir=eval_results_dir)

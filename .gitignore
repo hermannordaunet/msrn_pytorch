@@ -138,3 +138,4 @@ src/models/test_scipts/test_output.py
 wandb/
 
 results/
+evaluation_results/
