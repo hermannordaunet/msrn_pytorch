@@ -108,7 +108,7 @@ def main():
 
     model_param = {
         "model_class_name": "Exploding_EE_CNN_Residual",  # EE_CNN_Residual, small_DQN, ResNet_DQN, ResNet, Exploding_EE_CNN_Residual
-        "loss_function": "v5",
+        "loss_function": "v3",
         "exit_loss_function": None,
         "num_ee": 3,
         "exit_threshold": [0.7, 0.8, 0.9],
@@ -985,7 +985,10 @@ def model_trainer(
 
             # CRITICAL: This line has an error if no learning has been done. Not enough samples in memory.
             losses.append(agent.full_net_loss.item())  # save most recent loss
-            exit_losses.append(agent.cumulative_exits_loss.item())
+            
+            exit_loss = agent.cumulative_exits_loss
+            if exit_loss is not None:
+                exit_losses.append(exit_loss.item())
 
             if warm_start is not None and episode > warm_start:
                 eps = max(eps_end, eps_decay * eps)  # decrease epsilon
@@ -1001,6 +1004,7 @@ def model_trainer(
                     agent.policy_net,
                     agent.model_param["models_dir"],
                     model_type="best",
+                    best_episode=episode
                 )
                 best_model_score = avg_score
 
