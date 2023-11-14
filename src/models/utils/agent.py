@@ -95,8 +95,12 @@ class Agent:
 
         self.optimizer = None
         self.exit_optimizer = None
-        self.initalize_optimizer()
-        self.initalize_exit_optimizer()
+
+        if self.model_param["exit_loss_function"] is None:
+            self.initalize_full_optimizer()
+        else:
+            self.initalize_optimizer()
+            self.initalize_exit_optimizer()
 
         if config["use_lr_scheduler"]:
             use_scheduler_milestones = config["scheduler_milestones"] is not None
@@ -142,10 +146,10 @@ class Agent:
             )
             for epoch in range(self.num_epochs):
                 experiences = multiple_experiences[epoch]
-                self.learn(experiences)
+                self.old_learn(experiences)
         else:
             experiences = self.memory.sample()
-            self.learn(experiences)
+            self.old_learn(experiences)
 
         return True
 
@@ -213,6 +217,102 @@ class Agent:
             exits,
             costs,
         )  # confs, exits, costs
+
+    def old_learn(self, experiences):
+        """Update value parameters using given batch of experience tuples.
+
+        Params
+        ======
+            experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples
+        """
+
+        # CRITICAL: Understand all this code. Written for the IN5490 project.
+        # I have forgotten all the details of the DQN training loop with the
+        # local and tarfet network.
+
+        num_ee = len(self.policy_net.exits)
+
+        batch = self.memory.Transition(*zip(*experiences))
+
+        # Adding all the variables to the device?
+        # TODO: does all the things needs to
+        # be on the device (MPS/GPU). Most likely only the state and next-state
+        state_batch = torch.cat(batch.state).to(self.device)
+        next_state_batch = torch.cat(batch.next_state).to(self.device)
+        action_batch = torch.tensor(batch.action).unsqueeze(1).to(self.device)
+        reward_batch = (
+            torch.tensor(batch.reward, dtype=torch.float32).unsqueeze(1).to(self.device)
+        )
+        dones_batch = (
+            torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
+        )
+
+        # plot_grid_based_perception(state_batch[0:9, ...], title="10 first states", block=False)
+        # plot_grid_based_perception(next_state_batch[0:9, ...], title="10 first next states", block=False)
+
+        # print(action_batch[0:9, ...])
+        # print(dones_batch[0:9, ...])
+        # print(reward_batch[0:9, ...])
+
+        if self.target_net:
+            # Get max predicted Q values (for next states) from target model
+            next_pred, _, _ = self.target_net(next_state_batch)
+
+        else:
+            print("[ERROR] The agent has no target net. Only use for eval/visualize")
+            exit()
+
+        # CRITICAL: Here we get the Q_targets from the last exit of the network
+        # Here we need the network to be set up with some kind of inf threshold
+        # to get the prediction from the last exit
+        Q_targets_next = next_pred[-1].detach().max(1)[0].unsqueeze(1)
+
+        # Compute Q targets for current states
+        Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
+
+        # ASK: The Q_targets have no "info" of which action it took to get the score
+
+        self.policy_net.forced_exit_point = None
+        # Get expected Q values from policy model
+        pred, conf, cost = self.policy_net(state_batch)
+        # CRITICAL: Add back the correct loss
+        # cost.append(torch.tensor(1.0).to(self.device))
+
+        Q_expected = list()
+        for p in pred:
+            expected_value = p.gather(1, action_batch)
+            Q_expected.append(expected_value)
+
+        loss = self.initalize_loss_function()
+
+        cumulative_loss, pred_loss, cost_loss = loss(
+            Q_expected, Q_targets, conf, cost, num_ee=num_ee
+        )
+
+        # Append conf to a list for debugging later
+        self.full_net_loss = cumulative_loss
+        self.pred_loss = pred_loss
+        self.cost_loss = cost_loss
+        self.train_conf = conf
+        self.last_Q_expected = Q_expected[-1]
+        self.last_Q_targets = Q_targets
+
+        # Minimize the loss
+        self.optimizer.zero_grad()
+        cumulative_loss.backward()
+
+        if self.clip_gradients:
+            torch.nn.utils.clip_grad_norm_(
+                self.policy_net.parameters(), self.max_grad_norm
+            )
+
+        self.optimizer.step()
+
+        if self.scheduler is not None:
+            self.scheduler.step()
+
+        # Update target network
+        self.soft_update(self.policy_net, self.target_net, self.tau)
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.
@@ -382,6 +482,40 @@ class Agent:
     def unfreeze_exit_layers(self):
         for exit in self.policy_net.exits:
             exit.classifier[0].require_grad = True
+        
+    def initalize_full_optimizer(self):
+        # Getting the network parameters
+        policy_net_parameters = self.policy_net.parameters()
+        lr_backbone = self.config["learning_rate"]["lr"]
+
+        if self.config["optimizer"] == "adam":
+            self.optimizer = optim.Adam(
+                policy_net_parameters,
+                lr=lr_backbone,
+                # weight_decay=self.config["weight_decay"],
+            )
+
+        elif self.config["optimizer"] == "adamW":
+            self.optimizer = optim.AdamW(
+                policy_net_parameters,
+                lr=lr_backbone,
+                # weight_decay=self.config["weight_decay"],
+            )
+        elif self.config["optimizer"] == "SGD":
+            self.optimizer = optim.SGD(
+                policy_net_parameters,
+                lr=lr_backbone,
+                # weight_decay=self.config["weight_decay"],
+            )
+        elif self.config["optimizer"] == "RMSprop":
+            self.optimizer = optim.RMSprop(
+                policy_net_parameters,
+                lr=lr_backbone,
+                # weight_decay=self.config["weight_decay"],
+            )
+        else:
+            raise Exception("invalid optimizer")
+        
 
     def initalize_optimizer(self):
         # Getting the network parameters

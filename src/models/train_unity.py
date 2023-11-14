@@ -109,9 +109,9 @@ def main():
     model_param = {
         "model_class_name": "Exploding_EE_CNN_Residual",  # EE_CNN_Residual, small_DQN, ResNet_DQN, ResNet, Exploding_EE_CNN_Residual
         "loss_function": "v5",
-        # "exit_loss_function": "loss_exit",
+        "exit_loss_function": None,
         "num_ee": 3,
-        "exit_threshold": [0.65, 0.7, 0.75],
+        "exit_threshold": [0.7, 0.8, 0.9],
         "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
@@ -141,7 +141,7 @@ def main():
         "learning_rate": {
             "lr": 1e-4,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
-            "lr_exit": 0.01,
+            "lr_exit": 0.001,
         },  # learning rate to the optimizer
         "weight_decay": 0.00001,  # weight_decay value # TUNE: originally 0.00001
         "use_lr_scheduler": False,
@@ -154,14 +154,14 @@ def main():
         "print_range": 10,
         "train": {
             "episodes": 1000,
-            "all_agents_active": False,
+            "all_agents_active": True,
         },
         "eval": {
             "episodes": 10,
             "every-n-th-episode": 30,
-            "all_agents_active": False,
-            "one_of_each_exit": False,
-            "random_agent": False,
+            "all_agents_active": True,
+            "one_of_each_exit": True,
+            "random_agent": True,
         },
         "visualize": {
             "episodes": 10,
@@ -195,7 +195,7 @@ def main():
     stats_side_channel = StatsSideChannel()
 
     engine_config_channel = EngineConfigurationChannel()
-    engine_config_channel.set_configuration_parameters(time_scale=10)
+    engine_config_channel.set_configuration_parameters(time_scale=20)
 
     SIDE_CHANNELS = [
         engine_config_channel,
@@ -220,8 +220,8 @@ def main():
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
             # relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
-            # relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_6_agents.app"
-            relative_path = "builds/FoodCollector_1_env_respawn_no_wall_penalty_2_and_-4_reward_8_agents.app"
+            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_6_agents.app"
+            # relative_path = "builds/FoodCollector_1_env_respawn_no_wall_penalty_2_and_-4_reward_8_agents.app"
 
     else:
         relative_path = None
