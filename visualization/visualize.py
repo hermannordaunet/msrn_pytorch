@@ -120,7 +120,7 @@ def plot_action_distribution(
         for action_idx, action in enumerate(action_list):
             df = data_list.append({
                 'Agent': f'{agent}',
-                'Action': f'Action {action}',
+                'Action': f'{action}',
                 'Mean': mean_data[agent_idx, action_idx],
                 'StdDev': std_dev_data[agent_idx, action_idx]
             })
@@ -455,7 +455,7 @@ def create_dynamic_list(number_of_early_exits, with_random=True):
     return dynamic_list
 
 def main():
-    timestamp = "1699707985_34_no_comp_deployed_comp"
+    timestamp = "1699952039" #"1699707985_34_no_comp_deployed_comp"
     eval_results_dir = f"evaluation_results/{timestamp}"
 
     score_file = f"{eval_results_dir}/rewards.json"
@@ -474,7 +474,7 @@ def main():
 
     new_labels = create_dynamic_list(num_ee)
 
-    plot_action_distribution(action_dist, new_labels, result_dir=eval_results_dir)
+    plot_action_distribution(action_dist, new_labels, result_dir=eval_results_dir, add_error_bar=True)
 
     plot_macs_for_agent(exit_dists, result_dir=eval_results_dir, labels=new_labels)
     plot_exit_distribution(exit_dists, result_dir=eval_results_dir)
