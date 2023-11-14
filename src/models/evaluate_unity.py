@@ -285,6 +285,7 @@ def evaluate_trained_model(
                             eval_exit_point=exit_ids,
                         )
                         exits.append(exit)
+                        
                         if confs is None:
                             confs = conf
                         else:

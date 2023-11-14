@@ -109,13 +109,13 @@ def main():
     model_param = {
         "model_class_name": "Exploding_EE_CNN_Residual",  # EE_CNN_Residual, small_DQN, ResNet_DQN, ResNet, Exploding_EE_CNN_Residual
         "loss_function": "v3",
-        "exit_loss_function": None,
+        "exit_loss_function": None, #"loss_exit"
         "num_ee": 3,
-        "exit_threshold": [0.7, 0.8, 0.9],
+        "exit_threshold": [0.8],
         "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
-        "distribution": "pareto",
+        "distribution": "linear",
         "models_dir": None,
         "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed ezverything
@@ -139,7 +139,7 @@ def main():
         "benchmarks_mean_reward": None,
         "optimizer": "adam",  # 'SGD' | 'adam' | 'RMSprop' | 'adamW'
         "learning_rate": {
-            "lr": 1e-4,  # TUNE: 0.0001 original
+            "lr": 0.0001,  # TUNE: 0.0001 original
             "lr_critic": 0.0001,
             "lr_exit": 0.001,
         },  # learning rate to the optimizer
@@ -153,7 +153,7 @@ def main():
         "num_epochs": 3,
         "print_range": 10,
         "train": {
-            "episodes": 1000,
+            "episodes": 1,
             "all_agents_active": True,
         },
         "eval": {
@@ -186,7 +186,7 @@ def main():
     EVAL_MODEL = model_param["mode_setups"]["eval"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
 
-    TIMESTAMP = int(1697890478)
+    # TIMESTAMP = int(1699472908)
 
     VERBOSE = True
 
@@ -222,7 +222,6 @@ def main():
             # relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
             relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_6_agents.app"
             # relative_path = "builds/FoodCollector_1_env_respawn_no_wall_penalty_2_and_-4_reward_8_agents.app"
-
     else:
         relative_path = None
 
@@ -1012,7 +1011,7 @@ def model_trainer(
                 wandb.log(
                     {
                         "loss": losses[-1],
-                        "exit_loss": exit_losses[-1],
+                        # "exit_loss": exit_losses[-1],
                         "average_score": moving_avg_score[-1],
                         "min_last_score": min(scores_all_training_agents),
                         "max_last_score": max(scores_all_training_agents),

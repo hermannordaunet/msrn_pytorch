@@ -146,10 +146,10 @@ class Agent:
             )
             for epoch in range(self.num_epochs):
                 experiences = multiple_experiences[epoch]
-                self.old_learn(experiences)
+                self.learn(experiences)
         else:
             experiences = self.memory.sample()
-            self.old_learn(experiences)
+            self.learn(experiences)
 
         return True
 

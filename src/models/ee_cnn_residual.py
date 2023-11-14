@@ -41,7 +41,7 @@ class EE_CNN_Residual(nn.Module):
         block=BasicBlock,
         num_ee=1,
         exit_type="bnpool",
-        exit_threshold=[0.9],
+        exit_threshold : list() = [0.9],
         repetitions=list(),
         init_planes=int(),
         planes=list(),
@@ -72,7 +72,8 @@ class EE_CNN_Residual(nn.Module):
 
         exit_threshold_list_length = len(exit_threshold)
         if exit_threshold_list_length == 1:
-            self.exit_threshold = [exit_threshold] * self.num_ee
+            self.exit_threshold = exit_threshold * self.num_ee
+            print(f"Exit threshold list: {self.exit_threshold}")
         elif exit_threshold_list_length != 1 and exit_threshold_list_length != num_ee:
             print("Not enough thresholds in the list. Needs to match number of ee or be one single value.")
             exit()
