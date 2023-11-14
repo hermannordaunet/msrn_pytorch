@@ -108,10 +108,10 @@ def main():
 
     model_param = {
         "model_class_name": "Exploding_EE_CNN_Residual",  # EE_CNN_Residual, small_DQN, ResNet_DQN, ResNet, Exploding_EE_CNN_Residual
-        "loss_function": "v3",
-        "exit_loss_function": None, #"loss_exit"
+        "loss_function": "v3", #"v5"
+        "exit_loss_function": None, #"loss_exit", None
         "num_ee": 3,
-        "exit_threshold": [0.8],
+        "exit_threshold": 0.8,
         "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],

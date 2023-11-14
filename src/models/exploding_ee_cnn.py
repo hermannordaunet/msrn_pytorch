@@ -296,7 +296,7 @@ class Exploding_EE_CNN_Residual(nn.Module):
                     conf_over_threshold = conf.item() > self.exit_threshold
 
                     if conf_over_threshold or forced_exit_here:
-                        return pred, conf.item(), idx, self.cost[idx]
+                        return pred, conf, idx, self.cost[idx]
 
                 else:
                     exit_all_threshold = None
@@ -338,7 +338,7 @@ class Exploding_EE_CNN_Residual(nn.Module):
 
         if not self.training:
             if not_batch_eval:
-                return pred, conf.item(), len(self.exits), 1.0
+                return pred, conf, len(self.exits), 1.0
 
             self.construct_validation_output(
                 pred, conf, 1, len(self.exits), threshold=float("-inf")

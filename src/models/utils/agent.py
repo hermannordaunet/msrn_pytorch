@@ -140,16 +140,21 @@ class Agent:
         # else:
         #     experiences = self.memory.sample()
 
+        if self.model_param["exit_loss_function"] is None:
+            learn_function = self.old_learn
+        else:
+            learn_function = self.learn
+
         if self.multiple_epochs:
             multiple_experiences = self.memory.sample(
                 multiple_experiences=True, number_of_experiences=self.num_epochs
             )
             for epoch in range(self.num_epochs):
                 experiences = multiple_experiences[epoch]
-                self.learn(experiences)
+                learn_function(experiences)
         else:
             experiences = self.memory.sample()
-            self.learn(experiences)
+            learn_function(experiences)
 
         return True
 
