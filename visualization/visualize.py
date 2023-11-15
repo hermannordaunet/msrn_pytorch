@@ -57,6 +57,7 @@ def plot_reward_for_each_agent(
     env_name="",
     result_dir="./",
     rotate_labels=True,
+    exit_threshold=None,
 ):
     df = pd.DataFrame(dist)
 
@@ -79,7 +80,11 @@ def plot_reward_for_each_agent(
     else:
         plot = sns.violinplot(x="Agent", y="Reward", data=df_melted)
 
-    plt.title("Rewards for each agent type")
+    plt.suptitle("Rewards for each agent type", fontsize=12)
+
+    if exit_threshold is not None:
+        plt.title(f"Exit threshold: {exit_threshold}", fontsize=10, ha="center")
+
     plt.xlabel("Agents")
     plt.ylabel("Reward")
 
@@ -176,6 +181,7 @@ def plot_exit_distribution(
     env_name="",
     result_dir="./",
     rotate_labels=True,
+    exit_threshold=None,
 ):
     if agent_type == "msrn":
         last_agent_data = exit_dist[:, -1, :]
@@ -207,8 +213,11 @@ def plot_exit_distribution(
     plt.figure(figsize=set_size())
     sns.set_theme(style="darkgrid")
     plot = sns.barplot(data=df, x="Exit", y="Count", estimator=np.mean, errorbar="sd")
-    plt.title("Average Exit Count for the Last Agent with Standard Deviation")
+    plt.suptitle("Average Exit Count for the Last Agent with Standard Deviation", fontsize=12)
     sns.despine()
+
+    if exit_threshold is not None:
+        plt.title(f"Exit threshold: {exit_threshold}", fontsize=10)
 
     if labels is not None:
         plot.set_xticklabels(labels)
@@ -234,6 +243,7 @@ def plot_macs_for_agent(
     env_name="",
     result_dir="./",
     rotate_labels=True,
+    exit_threshold=None,
 ):
     
     num_exits = exit_dist.shape[-1]
@@ -256,7 +266,11 @@ def plot_macs_for_agent(
     plt.figure(figsize=set_size())
     sns.set_theme(style="darkgrid")
     plot = sns.barplot(data=tensor, estimator=np.mean, errorbar="sd", capsize=.15, errwidth=1)
-    plt.title("MACs for each agent. With Standard Deviation for Random and MSRN")
+    plt.suptitle("MACs for each agent. With Standard Deviation for Random and MSRN", fontsize=12)
+
+    if exit_threshold is not None:
+        plt.title(f"Exit threshold {exit_threshold}", fontsize=10)
+
     sns.despine()
 
     if labels is not None:
@@ -346,7 +360,6 @@ def plot_scores_from_nested_list(
     plt.close()
 
 
-# save loss plot
 def plot_loss_from_list(
     losses: list(), labels=None, env_name="", result_dir="./", loss_type="Q-value"
 ):
@@ -383,9 +396,6 @@ def plot_loss_from_list(
         bbox_inches="tight",
     )
     plt.close()
-
-
-# Eval loss and score
 
 
 def plot_grid_based_perception(
@@ -455,8 +465,11 @@ def create_dynamic_list(number_of_early_exits, with_random=True):
     return dynamic_list
 
 def main():
-    timestamp = "1699952039" #"1699707985_34_no_comp_deployed_comp"
+    timestamp = "1699995962_34_comp_0_85" #"1699707985_34_no_comp_deployed_comp"
     eval_results_dir = f"evaluation_results/{timestamp}"
+
+    threshold_file = f"{eval_results_dir}/exit_threshold.json"
+    threshold_list = load_json_as_list(threshold_file)
 
     score_file = f"{eval_results_dir}/rewards.json"
     scores = load_json_as_list(score_file)
@@ -476,9 +489,9 @@ def main():
 
     plot_action_distribution(action_dist, new_labels, result_dir=eval_results_dir, add_error_bar=True)
 
-    plot_macs_for_agent(exit_dists, result_dir=eval_results_dir, labels=new_labels)
-    plot_exit_distribution(exit_dists, result_dir=eval_results_dir)
-    plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir)
+    plot_macs_for_agent(exit_dists, result_dir=eval_results_dir, labels=new_labels, exit_threshold=threshold_list)
+    plot_exit_distribution(exit_dists, result_dir=eval_results_dir, exit_threshold=threshold_list)
+    plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir, exit_threshold=threshold_list)
 
 
     plot_reward_for_each_agent(
@@ -486,6 +499,7 @@ def main():
         plot_type="violin",
         result_dir=eval_results_dir,
         labels=new_labels,
+        exit_threshold=threshold_list,
     )
 
 
