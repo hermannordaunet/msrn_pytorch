@@ -5,7 +5,7 @@ import torch
 # CRITICAL: When saving best model, it has to be seralized.
 
 
-def save_model(q_policy_net, folder_path, model_type="last", best_episode=None):
+def save_model(q_policy_net, folder_path, model_type="last"):
     """
     Save PyTorch models to the given folder path.
     """
@@ -13,10 +13,7 @@ def save_model(q_policy_net, folder_path, model_type="last", best_episode=None):
     if not os.path.exists(folder_path):
         os.makedirs(folder_path)
     
-    if best_episode is not None:
-        model_file_name = f"{model_type}_model_{best_episode}.pt"
-    else:
-        model_file_name = f"{model_type}_model.pt"
+    model_file_name = f"{model_type}_model.pt"
     # Save models
     model_path = os.path.join(folder_path, model_file_name)
     torch.save(q_policy_net.state_dict(), model_path)

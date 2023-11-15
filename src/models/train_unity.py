@@ -107,12 +107,12 @@ def main():
     print(f"[INFO] Device is: {DEVICE}")
 
     model_param = {
-        "model_class_name": "Exploding_EE_CNN_Residual",  # EE_CNN_Residual, small_DQN, ResNet_DQN, ResNet, Exploding_EE_CNN_Residual
-        "loss_function": "v3", #"v5"
-        "exit_loss_function": None, #"loss_exit", None
-        "num_ee": 3,
-        "exit_threshold": 0.8,
-        "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
+        "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual, small_DQN, ResNet_DQN, ResNet, Exploding_EE_CNN_Residual
+        "loss_function": "v5", #"v3" "v5"
+        "exit_loss_function": "loss_exit", #"loss_exit", None
+        "num_ee": 5,
+        "exit_threshold": [0.7],
+        "repetitions": [3, 4, 6, 3],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
         "distribution": "linear",
@@ -153,15 +153,15 @@ def main():
         "num_epochs": 3,
         "print_range": 10,
         "train": {
-            "episodes": 1,
+            "episodes": 1000,
             "all_agents_active": True,
         },
         "eval": {
             "episodes": 10,
             "every-n-th-episode": 30,
             "all_agents_active": True,
-            "one_of_each_exit": True,
-            "random_agent": True,
+            "one_of_each_exit": False,
+            "random_agent": False,
         },
         "visualize": {
             "episodes": 10,
@@ -195,7 +195,7 @@ def main():
     stats_side_channel = StatsSideChannel()
 
     engine_config_channel = EngineConfigurationChannel()
-    engine_config_channel.set_configuration_parameters(time_scale=20)
+    engine_config_channel.set_configuration_parameters(time_scale=10)
 
     SIDE_CHANNELS = [
         engine_config_channel,
@@ -206,15 +206,12 @@ def main():
     if config["use_build"]:
         if platform == "linux" or platform == "linux2":
             # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
-            # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_headless.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_7_agents.x86_64"
-
-            # relative_path = "builds/Linus_FoodCollector_4_envs_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
-            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_6_agents.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_6_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_6_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_8_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_7_agents.x86_64"
-
+            relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
@@ -445,7 +442,7 @@ def main():
         except:
             print("Environment already closed")
 
-        engine_config_channel.set_configuration_parameters(time_scale=20)
+        engine_config_channel.set_configuration_parameters(time_scale=10)
 
         env = UnityEnvironment(
             file_name=FILE_NAME,
@@ -895,76 +892,6 @@ def model_trainer(
 
                         episode_done = done
 
-                    # agent_id = list(training_agents[team].keys())[0]
-                    # agent_dict = training_agents[team][agent_id]
-
-                    # if agent_id in agents_need_action:
-                    #     agent_obs = decision_steps[agent_id].obs
-                    #     next_state = (
-                    #         get_grid_based_perception(agent_obs).detach().clone()
-                    #     )
-                    # else:
-                    #     next_state = None
-                    #     print(f"Got a None next state. team: {team}, episode {episode}")
-
-                    # reward = decision_steps[agent_id].reward
-
-                    # terminated_agent_ids = terminal_steps.agent_id
-                    # done = (
-                    #     terminal_steps[agent_id].interrupted
-                    #     if agent_id in terminated_agent_ids
-                    #     else False
-                    # )
-
-                    # action = np.argmax(move_action)
-                    # # Make a clone of the state tensor. This was overwritten later
-                    # # making the training loop not work.
-                    # state = (
-                    #     (state_batch_tensor[team_idx, ...])
-                    #     .unsqueeze(0)
-                    #     .detach()
-                    #     .clone()
-                    # )
-                    # # plot_grid_based_perception(state, block=True)
-
-                    # if isinstance(agent, PPO_Agent):
-                    #     log_prob = 0
-                    #     agent.step(state, action, log_prob, reward, done)
-                    # else:
-                    #     optimized = agent.step(state, action, reward, next_state, done)
-                    #     if optimized:
-                    #         conf_min_max.append(agent.train_conf)
-
-                    # state_batch_tensor[team_idx, ...] = next_state.detach().clone()
-
-                    # if reward == -1.0:
-                    #     agent_dict["wall_hit"] += 1
-
-                    # if reward == -4.0:
-                    #     agent_dict["bad_food"] += 1
-
-                    # if reward > 0.0:
-                    #     agent_dict["good_food"] += 1
-
-                    # if reward < -4.0:
-                    #     agent_dict["wall_hit"] += 1
-                    #     agent_dict["bad_food"] += 1
-
-                    # if float(reward) != 0.0:
-                    #     agent_dict["episode_score"] += reward
-
-                    # if isinstance(exits, int):
-                    #     agent_dict["exit_points"][exits] += 1
-                    # elif isinstance(exits, torch.Tensor):
-                    #     exit = exits[team_idx]
-                    #     agent_dict["exit_points"][exit] += 1
-                    # elif exits is None:
-                    #     agent_dict["random_actions"] += 1
-                    # else:
-                    #     print("The type of exits are not supported at this point")
-
-                    # episode_done = done
-
             (
                 scores_all_training_agents,
                 bad_food,
@@ -1003,9 +930,9 @@ def model_trainer(
                     agent.policy_net,
                     agent.model_param["models_dir"],
                     model_type="best",
-                    best_episode=episode
                 )
                 best_model_score = avg_score
+                best_model_episode = episode
 
             if wandb:
                 wandb.log(
@@ -1154,6 +1081,8 @@ def model_trainer(
         )
 
         print("Model is saved, parameters is saved & the Environment is closed...")
+        if best_model_episode:
+            print(f"Best model was saved from episode: {best_model_episode}")
 
     return scores, episode, scores_window, losses
 
