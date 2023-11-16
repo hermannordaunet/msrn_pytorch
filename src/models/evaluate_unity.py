@@ -270,7 +270,7 @@ def evaluate_trained_model(
                     confs = None
                     move_action = None
                     laser_action = None
-                    for exit_ids in range(1, agent.policy_net.num_ee + 1):
+                    for exit_ids in range(agent.policy_net.num_ee):
                         exit_agent_state = state_batch_tensor[exit_ids].unsqueeze(0)
                         (
                             exit_move_action,
@@ -282,7 +282,7 @@ def evaluate_trained_model(
                             exit_agent_state,
                             num_agents=1,
                             eval_all_exit=True,
-                            eval_exit_point=exit_ids,
+                            eval_exit_point=exit_ids + 1,
                         )
                         exits.append(exit)
                         
@@ -302,6 +302,7 @@ def evaluate_trained_model(
                                 (laser_action, exit_laser_action), axis=cat_dim_action
                             )
 
+                    # Backbone agent
                     exit_agent_state = state_batch_tensor[-3].unsqueeze(0)
                     (
                         exit_move_action,
@@ -348,6 +349,7 @@ def evaluate_trained_model(
                             (laser_action, exit_laser_action), axis=cat_dim_action
                         )
 
+                    # MSRN agent
                     exit_agent_state = state_batch_tensor[-1].unsqueeze(0)
                     (
                         exit_move_action,
