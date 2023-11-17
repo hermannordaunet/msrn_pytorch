@@ -108,16 +108,16 @@ def main():
 
     model_param = {
         "model_class_name": "EE_CNN_Residual",  # EE_CNN_Residual, small_DQN, ResNet_DQN, ResNet, Exploding_EE_CNN_Residual
-        "loss_function": "v5", #"v3" "v5"
-        "exit_loss_function": "loss_exit", #"loss_exit", None
-        "num_ee": 3,
-        "exit_threshold": [0.9],
-        "repetitions": [2, 2, 2, 2],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
+        "loss_function": "v7", #"v3" "v5"
+        "exit_loss_function": None, #"loss_exit", None
+        "num_ee": 5,
+        "exit_threshold": [0.995],
+        "repetitions": [3, 4, 6, 3],  # [2, 2, 2, 2] resnet18, [3, 4, 6, 3] resnet34
         "init_planes": 64,
         "planes": [64, 128, 256, 512],
         "distribution": "pareto",
         "models_dir": None,
-        "mode_setups": {"train": False, "eval": True, "visualize": False},
+        "mode_setups": {"train": True, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed ezverything
         "device": DEVICE,
     }
@@ -153,15 +153,15 @@ def main():
         "num_epochs": 3,
         "print_range": 10,
         "train": {
-            "episodes": 1,
+            "episodes": 1000,
             "all_agents_active": True,
         },
         "eval": {
-            "episodes": 250,
+            "episodes": 10,
             "every-n-th-episode": 30,
             "all_agents_active": True,
-            "one_of_each_exit": True,
-            "random_agent": True,
+            "one_of_each_exit": False,
+            "random_agent": False,
         },
         "visualize": {
             "episodes": 10,
@@ -186,9 +186,17 @@ def main():
     EVAL_MODEL = model_param["mode_setups"]["eval"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
 
-    TIMESTAMP = int(1700037415)
+    # TIMESTAMP = int(1697890478)
 
     VERBOSE = True
+
+    if model_param["exit_loss_function"] is None:
+        if model_param["loss_function"] == "v7":
+            print("Using working_old_learn")
+        else:
+            print("Using old_learn")
+    else:
+        print("Using learn")
 
     # Unity environment spesific
     float_parameter_channel = EnvironmentParametersChannel()
@@ -208,10 +216,10 @@ def main():
             # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_headless.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_7_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_6_agents.x86_64"
-            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_6_agents.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_6_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_8_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_7_agents.x86_64"
-            # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
+            relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"

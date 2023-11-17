@@ -141,7 +141,10 @@ class Agent:
         #     experiences = self.memory.sample()
 
         if self.model_param["exit_loss_function"] is None:
-            learn_function = self.old_learn
+            if self.model_param["loss_function"] == "v7":
+                learn_function = self.working_old_learn
+            else:
+                learn_function = self.old_learn
         else:
             learn_function = self.learn
 
@@ -318,6 +321,135 @@ class Agent:
 
         # Update target network
         self.soft_update(self.policy_net, self.target_net, self.tau)
+
+
+    def working_old_learn(self, experiences):
+        """Update value parameters using given batch of experience tuples.
+
+        Params
+        ======
+            experiences (Tuple[torch.Variable]): tuple of (s, a, r, s', done) tuples
+        """
+
+        # CRITICAL: Understand all this code. Written for the IN5490 project.
+        # I have forgotten all the details of the DQN training loop with the
+        # local and tarfet network.
+
+        # self.freeze_exit_layers()
+
+        num_ee = len(self.policy_net.exits)
+
+        batch = self.memory.Transition(*zip(*experiences))
+
+        # Adding all the variables to the device?
+        # TODO: does all the things needs to
+        # be on the device (MPS/GPU). Most likely only the state and next-state
+        state_batch = torch.cat(batch.state).to(self.device)
+        next_state_batch = torch.cat(batch.next_state).to(self.device)
+        action_batch = torch.tensor(batch.action).unsqueeze(1).to(self.device)
+        reward_batch = (
+            torch.tensor(batch.reward, dtype=torch.float32).unsqueeze(1).to(self.device)
+        )
+        dones_batch = (
+            torch.tensor(batch.done, dtype=torch.int).unsqueeze(1).to(self.device)
+        )
+
+        # plot_grid_based_perception(state_batch[0:9, ...], title="10 first states", block=False)
+        # plot_grid_based_perception(next_state_batch[0:9, ...], title="10 first next states", block=False)
+
+        # print(action_batch[0:9, ...])
+        # print(dones_batch[0:9, ...])
+        # print(reward_batch[0:9, ...])
+
+        if self.target_net:
+            # Get max predicted Q values (for next states) from target model
+            next_pred, _, _ = self.target_net(next_state_batch)
+
+        else:
+            print("[ERROR] The agent has no target net. Only use for eval/visualize")
+            exit()
+
+        if self.double_dqn:
+
+            # TODO: Check if this can be used to make Double DQN
+            # Use policy_net to select the action that maximizes Q-values for the next state
+            next_action, _, _ = self.policy_net(next_state_batch)
+            max_next_action = torch.argmax(next_action[-1].detach(), dim=1)
+
+            # Use target_net to evaluate the Q-value of taking that action in the next state
+            Q_values_next_state = next_pred[-1].detach().gather(1, max_next_action.unsqueeze(1))
+
+            # Compute Q-targets using the reward and discounted Q-values of the next state
+            Q_targets = reward_batch + (self.gamma * Q_values_next_state * (1 - dones_batch))
+
+        # -------------------------------------------------------------------------------------- 
+        else:
+        # -------------------------------------------------------------------------------------- 
+            # DQN
+
+            Q_targets_next = next_pred[-1].detach().max(1)[0].unsqueeze(1)
+
+            # Compute Q targets for current states
+            Q_targets = reward_batch + (self.gamma * Q_targets_next * (1 - dones_batch))
+
+        # ASK: The Q_targets have no "info" of which action it took to get the score
+
+        self.policy_net.forced_exit_point = None
+        # Get expected Q values from policy model
+        pred, conf, cost = self.policy_net(state_batch)
+        # CRITICAL: Add back the correct loss
+        # cost.append(torch.tensor(1.0).to(self.device))
+
+        loss = loss_v7
+
+        # cumulative_loss, pred_loss, cost_loss = loss(
+        #     Q_expected, Q_targets, action_batch, conf, cost, num_ee=num_ee
+        # )
+
+        q_full_net_loss, pred_loss_exits, cumulative_loss, cost_loss, last_Q_expected = loss(
+            pred, Q_targets, action_batch, cost, num_ee=num_ee
+        )
+
+        conf = list()
+        for p in pred:
+            sliced_pred = p[torch.arange(self.batch_size), action_batch.squeeze()]
+            conf.append(sliced_pred.unsqueeze(1))
+
+        # conf = torch.max(conf_list, 1)[0]
+        # Append conf to a list for debugging later
+        self.train_conf = conf
+        self.cost_loss = cost_loss
+        self.cumulative_exits_loss = np.sum(pred_loss_exits)
+        self.full_net_loss = cumulative_loss
+
+        self.last_Q_targets = Q_targets
+        self.last_Q_expected = last_Q_expected
+
+        # self.cumulative_loss = cumulative_loss
+
+        # self.freeze_exit_layers()
+
+        # Minimize the loss
+        self.optimizer.zero_grad()
+        cumulative_loss.backward()
+
+        # for loss_exit in pred_loss_exits:
+        #     loss_exit.backward(retain_graph=True)
+
+        if self.clip_gradients:
+            torch.nn.utils.clip_grad_norm_(
+                self.policy_net.parameters(), self.max_grad_norm
+            )
+
+        self.optimizer.step()
+        # self.exit_optimizer.step()
+
+        if self.scheduler is not None:
+            self.scheduler.step()
+
+        # Update target network
+        self.soft_update(self.policy_net, self.target_net, self.tau)
+
 
     def learn(self, experiences):
         """Update value parameters using given batch of experience tuples.

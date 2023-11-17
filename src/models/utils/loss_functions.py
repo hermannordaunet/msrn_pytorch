@@ -189,7 +189,7 @@ def loss_v7(pred, target, actions, cost, num_ee=0):
     m = nn.LogSoftmax(dim=1)
     for i in range(num_ee - 1, -1, -1):
         pred_loss = F.nll_loss(m(pred[i].squeeze()), actions.squeeze())
-        pred_loss_exits.append(pred_loss)
+        pred_loss_exits.append(pred_loss.item())
 
         cumulative_loss += pred_loss
 
