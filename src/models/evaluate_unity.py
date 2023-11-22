@@ -199,13 +199,14 @@ def evaluate_trained_model(
 
     num_agents_on_teams = len(decision_steps.agent_id)
     num_total_agents = num_teams * num_agents_on_teams
-    if eval_each_exit:
-        if (agent.policy_net.num_ee + 3) != num_agents_on_teams:
-            print(
-                "Cannot run this evaluation because there are not enough agents for each exit, one random, and one hybrid"
-            )
-            print(f"{num_agents_on_teams} agents in the env")
-            env.close()
+    # if eval_each_exit:
+    #     if (agent.policy_net.num_ee + 3) != num_agents_on_teams:
+    #         print(
+    #             "Cannot run this evaluation because there are not enough agents for each exit, one random, and one hybrid"
+    #         )
+    #         print(f"{num_agents_on_teams} agents in the env")
+    #         env.close()
+
 
     state_size = agent.model_param["input_size"]
     state_batch_tensor = torch.zeros((num_total_agents, *state_size))
@@ -270,7 +271,7 @@ def evaluate_trained_model(
                     confs = None
                     move_action = None
                     laser_action = None
-                    for exit_ids in range(agent.policy_net.num_ee):
+                    for exit_ids in range(agent.policy_net.num_ee - 1):
                         exit_agent_state = state_batch_tensor[exit_ids].unsqueeze(0)
                         (
                             exit_move_action,
@@ -325,7 +326,8 @@ def evaluate_trained_model(
                     )
 
                     if random_agent:
-                        random_exit_idx = random.randint(1, agent.policy_net.num_ee + 1)
+                        # random_exit_idx = random.randint(1, agent.policy_net.num_ee + 1)
+                        random_exit_idx = np.random.choice([1, 2, 3, 4, 6])
                         exit_agent_state = state_batch_tensor[-2].unsqueeze(0)
                         (
                             exit_move_action,

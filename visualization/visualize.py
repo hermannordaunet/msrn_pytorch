@@ -79,13 +79,13 @@ def plot_reward_for_each_agent(
             flierprops={"marker": "o"},
         )
     else:
-        plot = sns.violinplot(x="Agent", y="Reward", data=df_melted)
+        plot = sns.violinplot(x="Agent", y="Reward", data=df_melted, errorbar="ci", estimator="mean")
 
-    # plt.ylim((-45, 35))
+    plt.ylim((-25, 30))
     plt.suptitle("Rewards for each agent type", fontsize=12)
 
     if exit_threshold is not None:
-        plt.title(f"Exit thresholds: {exit_threshold}", fontsize=10, ha="center")
+        plt.title(f"MSRN exit thresholds: {exit_threshold}", fontsize=10, ha="center")
 
     plt.xlabel("Agents")
     plt.ylabel("Reward")
@@ -105,14 +105,11 @@ def plot_reward_for_each_agent(
 def plot_action_distribution(
     action_dist,
     labels,
-    action_list=["Forward Motion", "Side Motion", "Rotation"],
-    add_error_bar=False,
-    plot_type="box",
-    env_name="",
     result_dir="./",
     rotate_labels=False,
 ):
-    _, num_agents, action_count = action_dist.shape
+    num_episodes, num_agents, _ = action_dist.shape
+    numpy_action_dist = action_dist.numpy()
 
     # Initialize columns
     data = {"agent_id": [], "Forward": [], "Side motion": [], "Rotation": []}
@@ -121,86 +118,33 @@ def plot_action_distribution(
     agent_types = ["exit 1", "exit 2", "exit 3", "exit 4", "exit 5", "full", "random", "MSRN"]
 
     # Populate the columns
-    for i in range(action_dist.shape[0]):  # Loop through episodes
-        for j in range(action_dist.shape[1]):  # Loop through agents
+    for i in range(num_episodes):  # Loop through episodes
+        for j in range(num_agents):  # Loop through agents
             data["agent_id"].append(agent_types[j])
-            data["Forward"].append(action_dist[i, j, 0])
-            data["Side motion"].append(action_dist[i, j, 1])
-            data["Rotation"].append(action_dist[i, j, 2])
+            data["Forward"].append(numpy_action_dist[i, j, 0])
+            data["Side motion"].append(numpy_action_dist[i, j, 1])
+            data["Rotation"].append(numpy_action_dist[i, j, 2])
 
     # Create DataFrame
     df = pd.DataFrame(data)
+    df_melted = df.melt(id_vars='agent_id', var_name='motion_type', value_name='value')
 
     plt.figure(figsize=set_size(golden_ratio=0.8))
     sns.set_theme(style="darkgrid")
     sns.despine()
-    plot = sns.barplot(data=df, x="action", y="count", hue="agent", errorbar="sd", estimator="mean")
-
-    # data_tensor = action_dist.cpu().numpy()
-    # # Reshaping and computing mean and standard deviation
-    # mean_data = data_tensor.mean(axis=0)
-    # std_dev_data = data_tensor.std(axis=0)
-
-    # # Creating a DataFrame suitable for Seaborn plotting
-    # df = pd.DataFrame(columns=["Agent", "Action", "Mean", "StdDev"])
-    # data_list = []
-
-    # for agent_idx, agent in enumerate(labels):
-    #     for action_idx, action in enumerate(action_list):
-    #         df = data_list.append(
-    #             {
-    #                 "Agent": f"{agent}",
-    #                 "Action": f"{action}",
-    #                 "Mean": mean_data[agent_idx, action_idx],
-    #                 "StdDev": std_dev_data[agent_idx, action_idx],
-    #             }
-    #         )
-
-    # df = pd.DataFrame(data_list)
-
-    # # Plotting the data using Seaborn
-
-    # plot = sns.barplot(data=df, x="Action", y="Mean", hue="Agent")
+    plot = sns.barplot(data=df_melted, x="motion_type", y="value", hue="agent_id", errorbar="ci", estimator="mean", capsize=0.05, errwidth=0.8)
 
     plt.title("Mean Action Counts per Agent with Standard Deviation")
     plt.xlabel("")
     plot.xaxis.set_ticks_position("none")
     plt.ylabel("Mean Count")
-
-    # # Getting the x coordinates of the bars
-    # x_coords = [p.get_x() + p.get_width() / 2 for p in plot.patches]
-
-    # std_list = df["StdDev"].tolist()
-    # # Initialize a new list for the reordered values
-    # correct_order_std_list = []
-
-    # # Nested loop to reorder the list
-    # for i in range(action_count):
-    #     for j in range(num_agents):
-    #         # Calculate the index in the original list
-    #         index = j * action_count + i
-    #         # Append the value to the reordered list
-    #         correct_order_std_list.append(std_list[index])
-
-    # if add_error_bar:
-    #     for i in range(len(std_list)):
-    #         plt.errorbar(
-    #             x=x_coords[i],
-    #             y=df.iloc[i]["Mean"],
-    #             yerr=correct_order_std_list[i],
-    #             fmt="none",
-    #             c="black",
-    #             capsize=3,
-    #         )
-
-    # if labels is not None:
-    #     plot.set_xticklabels(labels)
+    plt.legend()
 
     if rotate_labels:
         plot.set_xticklabels(plot.get_xticklabels(), rotation=20)
 
     plt.savefig(
-        f"{result_dir}/action_dist_{plot_type}.pdf", format="pdf", bbox_inches="tight"
+        f"{result_dir}/action_dist.pdf", format="pdf", bbox_inches="tight"
     )
 
     plt.close()
@@ -212,7 +156,7 @@ def plot_exit_distribution(
     labels=None,
     env_name="",
     result_dir="./",
-    rotate_labels=True,
+    rotate_labels=False,
     exit_threshold=None,
 ):
     if agent_type == "msrn":
@@ -246,14 +190,15 @@ def plot_exit_distribution(
     # Now create the barplot using Seaborn
     plt.figure(figsize=set_size())
     sns.set_theme(style="darkgrid")
-    plot = sns.barplot(data=df, x="Exit", y="Count", estimator="mean", errorbar="sd")
+    plot = sns.barplot(data=df, x="Exit", y="Count", estimator="mean", errorbar="ci", capsize=0.15, errwidth=1
+    )
     plt.suptitle(
         f"Average Exit Count for {agent_string} agent with Standard Deviation", fontsize=12
     )
     sns.despine()
 
     if exit_threshold is not None:
-        plt.title(f"Exit thresholds: {exit_threshold}", fontsize=10)
+        plt.title(f"MSRN exit thresholds: {exit_threshold}", fontsize=10)
 
     if labels is not None:
         plot.set_xticklabels(labels)
@@ -286,6 +231,21 @@ def get_cost_pareto(exit_dist):
         cost_list = [34.38, 64.83, 86.09, 107.35, 170.45]
     elif num_exits == 6:
         cost_list = [34.38, 64.83, 86.09, 107.35, 117.98, 170.45]
+
+        # cost_list = [28.63, 64.83, 86.09, 117.98, 151.56, 170.45]
+    else:
+        print("No exit cost_list for this amount of exits.")
+        exit()
+
+    cost_list = torch.tensor(cost_list)
+    return cost_list
+
+def get_cost_linear(exit_dist):
+    num_exits = exit_dist.shape[-1]
+
+    if num_exits == 6:
+        cost_list = [28.63, 64.83, 86.09, 117.98, 151.56, 170.45]
+
     else:
         print("No exit cost_list for this amount of exits.")
         exit()
@@ -339,22 +299,38 @@ def plot_macs_for_agent(
     result_dir="./",
     rotate_labels=True,
     exit_threshold=None,
+    timestamp=None,
 ):
-    cost_list = get_cost_pareto(exit_dist)
+    
+    if timestamp.startswith("1700306774"):
+        cost_list = get_cost_linear(exit_dist)
+    else:
+        cost_list = get_cost_pareto(exit_dist)
+
     macs_tensor = get_macs_for_agent(exit_dist, cost_list)
 
     # Now create the barplot using Seaborn
     plt.figure(figsize=set_size())
     sns.set_theme(style="darkgrid")
     plot = sns.barplot(
-        data=macs_tensor, estimator="mean", errorbar="sd", capsize=0.15, errwidth=1
+        data=macs_tensor, estimator="mean", errorbar="ci", capsize=0.15, errwidth=1
     )
     plt.suptitle(
-        "MACs for each agent. With Standard Deviation for Random and MSRN", fontsize=12
+        "MACs for each agent (95% CI)", fontsize=12
     )
+    plt.ylabel("Millions of MACs (MMACs)")
+    plt.xlabel("Agent type")
 
     if exit_threshold is not None:
-        plt.title(f"Exit thresholds: {exit_threshold}", fontsize=10)
+        plt.title(f"MSRN exit thresholds: {exit_threshold}", fontsize=10)
+
+    num_static_mac_agents = macs_tensor.shape[-1] - 2
+    num_lines_to_remove = num_static_mac_agents * 3 # each error bar has 3 lines (cap and bar), so multiply by 3
+
+    lines = plot.get_lines()
+    for i in range(num_lines_to_remove):
+        lines[i].set_visible(False)
+
 
     sns.despine()
 
@@ -424,7 +400,7 @@ def plot_scores_from_nested_list(
     plt.figure(figsize=set_size())
     # Set Seaborn style
     sns.set(style="darkgrid")
-    plot = sns.lineplot(data=scores_df, x="Episode", y="Score", estimator="mean", errorbar="sd", label=labels)
+    plot = sns.lineplot(data=scores_df, x="Episode", y="Score", estimator="mean", errorbar="ci", label=labels)
     sns.despine()
     plt.title(f"{env_name} Reward")
     plt.ylabel("Mean Reward")
@@ -547,6 +523,140 @@ def create_dynamic_list(number_of_early_exits, with_random=True):
 
     return dynamic_list
 
+def plot_split_violin_plot_18_vs_34(msrn_rewards, save_figure=True, result_dir="./"):
+
+    data = msrn_rewards.numpy() if not isinstance(msrn_rewards, np.ndarray) else msrn_rewards
+
+    # Reshape data: Each row is an episode, columns are 'AgentType' and 'Reward'
+    # Let's assume agent types are 0 and 1, you can replace these with actual names if available
+
+    agent_types = np.repeat(["ResNet18", "ResNet34"], data.shape[1])
+
+    episodes = np.tile(np.arange(data.shape[1]), 2)
+    rewards = data.flatten()
+    agent_classes = np.repeat([" ", " "], data.shape[1])
+
+    df = pd.DataFrame({'AgentType': agent_types, 'Episode': episodes, 'Reward': rewards, "AgentClasses": agent_classes})
+
+    plt.figure(figsize=set_size())
+    sns.set_theme(style="darkgrid")
+    sns.despine()
+
+    plot = sns.violinplot(data=df, y="AgentClasses", x="Reward", hue="AgentType", split=True, gap=.075, inner="box")
+
+    plt.xlabel("Reward")
+    plt.ylabel("")
+
+    plt.tight_layout()
+
+    if save_figure:
+        plt.savefig(f"{result_dir}/18_vs_34_violin_tilted.pdf", format="pdf", bbox_inches="tight")
+
+    plt.close()
+
+def plot_split_violin_plot_pareto_vs_linear(msrn_rewards, save_figure=True, result_dir="./"):
+
+    data = msrn_rewards.numpy() if not isinstance(msrn_rewards, np.ndarray) else msrn_rewards
+
+    # Reshape data: Each row is an episode, columns are 'AgentType' and 'Reward'
+    # Let's assume agent types are 0 and 1, you can replace these with actual names if available
+
+    agent_types = np.repeat(["Pareto", "Linear"], data.shape[1])
+
+    episodes = np.tile(np.arange(data.shape[1]), 2)
+    rewards = data.flatten()
+    agent_classes = np.repeat([" ", " "], data.shape[1])
+
+    df = pd.DataFrame({'AgentType': agent_types, 'Episode': episodes, 'Reward': rewards, "AgentClasses": agent_classes})
+
+    plt.figure(figsize=set_size())
+    sns.set_theme(style="darkgrid")
+    sns.despine()
+
+    plot = sns.violinplot(data=df, y="AgentClasses", x="Reward", hue="AgentType", split=True, gap=.075, inner="box")
+
+    plt.xlabel("Reward")
+    plt.ylabel("")
+
+    plt.tight_layout()
+
+    if save_figure:
+        plt.savefig(f"{result_dir}/pareto_vs_linear_violin_tilted.pdf", format="pdf", bbox_inches="tight")
+
+    plt.close()
+
+
+def plot_split_violin_plot_comp_vs_no_comp(msrn_rewards, save_figure=True, result_dir="./"):
+
+    data = msrn_rewards.numpy() if not isinstance(msrn_rewards, np.ndarray) else msrn_rewards
+
+    # Reshape data: Each row is an episode, columns are 'AgentType' and 'Reward'
+    # Let's assume agent types are 0 and 1, you can replace these with actual names if available
+
+    agent_types = np.repeat(["Comp", "Non-comp"], data.shape[1])
+
+    episodes = np.tile(np.arange(data.shape[1]), 2)
+    rewards = data.flatten()
+    agent_classes = np.repeat([" ", " "], data.shape[1])
+
+    df = pd.DataFrame({'Agent Type': agent_types, 'Episode': episodes, 'Reward': rewards, "AgentClasses": agent_classes})
+
+    plt.figure(figsize=set_size())
+    sns.set_theme(style="darkgrid")
+    sns.despine()
+
+    plot = sns.violinplot(data=df, y="AgentClasses", x="Reward", hue="Agent Type", split=True, gap=.075, inner="box")
+
+    plt.xlabel("Reward")
+    plt.ylabel("")
+
+    plt.tight_layout()
+
+    if save_figure:
+        plt.savefig(f"{result_dir}/comp_vs_noncomp_violin_tilted.pdf", format="pdf", bbox_inches="tight")
+
+    plt.close()
+
+def plot_split_violin_plot(msrn_rewards, save_figure=True, result_dir="./", training_type="regular"):
+
+    # Assuming your tensor is named 'tensor' and is convertible to a numpy array
+    data = msrn_rewards.numpy() if not isinstance(msrn_rewards, np.ndarray) else msrn_rewards
+
+    # Reshape data: Each row is an episode, columns are 'AgentType' and 'Reward'
+    # Let's assume agent types are 0 and 1, you can replace these with actual names if available
+
+    if training_type == "regular":
+        agent_types = np.repeat(["Regular", "MSRN"], data.shape[1])
+    elif training_type == "e2e":
+        agent_types = np.repeat(["End-to-End", "Element-wise"], data.shape[1])
+
+    episodes = np.tile(np.arange(data.shape[1]), 2)
+    rewards = data.flatten()
+    agent_classes = np.repeat([" ", " "], data.shape[1])
+
+    df = pd.DataFrame({'AgentType': agent_types, 'Episode': episodes, 'Reward': rewards, "AgentClasses": agent_classes})
+
+    plt.figure(figsize=set_size())
+    sns.set_theme(style="darkgrid")
+    sns.despine()
+
+    plot = sns.violinplot(data=df, y="AgentClasses", x="Reward", hue="AgentType", split=True, gap=.075, inner="box")
+
+    plt.xlabel("Reward")
+    if training_type == "e2e":
+        plt.ylabel("Training scheme")
+    else:
+        plt.ylabel("")
+
+    plt.tight_layout()
+
+    if save_figure:
+        plt.savefig(f"{result_dir}/training_{training_type}_violin_tilted.pdf", format="pdf", bbox_inches="tight")
+
+    plt.close()
+
+
+
 
 def plot_reward_vs_macs(
     msrn_rewards,
@@ -572,6 +682,7 @@ def plot_reward_vs_macs(
 
     plt.figure(figsize=set_size(golden_ratio=1))
     sns.set_theme(style="whitegrid")
+    plt.title("Reward vs MACs")
 
     # Mean reward
     mean_msrn_rewards = torch.mean(msrn_rewards_T, axis=0)
@@ -624,7 +735,7 @@ def plot_reward_vs_macs(
     # ax2.fill_between(thresholds, min_msrn_macs, max_msrn_macs, alpha=0.1, color="orange")
     # p2, = ax2.plot(thresholds, macs, color='orange', label='Mean MSRN MACs')
     ax2.grid(False)  # turn off grid #2
-    ax2.set_ylabel("Mean MMACs")
+    ax2.set_ylabel("Mean Million of MACs (MMACs)")
     # ax2.set_ylim(0, 90)
     # ax2.legend(['Mean MSRN MACs'])
     # ax2.yaxis.label.set_color(p2.get_color())
@@ -636,10 +747,10 @@ def plot_reward_vs_macs(
         backbone_color = "green"
         backbone_reward_T = torch.t(backbone_reward)
         # Mean reward
-        mean_backbone_reward = torch.mean(backbone_reward_T, axis=0)
-        max_mean_backbone_reward = torch.max(mean_backbone_reward)
-        min_backbone_reward = torch.min(backbone_reward_T, axis=0)[0]
-        max_backbone_reward = torch.max(backbone_reward_T, axis=0)[0]
+        mean_mean_backbone_reward = torch.mean(backbone_reward)
+        # max_mean_backbone_reward = torch.mean(mean_backbone_reward)
+        # min_backbone_reward = torch.min(backbone_reward_T, axis=0)[0]
+        # max_backbone_reward = torch.max(backbone_reward_T, axis=0)[0]
 
         # sns.lineplot(
         #     x=thresholds,
@@ -649,15 +760,15 @@ def plot_reward_vs_macs(
         #     alpha=0.4,
         #     ax=ax1,
         # )
-        ax1.axhline(max_mean_backbone_reward, color=backbone_color, alpha=0.4, label="Backbone Mean Reward")
+        ax1.axhline(mean_mean_backbone_reward, color=backbone_color, alpha=0.4, label="Backbone Mean Reward")
         # plt.fill_between(thresholds, min_backbone_reward, max_backbone_reward, alpha=0.25)
 
     if random_reward is not None:
         random_reward_T = torch.t(random_reward)
         # Mean reward
-        mean_random_reward = torch.mean(random_reward_T, axis=0)
-        mean_mean_random_reward = torch.mean(mean_random_reward)
-        mean_random_reward_list = torch.full((mean_random_reward.shape), mean_mean_random_reward)
+        mean_random_reward = torch.mean(random_reward, axis=0)
+        mean_mean_random_reward = torch.mean(random_reward)
+        mean_random_reward_list = torch.full((len(thresholds),), mean_mean_random_reward)
         # min_random_reward = torch.min(random_reward_T, axis=0)[0]
         # max_random_reward = torch.max(random_reward_T, axis=0)[0]
 
@@ -793,47 +904,76 @@ def extract_score_from_multiple_files(timestamp_list):
     return msrn_rewards, random_rewards, backbone_rewards, msrn_macs_list, random_macs_list
 
 def main():
+    # timestamp_list = [
+    #     "1700145488_34_comp_0_4",
+    #     "1700145498_34_comp_0_45",
+    #     "1700145603_34_comp_0_5",
+    #     "1700145639_34_comp_0_55",
+    #     "1700145831_34_comp_0_6",
+    #     "1700145857_34_comp_0_65",
+    #     "1700146049_34_comp_0_7",
+    #     "1700146094_34_comp_0_75",
+    #     "1700146302_34_comp_0_8",
+    #     "1700146439_34_comp_0_85",
+    #     "1700146547_34_comp_0_9",
+    # ]
+    # timestamp_list = [
+    #     "1700246057_18_comp_exploding",
+    #     "1700247231_18_comp_0_65", 
+    # ]
+    # timestamp_list = [
+    #     "1700383356_34_comp_e2e",
+    #     "1700145857_34_comp_0_65", 
+    # ]
+    # timestamp_list = [
+    #     "1700247231_18_comp_0_65",
+    #     "1700145857_34_comp_0_65", 
+    # ]
+    # timestamp_list = [
+    #     "1700145857_34_comp_0_65",
+    #     "1700306774_34_comp_linear_0_65", 
+    # ]
     timestamp_list = [
-        "1700037415",
-        "1700145488_34_comp_0_4",
-        "1700145498_34_comp_0_45",
-        "1700145603_34_comp_0_5",
-        "1700145639_34_comp_0_55",
-        "1700145831_34_comp_0_6",
         "1700145857_34_comp_0_65",
-        "1700146049_34_comp_0_7",
-        "1700146094_34_comp_0_75",
-        "1700146302_34_comp_0_8",
-        "1700146439_34_comp_0_85",
-        "1700146547_34_comp_0_9",
+        "1700228586_34_no_comp_0_65", 
     ]
-    # msrn_rewards, random_rewards, backbone_rewards, msrn_macs_count, random_macs_count = extract_score_from_multiple_files(timestamp_list)
+
+
+    msrn_rewards, random_rewards, backbone_rewards, msrn_macs_count, random_macs_count = extract_score_from_multiple_files(timestamp_list)
     
     tested_threshold = np.arange(40, 95, 5) / 100
     num_threshold_tested = len(tested_threshold)
 
+    # plot_split_violin_plot(msrn_rewards, training_type="e2e", result_dir="./reports")
+    # plot_split_violin_plot_18_vs_34(msrn_rewards, result_dir="./reports")
+
+    # plot_split_violin_plot_pareto_vs_linear(msrn_rewards, result_dir="./reports")
+
+    plot_split_violin_plot_comp_vs_no_comp(msrn_rewards, result_dir="./reports")
+
+    exit()
+
     # timestamp = "1700141473_18_comp_correct_state" #"1700130463_18_comp_exploding" int(1699630482)
     for timestamp in timestamp_list:
-        # eval_results_dir = f"evaluation_results/{timestamp}"
-        eval_results_dir = f"results/{timestamp}"
+        eval_results_dir = f"evaluation_results/{timestamp}"
+        # eval_results_dir = f"results/{timestamp}"
 
-        # threshold_file = f"{eval_results_dir}/exit_threshold.json"
-        # threshold_list = load_json_as_list(threshold_file)
+        threshold_file = f"{eval_results_dir}/exit_threshold.json"
+        threshold_list = load_json_as_list(threshold_file)
         # threshold_list = [0.9, 0.9, 0.9]
 
         score_file = f"{eval_results_dir}/rewards.json"
-        score_file = f"{eval_results_dir}/scores.json"
+        # score_file = f"{eval_results_dir}/scores.json"
         scores = load_json_as_list(score_file)
         scores = torch.tensor(scores).squeeze()
 
-        plot_scores_from_nested_list(scores, labels=["train"], result_dir=eval_results_dir)
+        # plot_scores_from_nested_list(scores, labels=["train"], result_dir=eval_results_dir)
         # (
         #     msrn_mean_reward[idx],
         #     random_reward[idx],
         #     backbone_reward[idx],
         # ) = get_all_mean_scores(scores)
 
-        exit()
         exit_dist_file = f"{eval_results_dir}/exit_points.json"
         exit_dists = load_json_as_list(exit_dist_file)
         exit_dists = torch.tensor(exit_dists).squeeze()
@@ -847,29 +987,29 @@ def main():
 
         new_labels = create_dynamic_list(num_ee)
 
-        # plot_action_distribution(action_dist, new_labels, result_dir=eval_results_dir, add_error_bar=True)
+        # plot_action_distribution(action_dist, new_labels, result_dir=eval_results_dir)
 
-        plot_macs_for_agent(exit_dists, result_dir=eval_results_dir, labels=new_labels, exit_threshold=threshold_list)
-        plot_exit_distribution(exit_dists, result_dir=eval_results_dir, exit_threshold=threshold_list)
-        plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir, exit_threshold=threshold_list)
+        # plot_macs_for_agent(exit_dists, result_dir=eval_results_dir, labels=new_labels, exit_threshold=threshold_list, timestamp=timestamp)
+        # plot_exit_distribution(exit_dists, result_dir=eval_results_dir, exit_threshold=threshold_list)
+        # plot_exit_distribution(exit_dists, agent_type="random", result_dir=eval_results_dir, exit_threshold=threshold_list)
 
-        plot_reward_for_each_agent(
-            scores,
-            plot_type="violin",
-            result_dir=eval_results_dir,
-            labels=new_labels,
-            exit_threshold=threshold_list,
+        # plot_reward_for_each_agent(
+        #     scores,
+        #     plot_type="violin",
+        #     result_dir=eval_results_dir,
+        #     labels=new_labels,
+        #     exit_threshold=threshold_list,
+        # )
+
+    plot_reward_vs_macs(
+            msrn_rewards,
+            msrn_macs_count,
+            random_macs_count=random_macs_count,
+            random_reward=random_rewards,
+            backbone_reward=backbone_rewards,
+            thresholds=tested_threshold,
+            result_dir="./reports",
         )
-
-    # plot_reward_vs_macs(
-    #         msrn_rewards,
-    #         msrn_macs_count,
-    #         random_macs_count=random_macs_count,
-    #         random_reward=random_rewards,
-    #         backbone_reward=backbone_rewards,
-    #         thresholds=tested_threshold,
-    #         result_dir="./reports",
-    #     )
 
 # timestamp_list = [
 #         "1699968537_34_comp_0_4",

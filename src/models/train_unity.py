@@ -117,7 +117,7 @@ def main():
         "planes": [64, 128, 256, 512],
         "distribution": "pareto",
         "models_dir": None,
-        "mode_setups": {"train": True, "eval": True, "visualize": False},
+        "mode_setups": {"train": False, "eval": True, "visualize": False},
         "manual_seed": 350,  # TODO: Seed ezverything
         "device": DEVICE,
     }
@@ -157,11 +157,11 @@ def main():
             "all_agents_active": True,
         },
         "eval": {
-            "episodes": 10,
+            "episodes": 250,
             "every-n-th-episode": 30,
             "all_agents_active": True,
-            "one_of_each_exit": False,
-            "random_agent": False,
+            "one_of_each_exit": True,
+            "random_agent": True,
         },
         "visualize": {
             "episodes": 10,
@@ -186,7 +186,7 @@ def main():
     EVAL_MODEL = model_param["mode_setups"]["eval"]
     VISUALIZE_MODEL = model_param["mode_setups"]["visualize"]
 
-    # TIMESTAMP = int(1697890478)
+    TIMESTAMP = int(1699472908)
 
     VERBOSE = True
 
@@ -218,14 +218,14 @@ def main():
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_reward_6_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_6_agents.x86_64"
             # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_8_agents.x86_64"
-            # relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_7_agents.x86_64"
-            relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
+            relative_path = "builds/Linus_FoodCollector_1_envs_no_respawn_wall_penalty_2_and_-4_no_wall-hit_reward_7_agents.x86_64"
+            # relative_path = "builds/Linus_FoodCollector_1_env_no_respawn_wall_penalty_2_and_-4_reward.x86_64"
         else:
             # relative_path = "builds/FoodCollector_1_env_no_respawn.app"
             # relative_path = "builds/FoodCollector_4_no_respawn.app"
             # relative_path = "builds/FoodCollector_1_env_no_respawn_overhead.app"
-            # relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
-            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_6_agents.app"
+            relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_7_agents.app"
+            # relative_path = "builds/FoodCollector_1_env_respawn_wall_penalty_2_and_-4_reward_6_agents.app"
             # relative_path = "builds/FoodCollector_1_env_respawn_no_wall_penalty_2_and_-4_reward_8_agents.app"
     else:
         relative_path = None
